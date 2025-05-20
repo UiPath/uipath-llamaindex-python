@@ -8,6 +8,10 @@ from llama_index.core.workflow import (
 from llama_index.llms.openai import OpenAI
 
 
+class TopicEvent(StartEvent):
+    topic: str
+
+
 class JokeEvent(Event):
     joke: str
 
@@ -16,7 +20,7 @@ class JokeFlow(Workflow):
     llm = OpenAI()
 
     @step
-    async def generate_joke(self, ev: StartEvent) -> JokeEvent:
+    async def generate_joke(self, ev: TopicEvent) -> JokeEvent:
         topic = ev.topic
 
         prompt = f"Write your best joke about {topic}."

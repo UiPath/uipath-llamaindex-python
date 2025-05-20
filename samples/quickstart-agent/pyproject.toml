@@ -1,7 +1,7 @@
 [project]
-name = "llama-demo"
-version = "0.0.1"
-description = "UiPath LlamaIndex SDK"
+name = "llama-quickstart-agent"
+version = "0.0.2"
+description = "UiPath LlamaIndex Quickstart Agent"
 authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"

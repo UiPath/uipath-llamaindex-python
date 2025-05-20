@@ -1,12 +1,10 @@
 import asyncio
-import inspect
 import json
 import os
 import uuid
-from typing import Any, Dict, Optional, Type, get_type_hints
+from typing import Any, Dict
 
-from llama_index.core.workflow import Event, StartEvent, StopEvent, Workflow
-from llama_index.core.workflow.decorators import StepConfig
+from llama_index.core.workflow import StopEvent, Workflow
 from uipath._cli._utils._console import ConsoleLogger
 from uipath._cli._utils._parse_ast import generate_bindings_json  # type: ignore
 from uipath._cli.middlewares import MiddlewareResult
@@ -50,45 +48,6 @@ def process_nullable_types(properties: Dict[str, Any]) -> Dict[str, Any]:
     return result
 
 
-def find_event_types(workflow: Workflow, event_base_class: Type[Event]) -> Type[Event]:
-    """Find the StartEvent or StopEvent class in a workflow"""
-    event_classes = set()
-
-    # Get all steps from the workflow
-    steps = {}
-
-    # Get steps defined as methods
-    for name, method in inspect.getmembers(workflow, inspect.ismethod):
-        if hasattr(method, "__step_config"):
-            steps[name] = method
-
-    # Get steps defined as free functions
-    class_steps = getattr(workflow.__class__, "_step_functions", {})
-    steps.update(class_steps)
-
-    # Find all event types that are subclasses of event_base_class
-    for step_func in steps.values():
-        step_config: Optional[StepConfig] = getattr(step_func, "__step_config")
-
-        if event_base_class is StartEvent:
-            # Look in accepted_events for StartEvent
-            for event_type in step_config.accepted_events:
-                if issubclass(event_type, event_base_class):
-                    event_classes.add(event_type)
-        else:
-            # Look in return_types for StopEvent
-            for event_type in step_config.return_types:
-                if issubclass(event_type, event_base_class):
-                    event_classes.add(event_type)
-
-    if len(event_classes) == 1:
-        return event_classes.pop()
-    elif len(event_classes) > 1:
-        # Return the most specific one (the one with the most fields)
-        return max(event_classes, key=lambda cls: len(get_type_hints(cls)))
-    return event_base_class  # Default fallback
-
-
 def generate_schema_from_workflow(workflow: Workflow) -> Dict[str, Any]:
     """Extract input/output schema from a LlamaIndex workflow"""
     schema = {
@@ -97,8 +56,8 @@ def generate_schema_from_workflow(workflow: Workflow) -> Dict[str, Any]:
     }
 
     # Find the actual StartEvent and StopEvent classes used in this workflow
-    start_event_class = find_event_types(workflow, StartEvent)
-    stop_event_class = find_event_types(workflow, StopEvent)
+    start_event_class = workflow._start_event_class
+    stop_event_class = workflow._stop_event_class
 
     # Generate input schema from StartEvent using Pydantic's schema method
     try:

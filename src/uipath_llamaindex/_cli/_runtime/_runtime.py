@@ -2,7 +2,6 @@ import json
 import logging
 from typing import Optional
 
-from llama_index.core.workflow import StartEvent
 from uipath import UiPath
 from uipath._cli._runtime._contracts import (
     UiPathBaseRuntime,
@@ -40,7 +39,9 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         await self.validate()
 
         try:
-            ev = StartEvent(**self.context.input_json)
+            start_event_class = self.context.workflow._start_event_class
+
+            ev = start_event_class(**self.context.input_json)
 
             handler = self.context.workflow.run(start_event=ev)
 
