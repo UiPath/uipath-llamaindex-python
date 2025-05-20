@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
 
-    if: ${{ github.repository == 'UiPath/uipath-llama-python' }}
+    if: ${{ github.repository == 'UiPath/uipath-llamaindex-python' }}
     permissions:
       contents: read
       actions: write
