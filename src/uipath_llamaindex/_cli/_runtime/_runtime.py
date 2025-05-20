@@ -2,6 +2,7 @@ import json
 import logging
 from typing import Optional
 
+from llama_index.core.workflow import StartEvent
 from uipath import UiPath
 from uipath._cli._runtime._contracts import (
     UiPathBaseRuntime,
@@ -39,7 +40,14 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         await self.validate()
 
         try:
-            output = await self.context.workflow.run(self.context.input_json)
+            ev = StartEvent(**self.context.input_json)
+
+            handler = self.context.workflow.run(start_event=ev)
+
+            async for event in handler.stream_events():
+                print(event)
+
+            output = await handler
 
             self.context.result = UiPathRuntimeResult(
                 output=self._serialize_object(output)
@@ -171,4 +179,4 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 return obj
         # Return primitive types as is
         else:
-            return obj
+            return {"result": obj}
