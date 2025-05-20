@@ -109,7 +109,7 @@ class WorkflowConfig:
 
 
 class LlamaIndexConfig:
-    def __init__(self, config_path: str = "llama.json"):
+    def __init__(self, config_path: str = "llama_index.json"):
         self.config_path = config_path
         self._config: Optional[Dict[str, Any]] = None
         self._workflows: List[WorkflowConfig] = []
