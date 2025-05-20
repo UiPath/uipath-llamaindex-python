@@ -2,7 +2,7 @@
   "entryPoints": [
     {
       "filePath": "agent",
-      "uniqueId": "f646d823-434c-4ef6-b8fb-6a239ee08974",
+      "uniqueId": "fef68d5e-56cd-4569-b18c-3bce0ef5343f",
       "type": "agent",
       "input": {
         "type": "object",
@@ -18,8 +18,20 @@
       },
       "output": {
         "type": "object",
-        "properties": {},
-        "required": []
+        "properties": {
+          "joke": {
+            "title": "Joke",
+            "type": "string"
+          },
+          "critique": {
+            "title": "Critique",
+            "type": "string"
+          }
+        },
+        "required": [
+          "joke",
+          "critique"
+        ]
       }
     }
   ],

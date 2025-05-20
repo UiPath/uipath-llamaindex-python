@@ -1123,7 +1123,7 @@ wheels = [
 
 [[package]]
 name = "llama-quickstart-agent"
-version = "0.0.2"
+version = "0.0.3"
 source = { virtual = "." }
 dependencies = [
     { name = "llama-index-llms-openai" },

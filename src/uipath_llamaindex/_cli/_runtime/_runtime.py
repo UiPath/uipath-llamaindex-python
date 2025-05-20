@@ -160,10 +160,10 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
     def _serialize_object(self, obj):
         """Recursively serializes an object and all its nested components."""
         # Handle Pydantic models
-        if hasattr(obj, "dict"):
-            return self._serialize_object(obj.dict())
-        elif hasattr(obj, "model_dump"):
+        if hasattr(obj, "model_dump"):
             return self._serialize_object(obj.model_dump(by_alias=True))
+        elif hasattr(obj, "dict"):
+            return self._serialize_object(obj.dict())
         elif hasattr(obj, "to_dict"):
             return self._serialize_object(obj.to_dict())
         # Handle dictionaries
@@ -180,4 +180,4 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 return obj
         # Return primitive types as is
         else:
-            return {"result": obj}
+            return obj

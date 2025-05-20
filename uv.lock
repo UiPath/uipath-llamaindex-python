@@ -2798,7 +2798,7 @@ wheels = [
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.0.1"
+version = "0.0.5"
 source = { editable = "." }
 dependencies = [
     { name = "llama-index" },

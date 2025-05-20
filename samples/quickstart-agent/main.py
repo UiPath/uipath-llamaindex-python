@@ -16,6 +16,11 @@ class JokeEvent(Event):
     joke: str
 
 
+class CritiqueEvent(StopEvent):
+    joke: str
+    critique: str
+
+
 class JokeFlow(Workflow):
     llm = OpenAI()
 
@@ -28,12 +33,12 @@ class JokeFlow(Workflow):
         return JokeEvent(joke=str(response))
 
     @step
-    async def critique_joke(self, ev: JokeEvent) -> StopEvent:
+    async def critique_joke(self, ev: JokeEvent) -> CritiqueEvent:
         joke = ev.joke
 
         prompt = f"Give a thorough analysis and critique of the following joke: {joke}"
         response = await self.llm.acomplete(prompt)
-        return StopEvent(result=str(response))
+        return CritiqueEvent(joke=joke, critique=str(response))
 
 
 agent = JokeFlow(timeout=60, verbose=False)
