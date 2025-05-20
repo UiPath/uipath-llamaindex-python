@@ -34,12 +34,18 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             Dictionary with execution results
 
         Raises:
-            UiPathLlamaRuntimeError: If execution fails
+            UiPathLlamaIndexRuntimeError: If execution fails
         """
         await self.validate()
 
         try:
-            a = 2
+            output = await self.context.workflow.run(self.context.input_json)
+
+            self.context.result = UiPathRuntimeResult(
+                output=self._serialize_object(output)
+            )
+
+            return self.context.result
 
         except Exception as e:
             if isinstance(e, UiPathLlamaIndexRuntimeError):
@@ -98,9 +104,9 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 UiPathErrorCategory.DEPLOYMENT,
             )
 
-        # Get the specified graph
-        self.graph_config = self.context.config.get_workflow(self.context.entrypoint)
-        if not self.graph_config:
+        # Get the specified workflow configuration
+        self.workflow_config = self.context.config.get_workflow(self.context.entrypoint)
+        if not self.workflow_config:
             raise UiPathLlamaIndexRuntimeError(
                 "WORKFLOW_NOT_FOUND",
                 "Workflow not found",
@@ -108,7 +114,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 UiPathErrorCategory.DEPLOYMENT,
             )
         try:
-            self.context.workflow = await self.graph_config.load_workflow()
+            self.context.workflow = await self.workflow_config.load_workflow()
         except ImportError as e:
             raise UiPathLlamaIndexRuntimeError(
                 "WORKFLOW_IMPORT_ERROR",
@@ -120,7 +126,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             raise UiPathLlamaIndexRuntimeError(
                 "WORKFLOW_TYPE_ERROR",
                 "Invalid workflow type",
-                f"Workflow '{self.context.entrypoint}' is not a valid Workflow: {str(e)}",
+                f"Workflow '{self.context.entrypoint}' is not a valid `Workflow`: {str(e)}",
                 UiPathErrorCategory.USER,
             ) from e
         except ValueError as e:
@@ -141,3 +147,28 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
     async def cleanup(self) -> None:
         """Clean up all resources."""
         pass
+
+    def _serialize_object(self, obj):
+        """Recursively serializes an object and all its nested components."""
+        # Handle Pydantic models
+        if hasattr(obj, "dict"):
+            return self._serialize_object(obj.dict())
+        elif hasattr(obj, "model_dump"):
+            return self._serialize_object(obj.model_dump(by_alias=True))
+        elif hasattr(obj, "to_dict"):
+            return self._serialize_object(obj.to_dict())
+        # Handle dictionaries
+        elif isinstance(obj, dict):
+            return {k: self._serialize_object(v) for k, v in obj.items()}
+        # Handle lists
+        elif isinstance(obj, list):
+            return [self._serialize_object(item) for item in obj]
+        # Handle other iterable objects (convert to dict first)
+        elif hasattr(obj, "__iter__") and not isinstance(obj, (str, bytes)):
+            try:
+                return self._serialize_object(dict(obj))
+            except (TypeError, ValueError):
+                return obj
+        # Return primitive types as is
+        else:
+            return obj

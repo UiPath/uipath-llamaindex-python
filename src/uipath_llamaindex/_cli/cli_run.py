@@ -25,7 +25,7 @@ def llamaindex_run_middleware(
     if not config.exists:
         return MiddlewareResult(
             should_continue=True
-        )  # Continue with normal flow if no llama.json
+        )  # Continue with normal flow if no llama_index.json
 
     try:
 
@@ -54,7 +54,7 @@ def llamaindex_run_middleware(
             )
 
             env["UIPATH_REQUESTING_PRODUCT"] = "uipath-python-sdk"
-            env["UIPATH_REQUESTING_FEATURE"] = "llama"
+            env["UIPATH_REQUESTING_FEATURE"] = "llamaindex"
 
             async with UiPathLlamaIndexRuntime.from_context(context) as runtime:
                 await runtime.execute()
