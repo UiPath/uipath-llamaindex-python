@@ -7,21 +7,21 @@ from dotenv import load_dotenv
 from uipath._cli._runtime._contracts import UiPathTraceContext
 from uipath._cli.middlewares import MiddlewareResult
 
-from ._runtime._context import UiPathLlamaRuntimeContext
-from ._runtime._exception import UiPathLlamaRuntimeError
-from ._runtime._runtime import UiPathLlamaRuntime
-from ._utils._config import LlamaConfig
+from ._runtime._context import UiPathLlamaIndexRuntimeContext
+from ._runtime._exception import UiPathLlamaIndexRuntimeError
+from ._runtime._runtime import UiPathLlamaIndexRuntime
+from ._utils._config import LlamaIndexConfig
 
 logger = logging.getLogger(__name__)
 load_dotenv()
 
 
-def llama_run_middleware(
+def llamaindex_run_middleware(
     entrypoint: Optional[str], input: Optional[str], resume: bool
 ) -> MiddlewareResult:
-    """Middleware to handle Llama agent execution"""
+    """Middleware to handle LlamaIndex agent execution"""
 
-    config = LlamaConfig()
+    config = LlamaIndexConfig()
     if not config.exists:
         return MiddlewareResult(
             should_continue=True
@@ -30,7 +30,7 @@ def llama_run_middleware(
     try:
 
         async def execute():
-            context = UiPathLlamaRuntimeContext.from_config(
+            context = UiPathLlamaIndexRuntimeContext.from_config(
                 env.get("UIPATH_CONFIG_PATH", "uipath.json")
             )
             context.config = config
@@ -56,14 +56,14 @@ def llama_run_middleware(
             env["UIPATH_REQUESTING_PRODUCT"] = "uipath-python-sdk"
             env["UIPATH_REQUESTING_FEATURE"] = "llama"
 
-            async with UiPathLlamaRuntime.from_context(context) as runtime:
+            async with UiPathLlamaIndexRuntime.from_context(context) as runtime:
                 await runtime.execute()
 
         asyncio.run(execute())
 
         return MiddlewareResult(should_continue=False, error_message=None)
 
-    except UiPathLlamaRuntimeError as e:
+    except UiPathLlamaIndexRuntimeError as e:
         return MiddlewareResult(
             should_continue=False,
             error_message=e.error_info.detail,

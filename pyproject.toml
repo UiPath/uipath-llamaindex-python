@@ -1,10 +1,11 @@
 [project]
-name = "uipath-llama"
+name = "uipath-llamaindex"
 version = "0.0.1"
-description = "UiPath Llama SDK"
+description = "UiPath LlamaIndex SDK"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
 dependencies = [
+    "llama-index>=0.12.36",
     "uipath>=2.0.56",
 ]
 classifiers = [
@@ -21,11 +22,11 @@ maintainers = [
 ]
 
 [project.entry-points."uipath.middlewares"]
-register = "uipath_llama.middlewares:register_middleware"
+register = "uipath_llamaindex.middlewares:register_middleware"
 
 [project.urls]
 Homepage = "https://uipath.com"
-Repository = "https://github.com/UiPath/uipath-llama-python"
+Repository = "https://github.com/UiPath/uipath-llamaindex-python"
 
 [build-system]
 requires = ["hatchling"]
