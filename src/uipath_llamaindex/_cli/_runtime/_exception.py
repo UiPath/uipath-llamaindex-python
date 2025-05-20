@@ -3,8 +3,8 @@ from typing import Optional
 from uipath._cli._runtime._contracts import UiPathErrorCategory, UiPathRuntimeError
 
 
-class UiPathLlamaRuntimeError(UiPathRuntimeError):
-    """Custom exception for Llama runtime errors with structured error information."""
+class UiPathLlamaIndexRuntimeError(UiPathRuntimeError):
+    """Custom exception for LlamaIndex runtime errors with structured error information."""
 
     def __init__(
         self,
@@ -14,4 +14,4 @@ class UiPathLlamaRuntimeError(UiPathRuntimeError):
         category: UiPathErrorCategory = UiPathErrorCategory.UNKNOWN,
         status: Optional[int] = None,
     ):
-        super().__init__(code, title, detail, category, status, prefix="Llama")
+        super().__init__(code, title, detail, category, status, prefix="LlamaIndex")
