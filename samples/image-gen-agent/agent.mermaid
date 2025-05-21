@@ -1,0 +1,21 @@
+flowchart TD
+    step__done["_done"]:::stepStyle
+    step_generate_image["generate_image"]:::stepStyle
+    step_generate_image_name["generate_image_name"]:::stepStyle
+    step_upload_attachment["upload_attachment"]:::stepStyle
+    event_TopicEvent([<p>TopicEvent</p>]):::defaultEventStyle
+    event_ImageEvent([<p>ImageEvent</p>]):::defaultEventStyle
+    event_NamedImageEvent([<p>NamedImageEvent</p>]):::defaultEventStyle
+    event_OutputEvent([<p>OutputEvent</p>]):::stopEventStyle
+    event_OutputEvent --> step__done
+    step_generate_image --> event_ImageEvent
+    event_TopicEvent --> step_generate_image
+    step_generate_image_name --> event_NamedImageEvent
+    event_ImageEvent --> step_generate_image_name
+    step_upload_attachment --> event_OutputEvent
+    event_NamedImageEvent --> step_upload_attachment
+    classDef stepStyle fill:#f2f0ff,line-height:1.2
+    classDef externalStyle fill:#f2f0ff,line-height:1.2
+    classDef defaultEventStyle fill-opacity:0
+    classDef stopEventStyle fill:#bfb6fc
+    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2

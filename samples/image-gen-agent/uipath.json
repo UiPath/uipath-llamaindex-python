@@ -1,0 +1,43 @@
+{
+  "entryPoints": [
+    {
+      "filePath": "agent",
+      "uniqueId": "17b36128-7b5d-446c-937f-e291f910af19",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "title": "Topic",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "image_name": {
+            "title": "Image Name",
+            "type": "string"
+          },
+          "attachment_id": {
+            "format": "uuid",
+            "title": "Attachment Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "image_name",
+          "attachment_id"
+        ]
+      }
+    }
+  ],
+  "bindings": {
+    "version": "2.0",
+    "resources": []
+  }
+}
