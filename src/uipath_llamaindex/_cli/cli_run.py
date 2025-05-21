@@ -1,11 +1,14 @@
 import asyncio
 import logging
+from contextlib import suppress
 from os import environ as env
 from typing import Optional
 
 from dotenv import load_dotenv
+from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 from uipath._cli._runtime._contracts import UiPathTraceContext
 from uipath._cli.middlewares import MiddlewareResult
+from uipath.tracing import get_trace_provider
 
 from ._runtime._context import UiPathLlamaIndexRuntimeContext
 from ._runtime._exception import UiPathLlamaIndexRuntimeError
@@ -30,6 +33,10 @@ def llamaindex_run_middleware(
     try:
 
         async def execute():
+
+            with suppress(Exception): 
+                LlamaIndexInstrumentor().instrument(tracer_provider=get_trace_provider())
+
             context = UiPathLlamaIndexRuntimeContext.from_config(
                 env.get("UIPATH_CONFIG_PATH", "uipath.json")
             )
