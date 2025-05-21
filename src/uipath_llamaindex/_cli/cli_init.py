@@ -5,6 +5,15 @@ import uuid
 from typing import Any, Dict
 
 from llama_index.core.workflow import StopEvent, Workflow
+from llama_index.core.workflow.drawing import StepConfig
+from llama_index.core.workflow.events import (
+    HumanResponseEvent,
+    InputRequiredEvent,
+)
+from llama_index.core.workflow.utils import (
+    get_steps_from_class,
+    get_steps_from_instance,
+)
 from uipath._cli._utils._console import ConsoleLogger
 from uipath._cli._utils._parse_ast import generate_bindings_json  # type: ignore
 from uipath._cli.middlewares import MiddlewareResult
@@ -91,6 +100,176 @@ def generate_schema_from_workflow(workflow: Workflow) -> Dict[str, Any]:
     return schema
 
 
+def draw_all_possible_flows_mermaid(
+    workflow: Workflow,
+    filename: str = "workflow_all_flows.mermaid",
+) -> str:
+    """Draws all possible flows of the workflow as a Mermaid diagram."""
+    # Initialize Mermaid flowchart string
+    mermaid_diagram = ["flowchart TD"]
+
+    # Add nodes from all steps
+    steps = get_steps_from_class(workflow)
+    if not steps:
+        # If no steps are defined in the class, try to get them from the instance
+        steps = get_steps_from_instance(workflow)
+
+    # Track all nodes and edges to avoid duplicates
+    nodes = set()
+    edges = set()
+
+    # Track event types to avoid duplicates
+    event_types = {}
+
+    # Only one kind of `StopEvent` is allowed in a `Workflow`.
+    current_stop_event = None
+    for _, step_func in steps.items():
+        step_config : StepConfig = getattr(step_func, "__step_config", None)
+        if step_config is None:
+            continue
+
+        for return_type in step_config.return_types:
+            if issubclass(return_type, StopEvent):
+                current_stop_event = return_type
+                break
+
+        if current_stop_event:
+            break
+
+    # First pass: collect all event types (both return types and accepted events)
+    for _, step_func in steps.items():
+        step_config = getattr(step_func, "__step_config", None)
+        if step_config is None:
+            continue
+
+        # Collect accepted event types
+        for event_type in step_config.accepted_events:
+            if event_type == StopEvent and event_type != current_stop_event:
+                continue
+
+            event_name = event_type.__name__
+            event_types[event_name] = event_type
+
+        # Collect return types
+        for return_type in step_config.return_types:
+            if return_type is type(None):
+                continue
+
+            return_name = return_type.__name__
+            event_types[return_name] = return_type
+
+    # Generate step nodes
+    for step_name, step_func in steps.items():
+        step_config = getattr(step_func, "__step_config", None)
+        if step_config is None:
+            continue
+
+        # Add step node (use step_name with cleaned ID)
+        step_id = f"step_{clean_id(step_name)}"
+        if step_id not in nodes:
+            nodes.add(step_id)
+            mermaid_diagram.append(f'    {step_id}["{step_name}"]:::stepStyle')
+
+    # Generate event nodes (only once per event type)
+    for event_name, event_type in event_types.items():
+        event_id = f"event_{clean_id(event_name)}"
+        if event_id not in nodes:
+            nodes.add(event_id)
+            style = get_event_style(event_type)
+            mermaid_diagram.append(f'    {event_id}("{event_name}"):::{style}')
+
+        if issubclass(event_type, InputRequiredEvent):
+            # Add node for conceptual external step
+            if "external_step" not in nodes:
+                nodes.add("external_step")
+                mermaid_diagram.append(
+                    '    external_step["external_step"]:::externalStyle'
+                )
+
+    # Generate edges
+    for step_name, step_func in steps.items():
+        step_config = getattr(step_func, "__step_config", None)
+        if step_config is None:
+            continue
+
+        step_id = f"step_{clean_id(step_name)}"
+
+        # Add edges for return types
+        for return_type in step_config.return_types:
+            if return_type is not type(None):
+                return_name = return_type.__name__
+                return_id = f"event_{clean_id(return_name)}"
+                edge = f"{step_id} --> {return_id}"
+                if edge not in edges:
+                    edges.add(edge)
+                    mermaid_diagram.append(f"    {edge}")
+
+            if issubclass(return_type, InputRequiredEvent):
+                return_name = return_type.__name__
+                return_id = f"event_{clean_id(return_name)}"
+                edge = f"{return_id} --> external_step"
+                if edge not in edges:
+                    edges.add(edge)
+                    mermaid_diagram.append(f"    {edge}")
+
+        # Add edges for accepted events
+        for event_type in step_config.accepted_events:
+            event_name = event_type.__name__
+            event_id = f"event_{clean_id(event_name)}"
+
+            if step_name == "_done" and issubclass(event_type, StopEvent):
+                stop_event_name = current_stop_event.__name__
+                stop_event_id = f"event_{clean_id(stop_event_name)}"
+                edge = f"{stop_event_id} --> {step_id}"
+                if edge not in edges:
+                    edges.add(edge)
+                    mermaid_diagram.append(f"    {edge}")
+            else:
+                edge = f"{event_id} --> {step_id}"
+                if edge not in edges:
+                    edges.add(edge)
+                    mermaid_diagram.append(f"    {edge}")
+
+            if issubclass(event_type, HumanResponseEvent):
+                edge = f"external_step --> {event_id}"
+                if edge not in edges:
+                    edges.add(edge)
+                    mermaid_diagram.append(f"    {edge}")
+
+    # Add style definitions
+    mermaid_diagram.append("    classDef stepStyle fill:#ADD8E6,stroke:#333")
+    mermaid_diagram.append("    classDef externalStyle fill:#BEDAE4,stroke:#333")
+    mermaid_diagram.append("    classDef defaultEventStyle fill:#FFA07A,stroke:#333")
+    mermaid_diagram.append("    classDef stopEventStyle fill:#98FB98,stroke:#333")
+    mermaid_diagram.append("    classDef inputRequiredStyle fill:#FFD700,stroke:#333")
+
+    # Join all lines
+    mermaid_string = "\n".join(mermaid_diagram)
+
+    # Write to file if filename is provided
+    if filename:
+        with open(filename, "w") as f:
+            f.write(mermaid_string)
+
+    return mermaid_string
+
+
+def clean_id(name: str) -> str:
+    """Convert a name to a valid Mermaid ID."""
+    # Replace invalid characters with underscores
+    return name.replace(" ", "_").replace("-", "_").replace(".", "_")
+
+
+def get_event_style(event_type) -> str:
+    """Return the appropriate Mermaid style class for an event type."""
+    if issubclass(event_type, StopEvent):
+        return "stopEventStyle"
+    elif issubclass(event_type, InputRequiredEvent):
+        return "inputRequiredStyle"
+    else:
+        return "defaultEventStyle"
+
+
 async def llamaindex_init_middleware_async(entrypoint: str) -> MiddlewareResult:
     """Middleware to check for llama_index.json and create uipath.json with schemas"""
     config = LlamaIndexConfig()
@@ -130,6 +309,10 @@ async def llamaindex_init_middleware_async(entrypoint: str) -> MiddlewareResult:
                     "output": schema["output"],
                 }
                 entrypoints.append(new_entrypoint)
+
+                draw_all_possible_flows_mermaid(
+                    loaded_workflow, filename=f"{workflow.name}.mermaid"
+                )
 
             except Exception as e:
                 console.error(f"Error during workflow load: {e}")
