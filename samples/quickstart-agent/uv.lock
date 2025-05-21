@@ -1123,7 +1123,7 @@ wheels = [
 
 [[package]]
 name = "llama-quickstart-agent"
-version = "0.0.3"
+version = "0.0.5"
 source = { virtual = "." }
 dependencies = [
     { name = "llama-index-llms-openai" },
@@ -1133,7 +1133,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "llama-index-llms-openai", specifier = ">=0.2.2" },
-    { name = "uipath-llamaindex", specifier = ">=0.0.5" },
+    { name = "uipath-llamaindex", specifier = ">=0.0.6" },
 ]
 
 [[package]]
@@ -2564,15 +2564,15 @@ wheels = [
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.0.5"
+version = "0.0.6"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "llama-index" },
     { name = "uipath" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/7c/5d/cc1da5213982406f72ae44e78b43e26ca4cec0abd44c79b7cae850bd7343/uipath_llamaindex-0.0.5.tar.gz", hash = "sha256:bd3e1d68decdb78481750b573f954940d2654b18140ed4c3939bff44d2b5d759", size = 304444 }
+sdist = { url = "https://files.pythonhosted.org/packages/96/e4/30bf9c2f01208c7da0b48884ef1a7047364504c1b93a840593f7be601641/uipath_llamaindex-0.0.6.tar.gz", hash = "sha256:9bffbd5607df76a495a80d4c9338c751b0593fd2ff7be483872b3bc9a2d298af", size = 304466 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/76/7a/249c150c275b443dd38d1581d276b82661b2abdc6bf37af825ad031dec2b/uipath_llamaindex-0.0.5-py3-none-any.whl", hash = "sha256:8c18096af9c4ac0c1ddd23486793512afd7a12ed81f359d85cccb4098279aa8a", size = 11061 },
+    { url = "https://files.pythonhosted.org/packages/79/6c/4b5a07bc11a644f6631b2bc257891acb7cf5aa3c425a13ccb216a64387de/uipath_llamaindex-0.0.6-py3-none-any.whl", hash = "sha256:ab32e1d592d792ccd542b3f6c1d1272fad78e0ba6e5e088b74be7e7f6712fea5", size = 11052 },
 ]
 
 [[package]]
