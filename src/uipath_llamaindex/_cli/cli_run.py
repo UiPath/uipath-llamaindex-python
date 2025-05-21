@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from opentelemetry.instrumentation.llamaindex import LlamaIndexInstrumentor
 from uipath._cli._runtime._contracts import UiPathTraceContext
 from uipath._cli.middlewares import MiddlewareResult
-from uipath.tracing import get_trace_provider
+from uipath.tracing import get_trace_provider, wait_for_tracers
 
 from ._runtime._context import UiPathLlamaIndexRuntimeContext
 from ._runtime._exception import UiPathLlamaIndexRuntimeError
@@ -66,7 +66,10 @@ def llamaindex_run_middleware(
             async with UiPathLlamaIndexRuntime.from_context(context) as runtime:
                 await runtime.execute()
 
-        asyncio.run(execute())
+        try:
+            asyncio.run(execute())
+        finally:
+            wait_for_tracers()
 
         return MiddlewareResult(should_continue=False, error_message=None)
 
