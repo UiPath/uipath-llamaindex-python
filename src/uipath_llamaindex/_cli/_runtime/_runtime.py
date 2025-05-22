@@ -43,13 +43,15 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         """
         await self.validate()
 
-        with suppress(Exception):
-            trace.set_tracer_provider(TracerProvider())
-            trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(LlamaIndexExporter()))  # type: ignore
+        self.trace_provider = TracerProvider()
 
-            LlamaIndexInstrumentor().instrument(
-                tracer_provider=trace.get_tracer_provider()
-            )
+        with suppress(Exception):
+            trace.set_tracer_provider(self.trace_provider)
+            self.trace_provider.add_span_processor(
+                BatchSpanProcessor(LlamaIndexExporter())
+            )  # type: ignore
+
+            LlamaIndexInstrumentor().instrument(tracer_provider=self.trace_provider)
 
         try:
             start_event_class = self.context.workflow._start_event_class
@@ -80,7 +82,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 UiPathErrorCategory.USER,
             ) from e
         finally:
-            trace.get_tracer_provider().shutdown() 
+            self.trace_provider.shutdown()
 
     async def validate(self) -> None:
         """Validate runtime inputs and load Llama agent configuration."""
