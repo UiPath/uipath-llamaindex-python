@@ -1,7 +1,7 @@
 # UiPath LlamaIndex Python SDK
 
 [![PyPI downloads](https://img.shields.io/pypi/dm/uipath-llamaindex.svg)](https://pypi.org/project/uipath-llamaindex/)
-[![Python versions](https://img.shields.io/pypi/pyversions/uipath-llamaindex.svg)](https://pypi.org/project/uipath-llamaidnex/)
+[![Python versions](https://img.shields.io/pypi/pyversions/uipath-llamaindex.svg)](https://pypi.org/project/uipath-llamaindex/)
 
 A Python SDK that enables developers to build and deploy LlamaIndex agents to the UiPath Cloud Platform. This package provides programmatic interaction with UiPath Cloud Platform services and human-in-the-loop (HITL) semantics through Action Center integration.
 
