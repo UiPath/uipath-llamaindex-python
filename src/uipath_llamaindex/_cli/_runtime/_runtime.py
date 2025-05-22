@@ -1,15 +1,20 @@
 import json
 import logging
+from contextlib import suppress
 from typing import Optional
 
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from uipath import UiPath
 from uipath._cli._runtime._contracts import (
     UiPathBaseRuntime,
     UiPathErrorCategory,
     UiPathRuntimeResult,
 )
-from uipath.tracing import wait_for_tracers
 
+from .._tracing._oteladapter import LlamaIndexExporter
 from ._context import UiPathLlamaIndexRuntimeContext
 from ._exception import UiPathLlamaIndexRuntimeError
 
@@ -37,6 +42,14 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             UiPathLlamaIndexRuntimeError: If execution fails
         """
         await self.validate()
+
+        with suppress(Exception):
+            trace.set_tracer_provider(TracerProvider())
+            trace.get_tracer_provider().add_span_processor(BatchSpanProcessor(LlamaIndexExporter()))  # type: ignore
+
+            LlamaIndexInstrumentor().instrument(
+                tracer_provider=trace.get_tracer_provider()
+            )
 
         try:
             start_event_class = self.context.workflow._start_event_class
@@ -67,7 +80,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 UiPathErrorCategory.USER,
             ) from e
         finally:
-            wait_for_tracers()
+            trace.get_tracer_provider().shutdown() 
 
     async def validate(self) -> None:
         """Validate runtime inputs and load Llama agent configuration."""
