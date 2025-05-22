@@ -1,17 +1,29 @@
 import json
 import logging
+import os
+import pickle
+import uuid
 from contextlib import suppress
-from typing import Optional
+from typing import Any, Optional
 
+from llama_index.core.workflow import (
+    Context,
+    HumanResponseEvent,
+    InputRequiredEvent,
+    JsonPickleSerializer,
+)
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from uipath import UiPath
 from uipath._cli._runtime._contracts import (
+    UiPathApiTrigger,
     UiPathBaseRuntime,
     UiPathErrorCategory,
+    UiPathResumeTrigger,
     UiPathRuntimeResult,
+    UiPathRuntimeStatus,
 )
 
 from .._tracing._oteladapter import LlamaIndexExporter
@@ -55,19 +67,45 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
 
         try:
             start_event_class = self.context.workflow._start_event_class
-
             ev = start_event_class(**self.context.input_json)
 
-            handler = self.context.workflow.run(start_event=ev)
+            ctx: Context = self._get_context()
+
+            handler = self.context.workflow.run(start_event=ev, ctx=ctx)
+
+            resume_trigger: UiPathResumeTrigger = None
 
             async for event in handler.stream_events():
+                if isinstance(event, InputRequiredEvent):
+                    resume_trigger = UiPathResumeTrigger(
+                        api_resume=UiPathApiTrigger(
+                            inbox_id=str(uuid.uuid4()), request=event.prefix
+                        )
+                    )
+                    break
                 print(event)
 
-            output = await handler
+            if resume_trigger is None:
+                output = await handler
+                self.context.result = UiPathRuntimeResult(
+                    output=self._serialize_object(output),
+                    status=UiPathRuntimeStatus.SUCCESSFUL,
+                )
+            else:
+                self.context.result = UiPathRuntimeResult(
+                    output=self._serialize_object(output),
+                    status=UiPathRuntimeStatus.SUSPENDED,
+                    resume=resume_trigger,
+                )
 
-            self.context.result = UiPathRuntimeResult(
-                output=self._serialize_object(output)
-            )
+            if self.context.state_file:
+                serializer = JsonPickleSerializer()
+                ctx_dict = ctx.to_dict(serializer=serializer)
+                ctx_dict["uipath_resume_trigger"] = (
+                    serializer.serialize(resume_trigger) if resume_trigger else None
+                )
+                with open(self.context.state_file, "wb") as f:
+                    pickle.dump(ctx_dict, f)
 
             return self.context.result
 
@@ -171,6 +209,73 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
     async def cleanup(self) -> None:
         """Clean up all resources."""
         pass
+
+    async def _get_context(self) -> Context:
+        """
+        Get the context for the LlamaIndex agent.
+
+        Returns:
+            The context object for the LlamaIndex agent.
+        """
+        logger.debug(f"Resumed: {self.context.resume} Input: {self.context.input_json}")
+
+        if not self.context.resume:
+            return Context(self.context.workflow)
+
+        if not self.context.state_file or not os.path.exists(self.context.state_file):
+            return Context(self.context.workflow)
+
+        serializer = JsonPickleSerializer()
+        ctx: Context = None
+
+        with open(self.context.state_file, "rb") as f:
+            loaded_ctx_dict = pickle.load(f)
+            ctx = Context.from_dict(
+                self.context.workflow,
+                loaded_ctx_dict,
+                serializer=serializer,
+            )
+
+        if self.context.input_json:
+            ctx.send_event(HumanResponseEvent(response=self.context.input_json))
+
+        resumed_trigger_data = loaded_ctx_dict["uipath_resume_trigger"]
+        if resumed_trigger_data:
+            resumed_trigger: UiPathResumeTrigger = serializer.deserialize(
+                resumed_trigger_data, UiPathResumeTrigger
+            )
+            inbox_id = resumed_trigger.api_resume.inbox_id
+            payload = await self._get_api_payload(inbox_id)
+            ctx.send_event(HumanResponseEvent(response=payload))
+
+        return ctx
+
+    async def _get_api_payload(self, inbox_id: str) -> Any:
+        """
+        Fetch payload data for API triggers.
+
+        Args:
+            inbox_id: The Id of the inbox to fetch the payload for.
+
+        Returns:
+            The value field from the API response payload, or None if an error occurs.
+        """
+        try:
+            response = self._uipath.api_client.request(
+                "GET",
+                f"/orchestrator_/api/JobTriggers/GetPayload/{inbox_id}",
+                include_folder_headers=True,
+            )
+            data = response.json()
+            return data.get("payload")
+        except Exception as e:
+            raise UiPathLlamaIndexRuntimeError(
+                "API_CONNECTION_ERROR",
+                "Failed to get trigger payload",
+                f"Error fetching API trigger payload for inbox {inbox_id}: {str(e)}",
+                UiPathErrorCategory.SYSTEM,
+                response.status_code,
+            ) from e
 
     def _serialize_object(self, obj):
         """Recursively serializes an object and all its nested components."""
