@@ -12,7 +12,7 @@ jobs:
       pull-requests: write
 
     # Only run if PR has the build:dev label
-    # if: contains(github.event.pull_request.labels.*.name, 'build:dev')
+    if: contains(github.event.pull_request.labels.*.name, 'build:dev')
 
     steps:
       - name: Checkout
