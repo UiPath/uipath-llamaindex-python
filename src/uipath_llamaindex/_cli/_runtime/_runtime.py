@@ -70,21 +70,31 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             start_event_class = self.context.workflow._start_event_class
             ev = start_event_class(**self.context.input_json)
 
-            ctx: Context = await self._get_context()
+            await self.load_context()
 
             handler: WorkflowHandler = self.context.workflow.run(
-                start_event=ev, ctx=ctx, **self.context.input_json
+                start_event=ev,
+                ctx=self.context.workflow_context,
+                **self.context.input_json,
             )
 
             resume_trigger: UiPathResumeTrigger = None
 
+            resume_applied = False
             async for event in handler.stream_events():
                 if isinstance(event, InputRequiredEvent):
-                    resume_trigger = UiPathResumeTrigger(
-                        api_resume=UiPathApiTrigger(
-                            inbox_id=str(uuid.uuid4()), request=event.prefix
+                    if self.context.resume and not resume_applied:
+                        # If we are resuming, we need to apply the resume trigger to the event stream.
+                        resume_applied = True
+                        self.context.workflow_context.send_event(
+                            await self.get_resume_event()
                         )
-                    )
+                    else:
+                        resume_trigger = UiPathResumeTrigger(
+                            api_resume=UiPathApiTrigger(
+                                inbox_id=str(uuid.uuid4()), request=event.prefix
+                            )
+                        )
                     break
                 print(event)
 
@@ -102,7 +112,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
 
             if self.state_file_path:
                 serializer = JsonPickleSerializer()
-                ctx_dict = ctx.to_dict(serializer=serializer)
+                ctx_dict = self.context.workflow_context.to_dict(serializer=serializer)
                 ctx_dict["uipath_resume_trigger"] = (
                     serializer.serialize(resume_trigger) if resume_trigger else None
                 )
@@ -212,45 +222,53 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         """Clean up all resources."""
         pass
 
-    async def _get_context(self) -> Context:
+    async def load_context(self):
         """
-        Get the context for the LlamaIndex agent.
-
-        Returns:
-            The context object for the LlamaIndex agent.
+        Load the context for the LlamaIndex agent.
         """
         logger.debug(f"Resumed: {self.context.resume} Input: {self.context.input_json}")
 
         if not self.context.resume:
-            return Context(self.context.workflow)
+            self.context.workflow_context = Context(self.context.workflow)
+            return
 
         if not self.state_file_path or not os.path.exists(self.state_file_path):
-            return Context(self.context.workflow)
+            self.context.workflow_context = Context(self.context.workflow)
+            return
 
         serializer = JsonPickleSerializer()
-        ctx: Context = None
 
         with open(self.state_file_path, "rb") as f:
             loaded_ctx_dict = pickle.load(f)
-            ctx = Context.from_dict(
+            self.context.workflow_context = Context.from_dict(
                 self.context.workflow,
                 loaded_ctx_dict,
                 serializer=serializer,
             )
 
+            resumed_trigger_data = loaded_ctx_dict["uipath_resume_trigger"]
+            if resumed_trigger_data:
+                self.context.resume_trigger = cast(
+                    UiPathResumeTrigger, serializer.deserialize(resumed_trigger_data)
+                )
+
+    async def get_resume_event(self) -> Optional[HumanResponseEvent]:
+        """
+        Get the resume event for the LlamaIndex agent.
+
+        Returns:
+            The resume event if available, otherwise None.
+        """
         if self.context.input_json:
-            ctx.send_event(HumanResponseEvent(response=self.context.input_json))
-
-        resumed_trigger_data = loaded_ctx_dict["uipath_resume_trigger"]
-        if resumed_trigger_data:
-            resumed_trigger = cast(
-                UiPathResumeTrigger, serializer.deserialize(resumed_trigger_data)
-            )
-            inbox_id = resumed_trigger.api_resume.inbox_id
+            # If input_json is provided, use it to create a HumanResponseEvent
+            return HumanResponseEvent(response=self.context.input_json)
+        # If resume_trigger is set, fetch the payload from the API
+        if self.context.resume_trigger:
+            inbox_id = self.context.resume_trigger.api_resume.inbox_id
             payload = await self._get_api_payload(inbox_id)
-            ctx.send_event(HumanResponseEvent(response=payload))
-
-        return ctx
+            if payload:
+                return HumanResponseEvent(response=payload)
+        return None
 
     async def _get_api_payload(self, inbox_id: str) -> Any:
         """
