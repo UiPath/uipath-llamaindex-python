@@ -6,7 +6,11 @@
       "type": "agent",
       "input": {
         "type": "object",
-        "properties": {},
+        "properties": {
+          "hack": {
+            "type": "object"
+          }
+        },
         "required": []
       },
       "output": {

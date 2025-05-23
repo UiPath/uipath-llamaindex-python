@@ -94,7 +94,6 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 )
             else:
                 self.context.result = UiPathRuntimeResult(
-                    output=self._serialize_object(output),
                     status=UiPathRuntimeStatus.SUSPENDED,
                     resume=resume_trigger,
                 )
