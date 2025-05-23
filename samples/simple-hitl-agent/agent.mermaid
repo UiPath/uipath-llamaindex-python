@@ -1,0 +1,35 @@
+flowchart TD
+    step__done["_done"]:::stepStyle
+    step_aggregate_tool_results["aggregate_tool_results"]:::stepStyle
+    step_call_tool["call_tool"]:::stepStyle
+    step_init_run["init_run"]:::stepStyle
+    step_parse_agent_output["parse_agent_output"]:::stepStyle
+    step_run_agent_step["run_agent_step"]:::stepStyle
+    step_setup_agent["setup_agent"]:::stepStyle
+    event_StopEvent([<p>StopEvent</p>]):::stopEventStyle
+    event_ToolCallResult([<p>ToolCallResult</p>]):::defaultEventStyle
+    event_AgentInput([<p>AgentInput</p>]):::defaultEventStyle
+    event_ToolCall([<p>ToolCall</p>]):::defaultEventStyle
+    event_AgentWorkflowStartEvent([<p>AgentWorkflowStartEvent</p>]):::defaultEventStyle
+    event_AgentOutput([<p>AgentOutput</p>]):::defaultEventStyle
+    event_AgentSetup([<p>AgentSetup</p>]):::defaultEventStyle
+    event_StopEvent --> step__done
+    step_aggregate_tool_results --> event_AgentInput
+    step_aggregate_tool_results --> event_StopEvent
+    event_ToolCallResult --> step_aggregate_tool_results
+    step_call_tool --> event_ToolCallResult
+    event_ToolCall --> step_call_tool
+    step_init_run --> event_AgentInput
+    event_AgentWorkflowStartEvent --> step_init_run
+    step_parse_agent_output --> event_StopEvent
+    step_parse_agent_output --> event_ToolCall
+    event_AgentOutput --> step_parse_agent_output
+    step_run_agent_step --> event_AgentOutput
+    event_AgentSetup --> step_run_agent_step
+    step_setup_agent --> event_AgentSetup
+    event_AgentInput --> step_setup_agent
+    classDef stepStyle fill:#f2f0ff,line-height:1.2
+    classDef externalStyle fill:#f2f0ff,line-height:1.2
+    classDef defaultEventStyle fill-opacity:0
+    classDef stopEventStyle fill:#bfb6fc
+    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2
