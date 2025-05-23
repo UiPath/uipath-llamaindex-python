@@ -4,7 +4,7 @@ import os
 import pickle
 import uuid
 from contextlib import suppress
-from typing import Any, Optional
+from typing import Any, Optional, cast
 
 from llama_index.core.workflow import (
     Context,
@@ -72,7 +72,9 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
 
             ctx: Context = await self._get_context()
 
-            handler: WorkflowHandler = self.context.workflow.run(start_event=ev, ctx=ctx, **self.context.input_json)
+            handler: WorkflowHandler = self.context.workflow.run(
+                start_event=ev, ctx=ctx, **self.context.input_json
+            )
 
             resume_trigger: UiPathResumeTrigger = None
 
@@ -241,8 +243,8 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
 
         resumed_trigger_data = loaded_ctx_dict["uipath_resume_trigger"]
         if resumed_trigger_data:
-            resumed_trigger: UiPathResumeTrigger = serializer.deserialize(
-                resumed_trigger_data, UiPathResumeTrigger
+            resumed_trigger = cast(
+                UiPathResumeTrigger, serializer.deserialize(resumed_trigger_data)
             )
             inbox_id = resumed_trigger.api_resume.inbox_id
             payload = await self._get_api_payload(inbox_id)
