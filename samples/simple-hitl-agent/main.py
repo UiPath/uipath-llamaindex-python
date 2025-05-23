@@ -9,22 +9,18 @@ from llama_index.llms.openai import OpenAI
 llm = OpenAI(model="gpt-4o-mini")
 
 
-# a tool that performs a dangerous task
 async def research_company(ctx: Context) -> str:
     """Research a company."""
+    print("Researching company...")
 
     # emit an event to the external stream to be captured
     ctx.write_event_to_stream(
-        InputRequiredEvent(
-            prefix="Are you sure you want to proceed? ",
-            user_name="Laurie",
-        )
+        InputRequiredEvent(prefix="Are you sure you want to proceed?")
     )
 
     # wait until we see a HumanResponseEvent
-    response = await ctx.wait_for_event(
-        HumanResponseEvent, requirements={"user_name": "Laurie"}
-    )
+    response = await ctx.wait_for_event(HumanResponseEvent)
+    print("Received response:", response.response)
 
     # act on the input from the event
     if response.response.strip().lower() == "yes":

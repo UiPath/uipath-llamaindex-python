@@ -1,11 +1,11 @@
 [project]
 name = "llama-simple-hitl-agent"
-version = "0.0.6"
+version = "0.0.8"
 description = "UiPath LlamaIndex Simple HITL Agent"
 authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
 dependencies = [
-    "uipath-llamaindex>=0.0.15",
+    "uipath-llamaindex>=0.0.18",
     "llama-index-llms-openai>=0.2.2"
 ]
