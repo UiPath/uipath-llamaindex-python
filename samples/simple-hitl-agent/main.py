@@ -10,8 +10,8 @@ llm = OpenAI(model="gpt-4o-mini")
 
 
 # a tool that performs a dangerous task
-async def dangerous_task(ctx: Context) -> str:
-    """A dangerous task that requires human confirmation."""
+async def research_company(ctx: Context) -> str:
+    """Research a company."""
 
     # emit an event to the external stream to be captured
     ctx.write_event_to_stream(
@@ -28,13 +28,13 @@ async def dangerous_task(ctx: Context) -> str:
 
     # act on the input from the event
     if response.response.strip().lower() == "yes":
-        return "Dangerous task completed successfully."
+        return "Research completed successfully."
     else:
-        return "Dangerous task aborted."
+        return "Research task aborted."
 
 
 workflow = AgentWorkflow.from_tools_or_functions(
-    [dangerous_task],
+    [research_company],
     llm=llm,
-    system_prompt="You are a helpful assistant that can perform dangerous tasks.",
+    system_prompt="You are a helpful assistant that can research companies.",
 )
