@@ -12,6 +12,7 @@ from llama_index.core.workflow import (
     InputRequiredEvent,
     JsonPickleSerializer,
 )
+from llama_index.core.workflow.handler import WorkflowHandler
 from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
@@ -69,9 +70,9 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             start_event_class = self.context.workflow._start_event_class
             ev = start_event_class(**self.context.input_json)
 
-            ctx: Context = self._get_context()
+            ctx: Context = await self._get_context()
 
-            handler = self.context.workflow.run(start_event=ev, ctx=ctx)
+            handler: WorkflowHandler = self.context.workflow.run(start_event=ev, ctx=ctx, **self.context.input_json)
 
             resume_trigger: UiPathResumeTrigger = None
 
