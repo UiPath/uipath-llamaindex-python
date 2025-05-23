@@ -925,7 +925,7 @@ wheels = [
 
 [[package]]
 name = "llama-image-gen-agent"
-version = "0.0.1"
+version = "0.0.2"
 source = { virtual = "." }
 dependencies = [
     { name = "llama-index-llms-openai" },

@@ -60,9 +60,7 @@ class ImageGenerationFlow(Workflow):
         image_url = image_tool.image_generation(text=topic)
 
         # Return the event with the image URL
-        return ImageEvent(
-            topic=topic, image_url=image_url, job_key=os.environ.get("UIPATH_JOB_KEY")
-        )
+        return ImageEvent(topic=topic, image_url=image_url)
 
     @step
     async def generate_image_name(self, ev: ImageEvent) -> NamedImageEvent:
@@ -125,7 +123,11 @@ class ImageGenerationFlow(Workflow):
         # Upload to UiPath using async method
         uipath_client = UiPath()
         attachment_id = await uipath_client.jobs.create_attachment_async(
-            name=ev.image_name, source_path=image_path, category="generated_images"
+            name=ev.image_name,
+            source_path=image_path,
+            category="generated_images",
+            job_key=os.environ.get("UIPATH_JOB_KEY"),
+            folder_key=os.environ.get("UIPATH_FOLDER_KEY"),
         )
 
         # Return the final event

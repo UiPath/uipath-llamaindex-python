@@ -98,13 +98,13 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                     resume=resume_trigger,
                 )
 
-            if self.context.state_file:
+            if self.state_file_path:
                 serializer = JsonPickleSerializer()
                 ctx_dict = ctx.to_dict(serializer=serializer)
                 ctx_dict["uipath_resume_trigger"] = (
                     serializer.serialize(resume_trigger) if resume_trigger else None
                 )
-                with open(self.context.state_file, "wb") as f:
+                with open(self.state_file_path, "wb") as f:
                     pickle.dump(ctx_dict, f)
 
             return self.context.result
@@ -222,13 +222,13 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         if not self.context.resume:
             return Context(self.context.workflow)
 
-        if not self.context.state_file or not os.path.exists(self.context.state_file):
+        if not self.state_file_path or not os.path.exists(self.state_file_path):
             return Context(self.context.workflow)
 
         serializer = JsonPickleSerializer()
         ctx: Context = None
 
-        with open(self.context.state_file, "rb") as f:
+        with open(self.state_file_path, "rb") as f:
             loaded_ctx_dict = pickle.load(f)
             ctx = Context.from_dict(
                 self.context.workflow,
