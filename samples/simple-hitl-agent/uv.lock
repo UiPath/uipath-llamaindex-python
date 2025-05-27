@@ -1110,20 +1110,8 @@ wheels = [
 ]
 
 [[package]]
-name = "llama-parse"
-version = "0.6.23"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "llama-cloud-services" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/11/30/8170f31a139314479dafea5e2140405e5127207fbc95056aedee01d6b7fd/llama_parse-0.6.23.tar.gz", hash = "sha256:ee575d12660de57264900ae414e7c61646db9fbdd030fd795fb4ce4d28d83f85", size = 3537 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/cd/53/a7e06181f36eaff6c7176e33644db2f19a7761fc9110f0a5d13759ce94ac/llama_parse-0.6.23-py3-none-any.whl", hash = "sha256:8290b08c28fb6cec17b22df7bf37678bbf4f76e8864eccefdbe5d4c04b0e994a", size = 4944 },
-]
-
-[[package]]
-name = "llama-simple-hitl-agent"
-version = "0.0.7"
+name = "llama-new"
+version = "0.0.2"
 source = { virtual = "." }
 dependencies = [
     { name = "llama-index-llms-openai" },
@@ -1133,7 +1121,19 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "llama-index-llms-openai", specifier = ">=0.2.2" },
-    { name = "uipath-llamaindex", specifier = ">=0.0.17" },
+    { name = "uipath-llamaindex", specifier = "==0.0.20.dev1000220026", index = "https://test.pypi.org/simple/" },
+]
+
+[[package]]
+name = "llama-parse"
+version = "0.6.23"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "llama-cloud-services" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/30/8170f31a139314479dafea5e2140405e5127207fbc95056aedee01d6b7fd/llama_parse-0.6.23.tar.gz", hash = "sha256:ee575d12660de57264900ae414e7c61646db9fbdd030fd795fb4ce4d28d83f85", size = 3537 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/cd/53/a7e06181f36eaff6c7176e33644db2f19a7761fc9110f0a5d13759ce94ac/llama_parse-0.6.23-py3-none-any.whl", hash = "sha256:8290b08c28fb6cec17b22df7bf37678bbf4f76e8864eccefdbe5d4c04b0e994a", size = 4944 },
 ]
 
 [[package]]
@@ -2605,16 +2605,16 @@ wheels = [
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.0.17"
-source = { registry = "https://pypi.org/simple" }
+version = "0.0.20.dev1000220026"
+source = { registry = "https://test.pypi.org/simple/" }
 dependencies = [
     { name = "llama-index" },
     { name = "openinference-instrumentation-llama-index" },
     { name = "uipath" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cf/e3/01e45a09b47cb8419c01146c99d71c806afa44612107dd504a2011f1be4c/uipath_llamaindex-0.0.17.tar.gz", hash = "sha256:ac646a2023ccef76f52bdd3e1f37323dc4cc5d7f16f891815859960c693d57ad", size = 589828 }
+sdist = { url = "https://test-files.pythonhosted.org/packages/98/ce/6d3c35c57148a6cd9495c9311a7958cf0ab3a7c8e3a658d394d12c76fca7/uipath_llamaindex-0.0.20.dev1000220026.tar.gz", hash = "sha256:60644f798277b4008d4b00c9c8c885f6b8cc2d55c2d296ee5f82d763e60e7455", size = 590673 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/97/ea/b62a4b9a4df06db0b8518365ca090acc990947250eb3b4c7fb0f89c2df25/uipath_llamaindex-0.0.17-py3-none-any.whl", hash = "sha256:7bd1227d5e0216c7349bdaf819cb7168cfe0f6cc332462535d4b098629615186", size = 16550 },
+    { url = "https://test-files.pythonhosted.org/packages/80/c7/47c37cc4162d90e7be67123af7d101680629003f27284ba8a6190aa87334/uipath_llamaindex-0.0.20.dev1000220026-py3-none-any.whl", hash = "sha256:9a3ba88bf8003a8aeb2a0440e34b7cc7c1a571b957c599927149c605e3aa58e6", size = 19396 },
 ]
 
 [[package]]

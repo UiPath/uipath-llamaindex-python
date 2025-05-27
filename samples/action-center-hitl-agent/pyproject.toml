@@ -1,5 +1,5 @@
 [project]
-name = "llama-simple-hitl-agent"
+name = "llama-action-center"
 version = "0.0.1"
 description = "UiPath LlamaIndex Simple HITL Agent"
 authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
