@@ -2,9 +2,8 @@ import json
 import logging
 import os
 import pickle
-import uuid
 from contextlib import suppress
-from typing import Any, Optional, cast
+from typing import Optional, cast
 
 from llama_index.core.workflow import (
     Context,
@@ -19,7 +18,6 @@ from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from uipath import UiPath
 from uipath._cli._runtime._contracts import (
-    UiPathApiTrigger,
     UiPathBaseRuntime,
     UiPathErrorCategory,
     UiPathResumeTrigger,
@@ -30,6 +28,7 @@ from uipath._cli._runtime._contracts import (
 from .._tracing._oteladapter import LlamaIndexExporter
 from ._context import UiPathLlamaIndexRuntimeContext
 from ._exception import UiPathLlamaIndexRuntimeError
+from ._hitl import HitlProcessor, HitlReader
 
 logger = logging.getLogger(__name__)
 
@@ -83,11 +82,13 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 **self.context.input_json,
             )
 
-            resume_trigger: UiPathResumeTrigger = None
+            resume_trigger: Optional[UiPathResumeTrigger] = None
 
             response_applied = False
             async for event in handler.stream_events():
+                # log the received event on trace level
                 if isinstance(event, InputRequiredEvent):
+                    hitl_processor = HitlProcessor(value=event)
                     if self.context.resume and not response_applied:
                         # If we are resuming, we need to apply the response to the event stream.
                         response_applied = True
@@ -95,13 +96,8 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                             await self.get_response_event()
                         )
                     else:
-                        resume_trigger = UiPathResumeTrigger(
-                            api_resume=UiPathApiTrigger(
-                                inbox_id=str(uuid.uuid4()), request=event.prefix
-                            )
-                        )
+                        resume_trigger = await hitl_processor.create_resume_trigger()
                         break
-                print(event)
 
             if resume_trigger is None:
                 output = await handler
@@ -250,7 +246,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 loaded_ctx_dict,
                 serializer=serializer,
             )
-
+            # TODO check multiple HITL same agent
             resumed_trigger_data = loaded_ctx_dict["uipath_resume_trigger"]
             if resumed_trigger_data:
                 self.context.resumed_trigger = cast(
@@ -267,40 +263,14 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         if self.context.input_json:
             # If input_json is provided, use it to create a HumanResponseEvent
             return HumanResponseEvent(**self.context.input_json)
-        # If resumed_trigger is set, fetch the payload from the API
+        # If resumed_trigger is set, fetch the feedback
         if self.context.resumed_trigger:
-            inbox_id = self.context.resumed_trigger.api_resume.inbox_id
-            payload = await self._get_api_payload(inbox_id)
-            if payload:
-                return HumanResponseEvent(response=payload)
+            feedback = await HitlReader.read(self.context.resumed_trigger)
+            if feedback:
+                if isinstance(feedback, dict):
+                    feedback = json.dumps(feedback)
+                return HumanResponseEvent(response=feedback)
         return None
-
-    async def _get_api_payload(self, inbox_id: str) -> Any:
-        """
-        Fetch payload data for API triggers.
-
-        Args:
-            inbox_id: The Id of the inbox to fetch the payload for.
-
-        Returns:
-            The value field from the API response payload, or None if an error occurs.
-        """
-        try:
-            response = self._uipath.api_client.request(
-                "GET",
-                f"/orchestrator_/api/JobTriggers/GetPayload/{inbox_id}",
-                include_folder_headers=True,
-            )
-            data = response.json()
-            return data.get("payload")
-        except Exception as e:
-            raise UiPathLlamaIndexRuntimeError(
-                "API_CONNECTION_ERROR",
-                "Failed to get trigger payload",
-                f"Error fetching API trigger payload for inbox {inbox_id}: {str(e)}",
-                UiPathErrorCategory.SYSTEM,
-                response.status_code,
-            ) from e
 
     def _serialize_object(self, obj):
         """Recursively serializes an object and all its nested components."""

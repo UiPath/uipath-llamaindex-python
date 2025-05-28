@@ -9,15 +9,15 @@ from uipath.tracing import LlmOpsHttpExporter
 
 logger = logging.getLogger(__name__)
 
-class LlamaIndexExporter(LlmOpsHttpExporter):
 
+class LlamaIndexExporter(LlmOpsHttpExporter):
     # Mapping of old attribute names to new attribute names or (new name, function)
     ATTRIBUTE_MAPPING = {
         "input.value": ("input", lambda s: json.loads(s)),
         "output.value": ("output", lambda s: json.loads(s)),
         "llm.model_name": "model",
     }
-    
+
     # Mapping of span types
     SPAN_TYPE_MAPPING = {
         "LLM": "completion",
@@ -41,9 +41,11 @@ class LlamaIndexExporter(LlmOpsHttpExporter):
                         # Remove the span kind attribute
                         span_type = attributes["openinference.span.kind"]
                         # Map span type using SPAN_TYPE_MAPPING
-                        span_data["SpanType"] = self.SPAN_TYPE_MAPPING.get(span_type, span_type)
+                        span_data["SpanType"] = self.SPAN_TYPE_MAPPING.get(
+                            span_type, span_type
+                        )
                         del attributes["openinference.span.kind"]
-                    
+
                     # Apply the transformation logic
                     for old_key, mapping in self.ATTRIBUTE_MAPPING.items():
                         if old_key in attributes:
@@ -57,14 +59,14 @@ class LlamaIndexExporter(LlmOpsHttpExporter):
                                 new_key = mapping
                                 attributes[new_key] = attributes[old_key]
                             del attributes[old_key]
-                    
+
                     # Transform token usage data if present
                     token_keys = {
                         "llm.token_count.prompt": "promptTokens",
-                        "llm.token_count.completion": "completionTokens", 
-                        "llm.token_count.total": "totalTokens"
+                        "llm.token_count.completion": "completionTokens",
+                        "llm.token_count.total": "totalTokens",
                     }
-                    
+
                     # Check if any token count keys exist
                     if any(key in attributes for key in token_keys):
                         usage = {}
@@ -72,27 +74,28 @@ class LlamaIndexExporter(LlmOpsHttpExporter):
                             if old_key in attributes:
                                 usage[new_key] = attributes[old_key]
                                 del attributes[old_key]
-                        
+
                         # Add default values for BYO execution fields
                         usage["isByoExecution"] = False
                         # usage["executionDeploymentType"] = "PAYGO"
-                        
+
                         # Add usage to attributes
                         attributes["usage"] = usage
-                        
+
                         # Clean up any other token count attributes
-                        keys_to_remove = [k for k in attributes if k.startswith("llm.token_count.")]
+                        keys_to_remove = [
+                            k for k in attributes if k.startswith("llm.token_count.")
+                        ]
                         for key in keys_to_remove:
                             del attributes[key]
-                    
+
                     # Convert back to JSON string
                     span_data["attributes"] = json.dumps(attributes)
                 except json.JSONDecodeError as e:
                     logger.warning(f"Failed to parse attributes JSON: {e}")
 
-        
         return super()._send_with_retries(
             url=url,
             payload=payload,
             max_retries=max_retries,
-    )
+        )

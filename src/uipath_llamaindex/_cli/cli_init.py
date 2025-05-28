@@ -124,7 +124,7 @@ def draw_all_possible_flows_mermaid(
     # Only one kind of `StopEvent` is allowed in a `Workflow`.
     current_stop_event = None
     for _, step_func in steps.items():
-        step_config : StepConfig = getattr(step_func, "__step_config", None)
+        step_config: StepConfig = getattr(step_func, "__step_config", None)
         if step_config is None:
             continue
 
@@ -176,7 +176,7 @@ def draw_all_possible_flows_mermaid(
         if event_id not in nodes:
             nodes.add(event_id)
             style = get_event_style(event_type)
-            mermaid_diagram.append(f'    {event_id}([<p>{event_name}</p>]):::{style}')
+            mermaid_diagram.append(f"    {event_id}([<p>{event_name}</p>]):::{style}")
 
         if issubclass(event_type, InputRequiredEvent):
             # Add node for conceptual external step
@@ -241,7 +241,9 @@ def draw_all_possible_flows_mermaid(
     mermaid_diagram.append("    classDef externalStyle fill:#f2f0ff,line-height:1.2")
     mermaid_diagram.append("    classDef defaultEventStyle fill-opacity:0")
     mermaid_diagram.append("    classDef stopEventStyle fill:#bfb6fc")
-    mermaid_diagram.append("    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2")
+    mermaid_diagram.append(
+        "    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2"
+    )
 
     # Join all lines
     mermaid_string = "\n".join(mermaid_diagram)
