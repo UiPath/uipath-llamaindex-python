@@ -16,7 +16,6 @@ from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
-from uipath import UiPath
 from uipath._cli._runtime._contracts import (
     UiPathBaseRuntime,
     UiPathErrorCategory,
@@ -41,7 +40,6 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
     def __init__(self, context: UiPathLlamaIndexRuntimeContext):
         super().__init__(context)
         self.context: UiPathLlamaIndexRuntimeContext = context
-        self._uipath = UiPath()
 
     async def execute(self) -> Optional[UiPathRuntimeResult]:
         """
@@ -73,7 +71,6 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
 
             start_event_class = self.context.workflow._start_event_class
             ev = start_event_class(**self.context.input_json)
-
             await self.load_workflow_context()
 
             handler: WorkflowHandler = self.context.workflow.run(
@@ -100,11 +97,24 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                         break
 
             if resume_trigger is None:
-                output = await handler
-                self.context.result = UiPathRuntimeResult(
-                    output=self._serialize_object(output),
-                    status=UiPathRuntimeStatus.SUCCESSFUL,
-                )
+                try:
+                    output = await handler
+                    serialized_output = self._serialize_object(output)
+                    # create simple kvp from string
+                    if type(serialized_output) is str:
+                        serialized_output = {"result": serialized_output}
+                    print(serialized_output)
+                    self.context.result = UiPathRuntimeResult(
+                        output=serialized_output,
+                        status=UiPathRuntimeStatus.SUCCESSFUL,
+                    )
+                except Exception as e:
+                    raise UiPathLlamaIndexRuntimeError(
+                        "SERIALIZE_OUTPUT_ERROR",
+                        "Failed to serialize output",
+                        str(e),
+                        UiPathErrorCategory.SYSTEM,
+                    ) from e
             else:
                 self.context.result = UiPathRuntimeResult(
                     status=UiPathRuntimeStatus.SUSPENDED,

@@ -7,57 +7,18 @@ from uipath._cli.cli_init import init  # type: ignore
 
 class TestInit:
     def test_init_basic_config_generation(
-        self, runner: CliRunner, temp_dir: str
+        self,
+        runner: CliRunner,
+        temp_dir: str,
+        simple_script_basic_config: str,
+        llama_config: str,
     ) -> None:
         """Test configuration file generation with StartEvent and StopEvent."""
         with runner.isolated_filesystem(temp_dir=temp_dir):
             # Create agent script
-            script_content = """
-from llama_index.core.workflow import (
-    Event,
-    StartEvent,
-    StopEvent,
-    Workflow,
-    step,
-)
-from llama_index.llms.openai import OpenAI
-
-class JokeEvent(Event):
-    joke: str
-
-class JokeFlow(Workflow):
-    llm = OpenAI()
-
-    @step
-    async def generate_joke(self, ev: StartEvent) -> JokeEvent:
-        topic = ev.topic
-
-        prompt = f"Write your best joke about {topic}."
-        response = await self.llm.acomplete(prompt)
-        return JokeEvent(joke=str(response))
-
-    @step
-    async def critique_joke(self, ev: JokeEvent) -> StopEvent:
-        joke = ev.joke
-
-        prompt = f"Give a thorough analysis and critique of the following joke: {joke}"
-        response = await self.llm.acomplete(prompt)
-        return StopEvent(result=str(response))
-
-agent = JokeFlow(timeout=60, verbose=False)
-"""
             with open("main.py", "w") as f:
-                f.write(script_content)
+                f.write(simple_script_basic_config)
 
-            llama_config = """
-{
-  "dependencies": ["."],
-  "workflows": {
-    "agent": "main.py:agent"
-  },
-  "env": ".env"
-}
-"""
             with open("llama_index.json", "w") as f:
                 f.write(llama_config)
 
@@ -89,9 +50,15 @@ agent = JokeFlow(timeout=60, verbose=False)
                 # Verify output schema
                 assert "output" in entry
                 output_schema = entry["output"]
-                assert output_schema["type"] == "object"
                 assert "properties" in output_schema
+                assert "result" in output_schema["properties"]
+                assert "title" in output_schema["properties"]["result"]
+                assert "type" in output_schema["properties"]["result"]
+                assert output_schema["properties"]["result"]["type"] == "object"
+                assert output_schema["properties"]["result"]["title"] == "Result"
                 assert "required" in output_schema
+                assert output_schema["required"] == ["result"]
+                assert output_schema["type"] == "object"
 
                 # Verify bindings
                 assert config["bindings"]["version"] == "2.0"
@@ -99,68 +66,18 @@ agent = JokeFlow(timeout=60, verbose=False)
                 assert isinstance(config["bindings"]["resources"], list)
 
     def test_init_custom_config_generation(
-        self, runner: CliRunner, temp_dir: str
+        self,
+        runner: CliRunner,
+        temp_dir: str,
+        simple_script_custom_config: str,
+        llama_config: str,
     ) -> None:
         """Test configuration file generation with custom StartEvent and StopEvent."""
         with runner.isolated_filesystem(temp_dir=temp_dir):
             # Create agent script
-            script_content = """
-from typing import Optional
-
-from llama_index.core.workflow import (
-    Event,
-    StartEvent,
-    StopEvent,
-    Workflow,
-    step,
-)
-from llama_index.llms.openai import OpenAI
-
-class TopicEvent(StartEvent):
-    topic: str
-    param: Optional[str] = None
-
-class JokeEvent(Event):
-    joke: str
-
-class CritiqueEvent(StopEvent):
-    joke: str
-    critique: str
-    param: Optional[str] = None
-
-class JokeFlow(Workflow):
-    llm = OpenAI()
-
-    @step
-    async def generate_joke(self, ev: TopicEvent) -> JokeEvent:
-        topic = ev.topic
-
-        prompt = f"Write your best joke about {topic}."
-        response = await self.llm.acomplete(prompt)
-        return JokeEvent(joke=str(response))
-
-    @step
-    async def critique_joke(self, ev: JokeEvent) -> CritiqueEvent:
-        joke = ev.joke
-
-        prompt = f"Give a thorough analysis and critique of the following joke: {joke}"
-        response = await self.llm.acomplete(prompt)
-        return CritiqueEvent(joke=joke, critique=str(response))
-
-agent = JokeFlow(timeout=60, verbose=False)
-"""
             with open("main.py", "w") as f:
-                f.write(script_content)
+                f.write(simple_script_custom_config)
 
-            llama_config = """
-{
-  "dependencies": ["."],
-  "workflows": {
-    "agent": "main.py:agent"
-  },
-  "env": ".env"
-}
-"""
             with open("llama_index.json", "w") as f:
                 f.write(llama_config)
 
