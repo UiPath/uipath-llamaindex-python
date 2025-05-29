@@ -1,3 +1,5 @@
+# TODO: extract this to core
+
 import json
 import uuid
 from dataclasses import dataclass
@@ -15,8 +17,6 @@ from uipath._cli._runtime._contracts import (
     UiPathRuntimeStatus,
 )
 from uipath.models import CreateAction, InvokeProcess, WaitAction, WaitJob
-
-uipath = UiPath()
 
 
 def _try_convert_to_json_format(value: str) -> str:
@@ -38,6 +38,7 @@ async def _get_api_payload(inbox_id: str) -> Any:
     """
     response = None
     try:
+        uipath = UiPath()
         response = uipath.api_client.request(
             "GET",
             f"/orchestrator_/api/JobTriggers/GetPayload/{inbox_id}",
@@ -58,6 +59,7 @@ async def _get_api_payload(inbox_id: str) -> Any:
 class HitlReader:
     @classmethod
     async def read(cls, resume_trigger: UiPathResumeTrigger) -> Optional[str]:
+        uipath = UiPath()
         match resume_trigger.trigger_type:
             case UiPathResumeTriggerType.ACTION:
                 if resume_trigger.item_key:
@@ -126,6 +128,7 @@ class HitlProcessor:
 
     async def create_resume_trigger(self) -> Optional[UiPathResumeTrigger]:
         """Returns the resume trigger."""
+        uipath = UiPath()
         try:
             hitl_input = self.value
             resume_trigger = UiPathResumeTrigger(

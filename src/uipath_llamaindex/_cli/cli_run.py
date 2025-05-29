@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from os import environ as env
-from typing import Optional
+from typing import Any, Dict, Optional
 
 from dotenv import load_dotenv
 from uipath._cli._runtime._contracts import UiPathTraceContext
@@ -57,7 +57,7 @@ def llamaindex_run_middleware(
             env["UIPATH_REQUESTING_FEATURE"] = "llamaindex"
 
             async with UiPathLlamaIndexRuntime.from_context(context) as runtime:
-                await runtime.execute()
+                return await runtime.execute()
 
         asyncio.run(execute())
 

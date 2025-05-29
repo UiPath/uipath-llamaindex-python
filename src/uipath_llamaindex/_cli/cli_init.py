@@ -82,8 +82,17 @@ def generate_schema_from_workflow(workflow: Workflow) -> Dict[str, Any]:
 
     # For output schema, check if it's the base StopEvent or a custom subclass
     if stop_event_class is StopEvent:
-        # For base StopEvent, just use Any type for the result
-        schema["output"] = {"type": "object", "properties": {}, "required": []}
+        # base StopEvent
+        schema["output"] = {
+            "type": "object",
+            "properties": {
+                "result": {
+                    "title": "Result",
+                    "type": "object",
+                }
+            },
+            "required": ["result"],
+        }
     else:
         # For custom StopEvent subclasses, extract their Pydantic schema
         try:
