@@ -1,5 +1,4 @@
 version = 1
-revision = 1
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -1027,7 +1026,7 @@ wheels = [
 
 [[package]]
 name = "llama-index"
-version = "0.12.36"
+version = "0.12.38"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "llama-index-agent-openai" },
@@ -1043,9 +1042,9 @@ dependencies = [
     { name = "llama-index-readers-llama-parse" },
     { name = "nltk" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/26/05/5fd6f4575ed797d3ece277a7fe8ef04a52c3f7e08d5b62ca46b7776f08d4/llama_index-0.12.36.tar.gz", hash = "sha256:3f0c4f0d1478c9f136760ef2bce65f03fa21a0a7402b537bcccbedf0ab7387bf", size = 8016 }
+sdist = { url = "https://files.pythonhosted.org/packages/81/27/4f25f8bb095941d84d8f59e30983142e342a9b369be06a885f32c6ff260e/llama_index-0.12.38.tar.gz", hash = "sha256:97a19b92aaae54f559d4252f609c74dce4463d1ee312e3bcbc6a7d70d98a1bf8", size = 8063 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/60/c2/cc9092dfc7dc70089a0da1753d97193f2e6daff11105322b514a2bf43550/llama_index-0.12.36-py3-none-any.whl", hash = "sha256:08bfa41c274672fe5aa4bafa6a6cbda4344141c4aa42517d842a5daf94ffcfe5", size = 7049 },
+    { url = "https://files.pythonhosted.org/packages/a0/cb/b396f5dd6d4eb06b6af936b6fed41c3229872ffd3b4a9e182e3928bb38e2/llama_index-0.12.38-py3-none-any.whl", hash = "sha256:b8662c770298856f1c76712b0eb527724e11ee27c0d34120679d50844db9c392", size = 7083 },
 ]
 
 [[package]]
@@ -1078,7 +1077,7 @@ wheels = [
 
 [[package]]
 name = "llama-index-core"
-version = "0.12.37"
+version = "0.12.38"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1106,9 +1105,9 @@ dependencies = [
     { name = "typing-inspect" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/99/96/cb236b066184c5154b391d5028a56d6ca1f9aec69edf6cbef6c9a6ff1eff/llama_index_core-0.12.37.tar.gz", hash = "sha256:c2c13c36229bc9cfffc7bf1daca888e382d5ae484af96273c53f001ed84dc253", size = 7289254 }
+sdist = { url = "https://files.pythonhosted.org/packages/f6/0f/1d086fa6310bd8b4a1285a84ecb50b0b50e3c769740d89a62d7ddd70676e/llama_index_core-0.12.38.tar.gz", hash = "sha256:bafaa43d853a2d01dc0275c8ec91671c7e39cd8c82f0f5ed1d1be78acea839ca", size = 7291253 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/67/e8/1a2c5ca5d2af0f1741964259f09d1c8b7ce27b0e913f39c894038088d430/llama_index_core-0.12.37-py3-none-any.whl", hash = "sha256:1a841db0dcdace161d2fcecfee0ab94d28e50196973974c5142f0d18d3f7663f", size = 7661867 },
+    { url = "https://files.pythonhosted.org/packages/1b/5b/5044a538ea9081dded02d4a50e12e1a803c19468234f936139ba368ca08e/llama_index_core-0.12.38-py3-none-any.whl", hash = "sha256:1cb852c37a52b7297a4c24dd3e7a53a45913f2a1f37e66af405958bb4669ce90", size = 7663883 },
 ]
 
 [[package]]
@@ -1657,7 +1656,7 @@ wheels = [
 
 [[package]]
 name = "openinference-instrumentation-llama-index"
-version = "4.2.1"
+version = "4.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "openinference-instrumentation" },
@@ -1668,9 +1667,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5c/ef/ec75993016edb1bd7c7b9de50c3a6db039da0ab5da1d3aaa1216a92cb360/openinference_instrumentation_llama_index-4.2.1.tar.gz", hash = "sha256:615603bd9bcc6bbf24e5ea2d2cfcd11e484102b8d8d131f7777543eca1f4d2b7", size = 58578 }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/10/57179fb827705b957921c9a1060143b89dc26025db7b7918ae53711f6833/openinference_instrumentation_llama_index-4.3.0.tar.gz", hash = "sha256:92107bcd61131fd41abf9407a0f6d25d6be692e04987b54de2aa4ecbd098b86c", size = 59253 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a2/06/aaca472113b499924cbc0b7ea2dd18d61d1f4ad7120f9fb0fd30bb4d8eec/openinference_instrumentation_llama_index-4.2.1-py3-none-any.whl", hash = "sha256:74102a2f1532dfac069ff8e241d498695f481bc3fa6c017d4df6c285fbc7d6cd", size = 27663 },
+    { url = "https://files.pythonhosted.org/packages/56/a9/1c4d10ef2a9cf12b0e1446eb21d6ca04c4dfaba417999a895928afcdd5d2/openinference_instrumentation_llama_index-4.3.0-py3-none-any.whl", hash = "sha256:c1559d397f8ed98f420ce0ebe0f5246d33aadd67f144d59c6f66f3258f73e854", size = 28311 },
 ]
 
 [[package]]
@@ -2819,7 +2818,7 @@ wheels = [
 
 [[package]]
 name = "uipath"
-version = "2.0.59"
+version = "2.0.63"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-monitor-opentelemetry" },
@@ -2833,14 +2832,14 @@ dependencies = [
     { name = "tenacity" },
     { name = "tomli" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/d1/e8c524982568a050beabf41842ef27486c234ffe6304708635399ea4c622/uipath-2.0.59.tar.gz", hash = "sha256:daa120511a1073109de2e1c4b2053c578d28362c36f7ed5f88c8e7268753b56d", size = 1830395 }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/bb/9d921247c7a154699f0b62e5e9acd67b8848441d03fed7345f986371c68c/uipath-2.0.63.tar.gz", hash = "sha256:74a6aef0d0889f93d5b0d2bb3be498e45b589fd71918fa5e44a2fdeab92ab571", size = 1833004 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/79/c8111a6a815075f5c9adce096bce93b8c51f38d08c18a0c53c4133958eaa/uipath-2.0.59-py3-none-any.whl", hash = "sha256:c8fb33a9fb88f8d30886dd967ef42aacd89805f05dcb106d1f46c9f3aa43b24d", size = 116531 },
+    { url = "https://files.pythonhosted.org/packages/d7/4f/5afe52f10ecc645acd87a6e9d4b117cb2a7e938d0b6574a933d1703b2c9f/uipath-2.0.63-py3-none-any.whl", hash = "sha256:06f89864ba287638f568938e2654294456369e87fc006e7ca8925b0044a40128", size = 117341 },
 ]
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.0.20"
+version = "0.0.22"
 source = { editable = "." }
 dependencies = [
     { name = "llama-index" },
@@ -2861,9 +2860,9 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "llama-index", specifier = ">=0.12.36" },
-    { name = "openinference-instrumentation-llama-index", specifier = ">=4.2.1" },
-    { name = "uipath", specifier = ">=2.0.59" },
+    { name = "llama-index", specifier = ">=0.12.38" },
+    { name = "openinference-instrumentation-llama-index", specifier = ">=4.3.0" },
+    { name = "uipath", specifier = ">=2.0.63" },
 ]
 
 [package.metadata.requires-dev]
