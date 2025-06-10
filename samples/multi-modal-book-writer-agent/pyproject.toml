@@ -1,11 +1,12 @@
 [project]
-name = "llama-image-gen-agent"
-version = "0.0.4"
-description = "UiPath LlamaIndex Image Generation Agent"
+name = "llama-multi-modal-book-writer-agent"
+version = "0.0.5"
+description = "UiPath LlamaIndex Multi-Modal Book Writer Agent"
 authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
 dependencies = [
+    "reportlab>=4.4.1",
     "uipath-llamaindex>=0.0.22",
     "llama-index-llms-openai>=0.3.44",
     "llama-index-tools-openai-image-generation>=0.4.0"

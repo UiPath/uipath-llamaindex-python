@@ -1,0 +1,61 @@
+{
+  "entryPoints": [
+    {
+      "filePath": "agent",
+      "uniqueId": "b0865de9-c280-4bd8-8814-98d73955b4b7",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "title": "Topic",
+            "type": "string"
+          },
+          "num_chapters": {
+            "title": "Num Chapters",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "topic",
+          "num_chapters"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "title": "Topic",
+            "type": "string"
+          },
+          "book_title": {
+            "title": "Book Title",
+            "type": "string"
+          },
+          "total_chapters": {
+            "title": "Total Chapters",
+            "type": "integer"
+          },
+          "chapter_attachments": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Chapter Attachments",
+            "type": "array"
+          }
+        },
+        "required": [
+          "topic",
+          "book_title",
+          "total_chapters",
+          "chapter_attachments"
+        ]
+      }
+    }
+  ],
+  "bindings": {
+    "version": "2.0",
+    "resources": []
+  }
+}
