@@ -1,0 +1,13 @@
+flowchart TD
+    step__done["_done"]:::stepStyle
+    step_process_query["process_query"]:::stepStyle
+    event_UserQueryEvent([<p>UserQueryEvent</p>]):::defaultEventStyle
+    event_AgentResponseEvent([<p>AgentResponseEvent</p>]):::stopEventStyle
+    event_AgentResponseEvent --> step__done
+    step_process_query --> event_AgentResponseEvent
+    event_UserQueryEvent --> step_process_query
+    classDef stepStyle fill:#f2f0ff,line-height:1.2
+    classDef externalStyle fill:#f2f0ff,line-height:1.2
+    classDef defaultEventStyle fill-opacity:0
+    classDef stopEventStyle fill:#bfb6fc
+    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2
