@@ -1112,6 +1112,20 @@ wheels = [
 ]
 
 [[package]]
+name = "llama-index-embeddings-azure-openai"
+version = "0.3.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "llama-index-core" },
+    { name = "llama-index-embeddings-openai" },
+    { name = "llama-index-llms-azure-openai" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d8/f9/7027f5984e690d6b171d44e944aba0d6fedcedd49c08962ea67dce8a463f/llama_index_embeddings_azure_openai-0.3.8.tar.gz", hash = "sha256:24cff674364cffef4798f5faf220b557115ff9ea9a4f5e643785bd89c595928c", size = 4760 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/4d/d0/c13abece3456e7de7d359e70bff8b9d8a53f4908b9f3783c8177f1be9a78/llama_index_embeddings_azure_openai-0.3.8-py3-none-any.whl", hash = "sha256:e5dc9c9103b914c4435a59ed0d7965b3a3eeeafb9868a5876c46315bb49f1e54", size = 4400 },
+]
+
+[[package]]
 name = "llama-index-embeddings-openai"
 version = "0.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1135,6 +1149,21 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/75/bc/d1a9013b117005a782a253bce16a1d1022349b85fe6206395376477ce6c6/llama_index_indices_managed_llama_cloud-0.6.11.tar.gz", hash = "sha256:925532f760cd2ebb2594828da311adac3d54cd2cae3dff2908491eebb2b8bd0f", size = 12703 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7e/f4/5decd79fd7f2f0e44c5689af62497447e86832e876b7dad11903259de5f9/llama_index_indices_managed_llama_cloud-0.6.11-py3-none-any.whl", hash = "sha256:64e82e2ac178cd3721b76c0817edd57e05a3bd877c412b4148d3abbdeea62d59", size = 14272 },
+]
+
+[[package]]
+name = "llama-index-llms-azure-openai"
+version = "0.3.2"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "azure-identity" },
+    { name = "httpx" },
+    { name = "llama-index-core" },
+    { name = "llama-index-llms-openai" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/0c/cf/23c516c5a61c9b7a481c383862ebd99cc5e6a35f820dab871bb12b453b71/llama_index_llms_azure_openai-0.3.2.tar.gz", hash = "sha256:c6ae4e6d896abc784a1d60e02a537c91e019317de69d02256424eab80c988646", size = 6287 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/ce/2f/efab9bd63f7f3dd9ec83c945c9516beffcff14ffd4a8187150b46e69124b/llama_index_llms_azure_openai-0.3.2-py3-none-any.whl", hash = "sha256:1a831035129042327f50d243a17918c481dfae39fd5a7ddaaaa0a712fb18ab8e", size = 7283 },
 ]
 
 [[package]]
@@ -2840,10 +2869,12 @@ wheels = [
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.0.22"
+version = "0.0.24"
 source = { editable = "." }
 dependencies = [
     { name = "llama-index" },
+    { name = "llama-index-embeddings-azure-openai" },
+    { name = "llama-index-llms-azure-openai" },
     { name = "openinference-instrumentation-llama-index" },
     { name = "uipath" },
 ]
@@ -2862,6 +2893,8 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "llama-index", specifier = ">=0.12.38" },
+    { name = "llama-index-embeddings-azure-openai", specifier = ">=0.3.8" },
+    { name = "llama-index-llms-azure-openai", specifier = ">=0.3.2" },
     { name = "openinference-instrumentation-llama-index", specifier = ">=4.3.0" },
     { name = "uipath", specifier = ">=2.0.64" },
 ]
