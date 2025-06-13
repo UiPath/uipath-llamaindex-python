@@ -25,8 +25,6 @@ class UiPathOpenAI(AzureOpenAI):
         api_version: str = "2024-10-21",
         **kwargs: Any,
     ):
-        uipath_access_token = os.environ.get("UIPATH_ACCESS_TOKEN")
-        
         default_headers_dict = {
             "X-UIPATH-STREAMING-ENABLED": "false",
             "X-UiPath-LlmGateway-RequestingProduct": "uipath-python-sdk",
@@ -42,7 +40,7 @@ class UiPathOpenAI(AzureOpenAI):
             "model": model_value,
             "deployment_name": model_value,
             "azure_endpoint": f"{base_url}/llmgateway_/",
-            "api_key": uipath_access_token,
+            "api_key": os.environ.get("UIPATH_ACCESS_TOKEN"),
             "api_version": api_version,
             "is_chat_model": True,
             "default_headers": default_headers_dict,
