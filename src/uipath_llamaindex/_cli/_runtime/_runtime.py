@@ -12,7 +12,10 @@ from llama_index.core.workflow import (
     JsonPickleSerializer,
 )
 from llama_index.core.workflow.handler import WorkflowHandler
-from openinference.instrumentation.llama_index import LlamaIndexInstrumentor, get_current_span
+from openinference.instrumentation.llama_index import (
+    LlamaIndexInstrumentor,
+    get_current_span,
+)
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -23,13 +26,12 @@ from uipath._cli._runtime._contracts import (
     UiPathRuntimeResult,
     UiPathRuntimeStatus,
 )
+from uipath.tracing import TracingManager
 
 from .._tracing._oteladapter import LlamaIndexExporter
 from ._context import UiPathLlamaIndexRuntimeContext
 from ._exception import UiPathLlamaIndexRuntimeError
 from ._hitl import HitlProcessor, HitlReader
-
-from uipath.tracing import TracingManager
 
 logger = logging.getLogger(__name__)
 
@@ -74,14 +76,20 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 if os.path.exists(self.state_file_path):
                     os.remove(self.state_file_path)
 
+            if self.context.workflow is None:
+                return None
+
             start_event_class = self.context.workflow._start_event_class
-            ev = start_event_class(**self.context.input_json)
+            ev = start_event_class(**(self.context.input_json or {}))
             await self.load_workflow_context()
+
+            if self.context.workflow_context is None:
+                return None
 
             handler: WorkflowHandler = self.context.workflow.run(
                 start_event=ev if self.context.resume else None,
                 ctx=self.context.workflow_context,
-                **self.context.input_json,
+                **(self.context.input_json or {}),
             )
 
             resume_trigger: Optional[UiPathResumeTrigger] = None
@@ -94,9 +102,10 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                     if self.context.resume and not response_applied:
                         # If we are resuming, we need to apply the response to the event stream.
                         response_applied = True
-                        self.context.workflow_context.send_event(
-                            await self.get_response_event()
-                        )
+                        response_event = await self.get_response_event()
+                        if response_event:
+                            # If we have a response event, send it to the workflow context.
+                            self.context.workflow_context.send_event(response_event)
                     else:
                         resume_trigger = await hitl_processor.create_resume_trigger()
                         break
@@ -244,6 +253,9 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         """
         logger.debug(f"Resumed: {self.context.resume} Input: {self.context.input_json}")
 
+        if self.context.workflow is None:
+            return
+
         if not self.context.resume:
             self.context.workflow_context = Context(self.context.workflow)
             return
@@ -277,7 +289,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         """
         if self.context.input_json:
             # If input_json is provided, use it to create a HumanResponseEvent
-            return HumanResponseEvent(**self.context.input_json)
+            return HumanResponseEvent(**(self.context.input_json or {}))
         # If resumed_trigger is set, fetch the feedback
         if self.context.resumed_trigger:
             feedback = await HitlReader.read(self.context.resumed_trigger)

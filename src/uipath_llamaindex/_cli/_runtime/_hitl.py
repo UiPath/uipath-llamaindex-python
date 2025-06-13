@@ -90,7 +90,7 @@ class HitlReader:
                     return job.output_arguments
 
             case UiPathResumeTriggerType.API:
-                if resume_trigger.api_resume.inbox_id:
+                if resume_trigger.api_resume and resume_trigger.api_resume.inbox_id:
                     return await _get_api_payload(resume_trigger.api_resume.inbox_id)
 
             case _:

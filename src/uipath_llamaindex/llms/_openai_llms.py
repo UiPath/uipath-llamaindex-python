@@ -2,7 +2,7 @@ import os
 from enum import Enum
 from typing import Any, Union
 
-from llama_index.llms.azure_openai import AzureOpenAI
+from llama_index.llms.azure_openai import AzureOpenAI  # type: ignore
 
 
 class OpenAIModel(Enum):
@@ -32,10 +32,8 @@ class UiPathOpenAI(AzureOpenAI):
         }
         model_value = model.value if isinstance(model, OpenAIModel) else model
 
-        base_url = os.environ.get(
-            "UIPATH_URL", "EMPTY"
-        ).rstrip("/")
-        
+        base_url = os.environ.get("UIPATH_URL", "EMPTY").rstrip("/")
+
         if base_url == "EMPTY":
             raise ValueError(
                 "UIPATH_URL environment variable is not set. Please run uipath auth."
