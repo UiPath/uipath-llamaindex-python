@@ -12,7 +12,7 @@ from llama_index.core.workflow import (
     JsonPickleSerializer,
 )
 from llama_index.core.workflow.handler import WorkflowHandler
-from openinference.instrumentation.llama_index import LlamaIndexInstrumentor
+from openinference.instrumentation.llama_index import LlamaIndexInstrumentor, get_current_span
 from opentelemetry import trace
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import BatchSpanProcessor
@@ -28,6 +28,8 @@ from .._tracing._oteladapter import LlamaIndexExporter
 from ._context import UiPathLlamaIndexRuntimeContext
 from ._exception import UiPathLlamaIndexRuntimeError
 from ._hitl import HitlProcessor, HitlReader
+
+from uipath.tracing import TracingManager
 
 logger = logging.getLogger(__name__)
 
@@ -54,14 +56,17 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         await self.validate()
 
         self.trace_provider = TracerProvider()
+        self.tracer = self.trace_provider.get_tracer("uipath.llamaindex.runtime")
 
         with suppress(Exception):
             trace.set_tracer_provider(self.trace_provider)
             self.trace_provider.add_span_processor(
                 BatchSpanProcessor(LlamaIndexExporter())
-            )  # type: ignore
+            )
 
             LlamaIndexInstrumentor().instrument(tracer_provider=self.trace_provider)
+
+            TracingManager.register_current_span_provider(get_current_span)
 
         try:
             if self.context.resume is False and self.context.job_id is None:
