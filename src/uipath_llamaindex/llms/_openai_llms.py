@@ -26,16 +26,12 @@ class UiPathOpenAI(AzureOpenAI):
         **kwargs: Any,
     ):
         uipath_access_token = os.environ.get("UIPATH_ACCESS_TOKEN")
-        auth_header_value = (
-            "Bearer " + str(uipath_access_token) if uipath_access_token else None
-        )
+        
         default_headers_dict = {
             "X-UIPATH-STREAMING-ENABLED": "false",
             "X-UiPath-LlmGateway-RequestingProduct": "uipath-python-sdk",
             "X-UiPath-LlmGateway-RequestingFeature": "llama-index-agent",
         }
-        if auth_header_value:
-            default_headers_dict["Authorization"] = auth_header_value
         model_value = model.value if isinstance(model, ModelName) else model
 
         base_url = os.environ.get(
