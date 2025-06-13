@@ -2,7 +2,7 @@ import os
 from enum import Enum
 from typing import Any, Union
 
-from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding
+from llama_index.embeddings.azure_openai import AzureOpenAIEmbedding  # type: ignore
 
 
 class OpenAIEmbeddingModel(Enum):
@@ -27,10 +27,8 @@ class UiPathOpenAIEmbedding(AzureOpenAIEmbedding):
 
         model_value = model.value if isinstance(model, OpenAIEmbeddingModel) else model
 
-        base_url = os.environ.get(
-            "UIPATH_URL", "EMPTY"
-        ).rstrip("/")
-        
+        base_url = os.environ.get("UIPATH_URL", "EMPTY").rstrip("/")
+
         if base_url == "EMPTY":
             raise ValueError(
                 "UIPATH_URL environment variable is not set. Please run uipath auth."

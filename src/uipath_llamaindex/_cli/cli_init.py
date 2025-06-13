@@ -5,7 +5,7 @@ import uuid
 from typing import Any, Dict
 
 from llama_index.core.workflow import StopEvent, Workflow
-from llama_index.core.workflow.drawing import StepConfig
+from llama_index.core.workflow.drawing import StepConfig  # type: ignore
 from llama_index.core.workflow.events import (
     HumanResponseEvent,
     InputRequiredEvent,
@@ -129,11 +129,13 @@ def draw_all_possible_flows_mermaid(
 
     # Track event types to avoid duplicates
     event_types = {}
+    current_stop_event = (
+        None  # Only one kind of `StopEvent` is allowed in a `Workflow`.
+    )
+    step_config: StepConfig | None = None
 
-    # Only one kind of `StopEvent` is allowed in a `Workflow`.
-    current_stop_event = None
     for _, step_func in steps.items():
-        step_config: StepConfig = getattr(step_func, "__step_config", None)
+        step_config = getattr(step_func, "__step_config", None)
         if step_config is None:
             continue
 
@@ -227,12 +229,13 @@ def draw_all_possible_flows_mermaid(
             event_id = f"event_{clean_id(event_name)}"
 
             if step_name == "_done" and issubclass(event_type, StopEvent):
-                stop_event_name = current_stop_event.__name__
-                stop_event_id = f"event_{clean_id(stop_event_name)}"
-                edge = f"{stop_event_id} --> {step_id}"
-                if edge not in edges:
-                    edges.add(edge)
-                    mermaid_diagram.append(f"    {edge}")
+                if current_stop_event:
+                    stop_event_name = current_stop_event.__name__
+                    stop_event_id = f"event_{clean_id(stop_event_name)}"
+                    edge = f"{stop_event_id} --> {step_id}"
+                    if edge not in edges:
+                        edges.add(edge)
+                        mermaid_diagram.append(f"    {edge}")
             else:
                 edge = f"{event_id} --> {step_id}"
                 if edge not in edges:
