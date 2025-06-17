@@ -26,12 +26,12 @@ from uipath._cli._runtime._contracts import (
     UiPathRuntimeResult,
     UiPathRuntimeStatus,
 )
+from uipath._cli._runtime._hitl import HitlProcessor, HitlReader
 from uipath.tracing import TracingManager
 
 from .._tracing._oteladapter import LlamaIndexExporter
 from ._context import UiPathLlamaIndexRuntimeContext
 from ._exception import UiPathLlamaIndexRuntimeError
-from ._hitl import HitlProcessor, HitlReader
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,8 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             async for event in handler.stream_events():
                 # log the received event on trace level
                 if isinstance(event, InputRequiredEvent):
-                    hitl_processor = HitlProcessor(value=event)
+                    # for api trigger hitl scenarios only pass the str input for processing
+                    hitl_processor = HitlProcessor(value=event.prefix)
                     if self.context.resume and not response_applied:
                         # If we are resuming, we need to apply the response to the event stream.
                         response_applied = True
@@ -296,6 +297,9 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             if feedback:
                 if isinstance(feedback, dict):
                     feedback = json.dumps(feedback)
+                elif isinstance(feedback, bool):
+                    # special handling for default escalation scenarios
+                    feedback = str(feedback)
                 return HumanResponseEvent(response=feedback)
         return None
 

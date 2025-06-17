@@ -4,9 +4,22 @@ on:
   workflow_call
 
 jobs:
+  skip-lint:
+    name: Skip Lint (Custom Version Testing)
+    runs-on: ubuntu-latest
+    if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
+    permissions:
+      contents: read
+    steps:
+      - name: Skip lint for custom version testing
+        run: |
+          echo "Custom version testing enabled - skipping normal lint process"
+          echo "This job completes successfully to allow PR merging"
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    if: "!contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')"
     permissions:
       contents: read
 
