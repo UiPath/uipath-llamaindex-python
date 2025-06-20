@@ -1,0 +1,20 @@
+[project]
+name = "travel-helper-RAG-agent"
+version = "0.0.4"
+description = "UiPath LlamaIndex Simple HITL Agent"
+authors = [{ name = "Radu Mocanu", email = "radu.mocanu@uipath.com" }]
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+dependencies = [
+    "uipath-llamaindex>=0.0.26",
+    "llama-index-llms-openai>=0.2.2"
+]
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
+
+[tool.uv.sources]
+uipath-llamaindex = { index = "testpypi" }

@@ -1,0 +1,80 @@
+{
+  "entryPoints": [
+    {
+      "filePath": "agent",
+      "uniqueId": "8e6de5fd-132a-4e13-a68b-1eb45a33a44c",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "title": "Query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "output": {
+            "title": "Output",
+            "type": "string"
+          }
+        },
+        "required": [
+          "output"
+        ]
+      }
+    }
+  ],
+  "bindings": {
+    "version": "2.0",
+    "resources": [
+      {
+        "resource": "index",
+        "key": "context_grounding_index_folder_path.company_policy",
+        "value": {
+          "name": {
+            "defaultValue": "company_policy",
+            "isExpression": false,
+            "displayName": "Name"
+          },
+          "folderPath": {
+            "defaultValue": "context_grounding_index_folder_path",
+            "isExpression": true,
+            "displayName": "Folder Path"
+          }
+        },
+        "metadata": {
+          "ActivityName": "retrieve",
+          "BindingsVersion": "2.2",
+          "DisplayLabel": "FullName"
+        }
+      },
+      {
+        "resource": "index",
+        "key": "context_grounding_index_folder_path.personal_preferences",
+        "value": {
+          "name": {
+            "defaultValue": "personal_preferences",
+            "isExpression": false,
+            "displayName": "Name"
+          },
+          "folderPath": {
+            "defaultValue": "context_grounding_index_folder_path",
+            "isExpression": true,
+            "displayName": "Folder Path"
+          }
+        },
+        "metadata": {
+          "ActivityName": "retrieve",
+          "BindingsVersion": "2.2",
+          "DisplayLabel": "FullName"
+        }
+      }
+    ]
+  }
+}

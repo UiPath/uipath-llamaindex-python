@@ -1,0 +1,21 @@
+flowchart TD
+    step__done["_done"]:::stepStyle
+    step_combine_answers["combine_answers"]:::stepStyle
+    step_query["query"]:::stepStyle
+    step_sub_question["sub_question"]:::stepStyle
+    event_AnswerEvent([<p>AnswerEvent</p>]):::defaultEventStyle
+    event_OutputEvent([<p>OutputEvent</p>]):::stopEventStyle
+    event_CustomStartEvent([<p>CustomStartEvent</p>]):::defaultEventStyle
+    event_QueryEvent([<p>QueryEvent</p>]):::defaultEventStyle
+    event_OutputEvent --> step__done
+    step_combine_answers --> event_OutputEvent
+    event_AnswerEvent --> step_combine_answers
+    step_query --> event_QueryEvent
+    event_CustomStartEvent --> step_query
+    step_sub_question --> event_AnswerEvent
+    event_QueryEvent --> step_sub_question
+    classDef stepStyle fill:#f2f0ff,line-height:1.2
+    classDef externalStyle fill:#f2f0ff,line-height:1.2
+    classDef defaultEventStyle fill-opacity:0
+    classDef stopEventStyle fill:#bfb6fc
+    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2
