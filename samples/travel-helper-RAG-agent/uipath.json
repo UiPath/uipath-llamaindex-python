@@ -1,0 +1,48 @@
+{
+  "settings": {
+    "fileExtensionsIncluded": [
+      ".txt",
+      ".xlsx"
+    ]
+  },
+  "entryPoints": [
+    {
+      "filePath": "agent",
+      "uniqueId": "53271079-41d3-4f2b-a682-6c57ee3334c8",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "add_data_to_index": {
+            "title": "Add Data To Index",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "query",
+          "add_data_to_index"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "output": {
+            "title": "Output",
+            "type": "string"
+          }
+        },
+        "required": [
+          "output"
+        ]
+      }
+    }
+  ],
+  "bindings": {
+    "version": "2.0",
+    "resources": []
+  }
+}
