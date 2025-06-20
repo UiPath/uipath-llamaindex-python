@@ -2848,7 +2848,7 @@ wheels = [
 
 [[package]]
 name = "uipath"
-version = "2.0.64"
+version = "2.0.68"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-monitor-opentelemetry" },
@@ -2862,14 +2862,14 @@ dependencies = [
     { name = "tenacity" },
     { name = "tomli" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/8e/1f660202ff18c244012e732bc51f23767536c2e5debc119120ea31b7f19e/uipath-2.0.64.tar.gz", hash = "sha256:f77cd254384a03dd9475f0daa152f5d92e409a1c2b76bc866edb982b071fd988", size = 1840220 }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/19/d6b7281b9e773708671ead073abea1ae645a135f4e6eae0f17bd57786944/uipath-2.0.68.tar.gz", hash = "sha256:17f6a8fe066e50ec1afe1b51069dc86b143ba7f4bf5166bf33a681de8c36b6a5", size = 1830506 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/1d/1a/f22e837b8528cf067fb700975a8fdd7403d95c0e7f9ffe9ffae5a276f155/uipath-2.0.64-py3-none-any.whl", hash = "sha256:8ec14ee26a96aa1fad8b19d137013ab5fd599e867f45c11c4643922c0bdcd223", size = 123261 },
+    { url = "https://files.pythonhosted.org/packages/0d/b9/3cf988d3dcb888873af7665384bda5bfb4f1c253bd9ed92f10437ab69598/uipath-2.0.68-py3-none-any.whl", hash = "sha256:a645720fead5b2acdea037968bedc126ee181be7967c6fbac4a5524fe2422fd5", size = 125557 },
 ]
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.0.25"
+version = "0.0.26"
 source = { editable = "." }
 dependencies = [
     { name = "llama-index" },
@@ -2896,7 +2896,7 @@ requires-dist = [
     { name = "llama-index-embeddings-azure-openai", specifier = ">=0.3.8" },
     { name = "llama-index-llms-azure-openai", specifier = ">=0.3.2" },
     { name = "openinference-instrumentation-llama-index", specifier = ">=4.3.0" },
-    { name = "uipath", specifier = ">=2.0.64" },
+    { name = "uipath", specifier = ">=2.0.65,<2.1.0" },
 ]
 
 [package.metadata.requires-dev]
