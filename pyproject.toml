@@ -1,6 +1,6 @@
 [project]
 name = "uipath-llamaindex"
-version = "0.0.25"
+version = "0.0.26"
 description = "UiPath LlamaIndex SDK"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
@@ -90,3 +90,4 @@ name = "testpypi"
 url = "https://test.pypi.org/simple/"
 publish-url = "https://test.pypi.org/legacy/"
 explicit = true
+

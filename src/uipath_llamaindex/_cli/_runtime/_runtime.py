@@ -11,6 +11,7 @@ from llama_index.core.workflow import (
     InputRequiredEvent,
     JsonPickleSerializer,
 )
+from llama_index.core.workflow.errors import WorkflowTimeoutError
 from llama_index.core.workflow.handler import WorkflowHandler
 from openinference.instrumentation.llama_index import (
     LlamaIndexInstrumentor,
@@ -114,15 +115,33 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             if resume_trigger is None:
                 try:
                     output = await handler
+                # catch any script exceptions
+                except Exception as e:
+                    raise UiPathLlamaIndexRuntimeError(
+                        "AGENT_EXECUTION_FAILURE",
+                        "There was an exception while executing the agent ",
+                        str(e),
+                        UiPathErrorCategory.USER,
+                    ) from e
+                try:
                     serialized_output = self._serialize_object(output)
                     # create simple kvp from string
                     if type(serialized_output) is str:
                         serialized_output = {"result": serialized_output}
+
                     print(serialized_output)
                     self.context.result = UiPathRuntimeResult(
                         output=serialized_output,
                         status=UiPathRuntimeStatus.SUCCESSFUL,
                     )
+                # check if workflow failed because of timeout constraints
+                except WorkflowTimeoutError as e:
+                    raise UiPathLlamaIndexRuntimeError(
+                        "TIMEOUT_ERROR",
+                        "Workflow timed out",
+                        str(e),
+                        UiPathErrorCategory.USER,
+                    ) from e
                 except Exception as e:
                     raise UiPathLlamaIndexRuntimeError(
                         "SERIALIZE_OUTPUT_ERROR",

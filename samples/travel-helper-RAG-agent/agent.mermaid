@@ -1,0 +1,35 @@
+flowchart TD
+    step__done["_done"]:::stepStyle
+    step_add_data_to_index["add_data_to_index"]:::stepStyle
+    step_combine_and_interpret_answers["combine_and_interpret_answers"]:::stepStyle
+    step_create_sub_questions_plan["create_sub_questions_plan"]:::stepStyle
+    step_handle_sub_question["handle_sub_question"]:::stepStyle
+    step_wait_for_index_ingestion["wait_for_index_ingestion"]:::stepStyle
+    step_workflow_entrypoint["workflow_entrypoint"]:::stepStyle
+    event_AddDataToIndexEvent([<p>AddDataToIndexEvent</p>]):::defaultEventStyle
+    event_WaitForIndexIngestion([<p>WaitForIndexIngestion</p>]):::defaultEventStyle
+    event_AnswerEvent([<p>AnswerEvent</p>]):::defaultEventStyle
+    event_OutputEvent([<p>OutputEvent</p>]):::stopEventStyle
+    event_QueryEvent([<p>QueryEvent</p>]):::defaultEventStyle
+    event_SubQuestionEvent([<p>SubQuestionEvent</p>]):::defaultEventStyle
+    event_CustomStartEvent([<p>CustomStartEvent</p>]):::defaultEventStyle
+    event_OutputEvent --> step__done
+    step_add_data_to_index --> event_WaitForIndexIngestion
+    event_AddDataToIndexEvent --> step_add_data_to_index
+    step_combine_and_interpret_answers --> event_OutputEvent
+    event_AnswerEvent --> step_combine_and_interpret_answers
+    step_create_sub_questions_plan --> event_SubQuestionEvent
+    event_QueryEvent --> step_create_sub_questions_plan
+    step_handle_sub_question --> event_AnswerEvent
+    event_SubQuestionEvent --> step_handle_sub_question
+    step_wait_for_index_ingestion --> event_QueryEvent
+    step_wait_for_index_ingestion --> event_OutputEvent
+    event_WaitForIndexIngestion --> step_wait_for_index_ingestion
+    step_workflow_entrypoint --> event_QueryEvent
+    step_workflow_entrypoint --> event_AddDataToIndexEvent
+    event_CustomStartEvent --> step_workflow_entrypoint
+    classDef stepStyle fill:#f2f0ff,line-height:1.2
+    classDef externalStyle fill:#f2f0ff,line-height:1.2
+    classDef defaultEventStyle fill-opacity:0
+    classDef stopEventStyle fill:#bfb6fc
+    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2

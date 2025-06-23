@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.12'",
@@ -2847,7 +2848,7 @@ wheels = [
 
 [[package]]
 name = "uipath"
-version = "2.0.66"
+version = "2.0.68"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-monitor-opentelemetry" },
@@ -2861,9 +2862,9 @@ dependencies = [
     { name = "tenacity" },
     { name = "tomli" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/16/51/dd3c07e194d9899ada9abb4bdfd8198bbe18f6db3e1451c670c6ec3484f5/uipath-2.0.66.tar.gz", hash = "sha256:81592b8ac4891220b16dce94eb1f3b5b4ad59fe05102f77a3fd07263e824e1b5", size = 1829440 }
+sdist = { url = "https://files.pythonhosted.org/packages/d8/19/d6b7281b9e773708671ead073abea1ae645a135f4e6eae0f17bd57786944/uipath-2.0.68.tar.gz", hash = "sha256:17f6a8fe066e50ec1afe1b51069dc86b143ba7f4bf5166bf33a681de8c36b6a5", size = 1830506 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e2/82/8c13b337aabf49eddc1d3a8ce315a16f7bab83f339746c8569c61b2ceddc/uipath-2.0.66-py3-none-any.whl", hash = "sha256:4f75b1edcb543ba495c96b2647aed0d64bc707119a3ef7c03948576cb27083b7", size = 125292 },
+    { url = "https://files.pythonhosted.org/packages/0d/b9/3cf988d3dcb888873af7665384bda5bfb4f1c253bd9ed92f10437ab69598/uipath-2.0.68-py3-none-any.whl", hash = "sha256:a645720fead5b2acdea037968bedc126ee181be7967c6fbac4a5524fe2422fd5", size = 125557 },
 ]
 
 [[package]]
