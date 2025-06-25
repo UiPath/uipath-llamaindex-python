@@ -2,7 +2,7 @@ import asyncio
 import json
 import os
 import uuid
-from typing import Any, Dict
+from typing import Any, Callable, Dict, overload
 
 from llama_index.core.workflow import StopEvent, Workflow
 from llama_index.core.workflow.drawing import StepConfig  # type: ignore
@@ -284,8 +284,14 @@ def get_event_style(event_type) -> str:
         return "defaultEventStyle"
 
 
-async def llamaindex_init_middleware_async(entrypoint: str) -> MiddlewareResult:
+async def llamaindex_init_middleware_async(
+    entrypoint: str,
+    options: dict[str, Any] | None = None,
+    write_config: Callable[[Any], str] | None = None,
+) -> MiddlewareResult:
     """Middleware to check for llama_index.json and create uipath.json with schemas"""
+    options = options or {}
+
     config = LlamaIndexConfig()
     if not config.exists:
         return MiddlewareResult(
@@ -305,8 +311,9 @@ async def llamaindex_init_middleware_async(entrypoint: str) -> MiddlewareResult:
                 loaded_workflow = await workflow.load_workflow()
                 schema = generate_schema_from_workflow(loaded_workflow)
                 try:
+                    should_infer_bindings = options.get("infer_bindings", True)
                     # Make sure the file path exists
-                    if os.path.exists(workflow.file_path):
+                    if os.path.exists(workflow.file_path) and should_infer_bindings:
                         file_bindings = generate_bindings_json(workflow.file_path)
                         # Merge bindings
                         if "resources" in file_bindings:
@@ -345,10 +352,13 @@ async def llamaindex_init_middleware_async(entrypoint: str) -> MiddlewareResult:
 
         uipath_config = {"entryPoints": entrypoints, "bindings": all_bindings}
 
-        # Save the uipath.json file
-        config_path = "uipath.json"
-        with open(config_path, "w") as f:
-            json.dump(uipath_config, f, indent=2)
+        if write_config:
+            config_path = write_config(uipath_config)
+        else:
+            # Save the uipath.json file
+            config_path = "uipath.json"
+            with open(config_path, "w") as f:
+                json.dump(uipath_config, f, indent=4)
 
         console.success(f" Created '{config_path}' file.")
         return MiddlewareResult(should_continue=False)
@@ -361,6 +371,24 @@ async def llamaindex_init_middleware_async(entrypoint: str) -> MiddlewareResult:
         )
 
 
-def llamaindex_init_middleware(entrypoint: str) -> MiddlewareResult:
+@overload
+def llamaindex_init_middleware(entrypoint: str) -> MiddlewareResult: ...
+
+
+@overload
+def llamaindex_init_middleware(
+    entrypoint: str,
+    options: dict[str, Any],
+    write_config: Callable[[Any], str],
+) -> MiddlewareResult: ...
+
+
+def llamaindex_init_middleware(
+    entrypoint: str,
+    options: dict[str, Any] | None = None,
+    write_config: Callable[[Any], str] | None = None,
+) -> MiddlewareResult:
     """Middleware to check for llama_index.json and create uipath.json with schemas"""
-    return asyncio.run(llamaindex_init_middleware_async(entrypoint))
+    return asyncio.run(
+        llamaindex_init_middleware_async(entrypoint, options, write_config)
+    )
