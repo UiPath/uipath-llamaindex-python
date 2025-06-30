@@ -318,4 +318,4 @@ section, as agent input:
 
 Congratulations! You have successfully set up, created, published, and run a UiPath LangChain Agent. 🚀
 
-For more advanced agents and agent samples, please refer to our [samples section](https://github.com/UiPath/uipath-langchain-python/tree/main/samples) in GitHub.
+For more advanced agents and agent samples, please refer to our [samples section](https://github.com/UiPath/uipath-llamaindex-python/tree/main/samples) in GitHub.
