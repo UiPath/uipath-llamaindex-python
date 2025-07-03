@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import pickle
+from cgitb import handler
 from contextlib import suppress
 from typing import Optional, cast
 
@@ -9,7 +10,7 @@ from llama_index.core.workflow import (
     Context,
     HumanResponseEvent,
     InputRequiredEvent,
-    JsonPickleSerializer,
+    JsonPickleSerializer, StartEvent,
 )
 from llama_index.core.workflow.errors import WorkflowTimeoutError
 from llama_index.core.workflow.handler import WorkflowHandler
@@ -87,30 +88,12 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             if self.context.workflow_context is None:
                 return None
 
-            handler: WorkflowHandler = self.context.workflow.run(
-                start_event=ev if self.context.resume else None,
-                ctx=self.context.workflow_context,
-                **(self.context.input_json or {}),
-            )
-
             resume_trigger: Optional[UiPathResumeTrigger] = None
 
-            response_applied = False
-            async for event in handler.stream_events():
-                # log the received event on trace level
-                if isinstance(event, InputRequiredEvent):
-                    # for api trigger hitl scenarios only pass the str input for processing
-                    hitl_processor = HitlProcessor(value=event.prefix)
-                    if self.context.resume and not response_applied:
-                        # If we are resuming, we need to apply the response to the event stream.
-                        response_applied = True
-                        response_event = await self.get_response_event()
-                        if response_event:
-                            # If we have a response event, send it to the workflow context.
-                            self.context.workflow_context.send_event(response_event)
-                    else:
-                        resume_trigger = await hitl_processor.create_resume_trigger()
-                        break
+            if self.context.debug and os.getenv("VSCODE_EXPLORER_EXECUTION") == "True":
+                handler = await self.debug_workflow()
+            else:
+                handler, resume_trigger = await self.run_workflow(ev)
 
             if resume_trigger is None:
                 try:
@@ -178,6 +161,64 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             ) from e
         finally:
             self.trace_provider.shutdown()
+
+    async def debug_workflow(self):
+        try:
+            import debugpy
+        except ImportError:
+            raise Exception("DebugPy not available")
+
+        handler: WorkflowHandler = self.context.workflow.run(
+            stepwise=True,
+            **(self.context.input_json or {}),
+        )
+        # if we are in debug mode, emit all events
+        while produced_events := await handler.run_step():
+            for ev in produced_events:
+                debug_file_path = os.environ.get('VSCODE_EXTENSION_TEMP_DEBUG_FILE')
+                if debug_file_path:
+                    # Write the debug data
+                    debug_data = {
+                        "llama_event_name": type(ev).__name__,
+                        'llama_event_data': self._serialize_object(ev)
+                    }
+                    with open(debug_file_path, 'w') as f:
+                        json.dump(debug_data, f)
+
+                    # Trigger breakpoint
+                    debugpy.breakpoint()
+
+                # Send the event
+                handler.ctx.send_event(ev)
+        return handler
+
+    async def run_workflow(self, start_event :type[StartEvent]) -> (WorkflowHandler, Optional[UiPathResumeTrigger]):
+        resume_trigger: Optional[UiPathResumeTrigger] = None
+
+        handler: WorkflowHandler = self.context.workflow.run(
+            start_event=start_event if self.context.resume else None,
+            ctx=self.context.workflow_context,
+            **(self.context.input_json or {}),
+        )
+
+        response_applied = False
+        async for event in handler.stream_events():
+            # log the received event on trace level
+            if isinstance(event, InputRequiredEvent):
+                # for api trigger hitl scenarios only pass the str input for processing
+                hitl_processor = HitlProcessor(value=event.prefix)
+                if self.context.resume and not response_applied:
+                    # If we are resuming, we need to apply the response to the event stream.
+                    response_applied = True
+                    response_event = await self.get_response_event()
+                    if response_event:
+                        # If we have a response event, send it to the workflow context.
+                        self.context.workflow_context.send_event(response_event)
+                else:
+                    resume_trigger = await hitl_processor.create_resume_trigger()
+                    break
+
+        return handler, resume_trigger
 
     async def validate(self) -> None:
         """Validate runtime inputs and load Llama agent configuration."""
