@@ -6,18 +6,18 @@ from typing import Optional
 from dotenv import load_dotenv
 from uipath._cli._runtime._contracts import UiPathTraceContext
 from uipath._cli.middlewares import MiddlewareResult
-
 from ._runtime._context import UiPathLlamaIndexRuntimeContext
 from ._runtime._exception import UiPathLlamaIndexRuntimeError
 from ._runtime._runtime import UiPathLlamaIndexRuntime
 from ._utils._config import LlamaIndexConfig
+from uipath._cli._utils._common import serialize_object
 
 logger = logging.getLogger(__name__)
 load_dotenv()
 
 
 def llamaindex_run_middleware(
-    entrypoint: Optional[str], input: Optional[str], resume: bool
+    entrypoint: Optional[str], input: Optional[str], resume: bool, **kwargs
 ) -> MiddlewareResult:
     """Middleware to handle LlamaIndex agent execution"""
 
@@ -37,6 +37,7 @@ def llamaindex_run_middleware(
             context.entrypoint = entrypoint
             context.input = input
             context.resume = resume
+            context.debug = kwargs.get("debug", False)
             context.logs_min_level = env.get("LOG_LEVEL", "INFO")
             context.job_id = env.get("UIPATH_JOB_KEY")
             context.trace_id = env.get("UIPATH_TRACE_ID")
@@ -59,9 +60,9 @@ def llamaindex_run_middleware(
             async with UiPathLlamaIndexRuntime.from_context(context) as runtime:
                 return await runtime.execute()
 
-        asyncio.run(execute())
+        result = asyncio.run(execute())
 
-        return MiddlewareResult(should_continue=False, error_message=None)
+        return MiddlewareResult(should_continue=False, error_message=None, output=serialize_object(result.output))
 
     except UiPathLlamaIndexRuntimeError as e:
         return MiddlewareResult(
