@@ -1,17 +1,7 @@
-# UiPath LLMs and Embeddings
+# LLMs and Embeddings
 
-This guide covers the UiPath-integrated Large Language Models (LLMs) and embedding models available in the UiPath LlamaIndex SDK.
-
-## Overview
-
-The UiPath LlamaIndex SDK provides pre-configured LLM and embedding classes that integrate seamlessly with UiPath. These classes handle authentication, routing, and configuration automatically, allowing you to focus on building your agents.
-
-## Prerequisites
-
-Before using these classes, ensure you have:
-
-- Authenticated with UiPath using `uipath auth`
-- Set up your environment variables (automatically configured after authentication)
+UiPath provides pre-configured LLM and embedding classes that handle authentication, routing, and configuration automatically, allowing you to focus on building your agents.
+You do not need to add tokens from OpenAI, usage of these models will consume `Agent Units` on your account.
 
 ## UiPathOpenAI
 
@@ -127,7 +117,7 @@ multiply_tool = FunctionTool.from_defaults(fn=multiply)
 
 # Create agent with UiPath LLM
 agent = ReActAgent.from_tools(
-    [multiply_tool], 
+    [multiply_tool],
     llm=UiPathOpenAI(model=OpenAIModel.GPT_4O_2024_11_20)
 )
 
@@ -160,3 +150,10 @@ query_engine = index.as_query_engine(
 
 response = query_engine.query("What is machine learning?")
 ```
+
+/// warning
+Please note that you may get errors related to data residency, as some models are not available on all regions.
+
+Example: `[Enforced Region] No model configuration found for product uipath-python-sdk in EU`.
+
+///
