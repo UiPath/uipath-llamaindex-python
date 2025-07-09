@@ -3,6 +3,7 @@ from enum import Enum
 from typing import Any, Union
 
 from llama_index.llms.azure_openai import AzureOpenAI  # type: ignore
+from uipath.utils import EndpointManager
 
 
 class OpenAIModel(Enum):
@@ -42,7 +43,7 @@ class UiPathOpenAI(AzureOpenAI):
         defaults = {
             "model": model_value,
             "deployment_name": model_value,
-            "azure_endpoint": f"{base_url}/llmgateway_/",
+            "azure_endpoint": f"{base_url}/{EndpointManager.get_passthrough_endpoint().format(model=model, api_version=api_version)}",
             "api_key": os.environ.get("UIPATH_ACCESS_TOKEN"),
             "api_version": api_version,
             "is_chat_model": True,

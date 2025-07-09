@@ -10,9 +10,9 @@ from llama_index.core.workflow import (
     HumanResponseEvent,
     InputRequiredEvent,
     JsonPickleSerializer,
+    WorkflowTimeoutError,
 )
-from llama_index.core.workflow.errors import WorkflowTimeoutError
-from llama_index.core.workflow.handler import WorkflowHandler
+from llama_index.core.workflow.handler import WorkflowHandler  # type: ignore
 from openinference.instrumentation.llama_index import (
     LlamaIndexInstrumentor,
     get_current_span,
