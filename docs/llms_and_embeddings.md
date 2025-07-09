@@ -105,23 +105,29 @@ Both classes integrate seamlessly with LlamaIndex components:
 ### Using with Agents
 
 ```python
-from llama_index.core.agent import ReActAgent
-from llama_index.core.tools import FunctionTool
-from uipath_llamaindex.llms import UiPathOpenAI
+import asyncio
+from llama_index.core.agent.workflow import ReActAgent
+from uipath_llamaindex.llms import UiPathOpenAI, OpenAIModel
 
 def multiply(a: int, b: int) -> int:
-    """Multiply two integers and returns the result."""
+    """Multiply two integers and returns the result integer"""
     return a * b
 
-multiply_tool = FunctionTool.from_defaults(fn=multiply)
+
+def add(a: int, b: int) -> int:
+    """Add two integers and returns the result integer"""
+    return a + b
 
 # Create agent with UiPath LLM
-agent = ReActAgent.from_tools(
-    [multiply_tool],
-    llm=UiPathOpenAI(model=OpenAIModel.GPT_4O_2024_11_20)
-)
+agent = ReActAgent(
+    tools=[multiply, add],
+    llm=UiPathOpenAI(model=OpenAIModel.GPT_4O_2024_11_20))
 
-response = agent.chat("What is 21 multiplied by 2?")
+async def main():
+    handler = agent.run("What is 2+(2*4)?")
+    response = await handler
+
+asyncio.run(main())
 ```
 
 ### Using with VectorStoreIndex
