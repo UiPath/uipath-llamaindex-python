@@ -4,13 +4,14 @@ import os
 import uuid
 from typing import Any, Callable, Dict, overload
 
-from llama_index.core.workflow import StopEvent, Workflow
-from llama_index.core.workflow.drawing import StepConfig  # type: ignore
-from llama_index.core.workflow.events import (
+from llama_index.core.workflow import (
     HumanResponseEvent,
     InputRequiredEvent,
+    StopEvent,
+    Workflow,
 )
-from llama_index.core.workflow.utils import (
+from llama_index.core.workflow.drawing import StepConfig  # type: ignore
+from llama_index.core.workflow.utils import (  # type: ignore
     get_steps_from_class,
     get_steps_from_instance,
 )
