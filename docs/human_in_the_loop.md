@@ -1,6 +1,6 @@
 # Human In The Loop
 
-Guide for **Human-In-The-Loop** scenarios within the UiPath-LLamaIndex integration.
+Guide for **Human-In-The-Loop** scenarios within the UiPath-LlamaIndex integration.
 It focuses on the **ctx.write_event_to_stream** LlamaIndex functionality.
 
 ## Models Overview
