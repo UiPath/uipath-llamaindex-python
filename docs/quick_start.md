@@ -1,8 +1,8 @@
-# Quickstart Guide: UiPath LLamaIndex Agents
+# Quickstart Guide: UiPath LlamaIndex Agents
 
 ## Introduction
 
-This guide provides step-by-step instructions for setting up, creating, publishing, and running your first UiPath-LLamaIndex Agent.
+This guide provides step-by-step instructions for setting up, creating, publishing, and running your first UiPath-LlamaIndex Agent.
 
 ## Prerequisites
 
@@ -94,7 +94,7 @@ Activate with: source .venv/bin/activate
 
 ## Create Your First UiPath Agent
 
-Generate your first UiPath LLamaIndex agent:
+Generate your first UiPath LlamaIndex agent:
 
 <!-- termynal -->
 
@@ -113,8 +113,8 @@ This command creates the following files:
 
 | File Name        | Description                                                                                                                      |
 |------------------|----------------------------------------------------------------------------------------------------------------------------------|
-| `main.py`        | LLamaIndex agent code.                                                                                                            |
-| `llama_index.json` | LLamaIndex specific configuration file. |
+| `main.py`        | LlamaIndex agent code.                                                                                                            |
+| `llama_index.json` | LlamaIndex specific configuration file. |
 | `pyproject.toml` | Project metadata and dependencies as per [PEP 518](https://peps.python.org/pep-0518/).                                           |
 
 
@@ -316,6 +316,6 @@ section, as agent input:
 
 ## Next Steps
 
-Congratulations! You have successfully set up, created, published, and run a UiPath LangChain Agent. 🚀
+Congratulations! You have successfully set up, created, published, and run a UiPath LlamaIndex Agent. 🚀
 
 For more advanced agents and agent samples, please refer to our [samples section](https://github.com/UiPath/uipath-llamaindex-python/tree/main/samples) in GitHub.
