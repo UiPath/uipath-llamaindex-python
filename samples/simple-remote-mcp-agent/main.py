@@ -10,7 +10,7 @@ from llama_index.core.workflow import (
 from llama_index.llms.openai import OpenAI
 from llama_index.tools.mcp import McpToolSpec
 from mcp import ClientSession
-from mcp.client.sse import sse_client
+from mcp.client.streamable_http import streamablehttp_client
 
 
 # Define events
@@ -35,15 +35,30 @@ class MCPAgentWorkflow(Workflow):
         """Process the user query using the MCP-enabled agent."""
 
         # Initialize MCP client and tools
-        async with sse_client(
+        async with streamablehttp_client(
             url=os.getenv("UIPATH_MCP_SERVER_URL"),
             headers={"Authorization": f"Bearer {os.getenv('UIPATH_ACCESS_TOKEN')}"},
             timeout=60,
-        ) as (read, write):
+        ) as (read, write, _get_session_id_callback):
             async with ClientSession(read, write) as client_session:
                 await client_session.initialize()
                 mcp_tool_spec = McpToolSpec(client=client_session)
                 tools = await mcp_tool_spec.to_tool_list_async()
+
+                # Print name and input schema for each tool
+                print(f"Available MCP tools: {len(tools)}")
+                for i, tool in enumerate(tools, 1):
+                    print(f"{i}. {tool.metadata.name}")
+                    if tool.metadata.fn_schema:
+                        fn_schema = tool.metadata.fn_schema
+                        if fn_schema.model_fields:
+                            params = list(fn_schema.model_fields.keys())
+                        else:
+                            params = []
+                        print(f"   Parameters: {params}")
+                    else:
+                        print("   Parameters: None")
+                print("-" * 40)
 
                 # Initialize the agent
                 self.agent = FunctionAgent(
