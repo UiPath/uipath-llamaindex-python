@@ -67,7 +67,7 @@ plugins = [
   "pydantic.mypy"
 ]
 exclude = [
-    "samples/.*"
+    "samples/.*", "testcases/.*"
 ]
 
 follow_imports = "silent"
