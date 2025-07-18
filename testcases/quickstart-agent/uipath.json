@@ -1,0 +1,42 @@
+{
+  "entryPoints": [
+    {
+      "filePath": "agent",
+      "uniqueId": "a1ac234f-75bc-4f3a-9bae-514f53cd86db",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "topic": {
+            "title": "Topic",
+            "type": "string"
+          }
+        },
+        "required": [
+          "topic"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "joke": {
+            "title": "Joke",
+            "type": "string"
+          },
+          "critique": {
+            "title": "Critique",
+            "type": "string"
+          }
+        },
+        "required": [
+          "joke",
+          "critique"
+        ]
+      }
+    }
+  ],
+  "bindings": {
+    "version": "2.0",
+    "resources": []
+  }
+}
