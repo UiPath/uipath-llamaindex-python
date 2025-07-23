@@ -17,7 +17,7 @@ load_dotenv()
 
 
 def llamaindex_run_middleware(
-    entrypoint: Optional[str], input: Optional[str], resume: bool
+    entrypoint: Optional[str], input: Optional[str], resume: bool, **kwargs
 ) -> MiddlewareResult:
     """Middleware to handle LlamaIndex agent execution"""
 
@@ -37,6 +37,9 @@ def llamaindex_run_middleware(
             context.entrypoint = entrypoint
             context.input = input
             context.resume = resume
+            context.debug = kwargs.get("debug", False)
+            context.input_file = kwargs.get("input_file", None)
+            context.execution_output_file = kwargs.get("execution_output_file", None)
             context.logs_min_level = env.get("LOG_LEVEL", "INFO")
             context.job_id = env.get("UIPATH_JOB_KEY")
             context.trace_id = env.get("UIPATH_TRACE_ID")
@@ -57,7 +60,7 @@ def llamaindex_run_middleware(
             env["UIPATH_REQUESTING_FEATURE"] = "llamaindex"
 
             async with UiPathLlamaIndexRuntime.from_context(context) as runtime:
-                return await runtime.execute()
+                await runtime.execute()
 
         asyncio.run(execute())
 
