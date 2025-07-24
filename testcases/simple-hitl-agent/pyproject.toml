@@ -1,0 +1,15 @@
+[project]
+name = "llama-simple-hitl-agent"
+version = "0.0.1"
+description = "UiPath LlamaIndex Simple HITL Agent"
+authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+dependencies = [
+    "uipath-llamaindex",
+    "llama-index-llms-openai>=0.2.2",
+    "uipath>=2.0.82",
+]
+
+[tool.uv.sources]
+uipath-llamaindex = { path = "../../", editable = true }

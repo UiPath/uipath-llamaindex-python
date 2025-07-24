@@ -1,0 +1,27 @@
+{
+  "entryPoints": [
+    {
+      "filePath": "agent",
+      "uniqueId": "ca9074cb-d758-483c-a88d-4346b3214fb7",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "hack": {
+            "type": "object"
+          }
+        },
+        "required": []
+      },
+      "output": {
+        "type": "object",
+        "properties": {},
+        "required": []
+      }
+    }
+  ],
+  "bindings": {
+    "version": "2.0",
+    "resources": []
+  }
+}
