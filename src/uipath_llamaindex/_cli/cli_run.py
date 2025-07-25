@@ -31,7 +31,7 @@ def llamaindex_run_middleware(
 
         async def execute():
             context = UiPathLlamaIndexRuntimeContext.from_config(
-                env.get("UIPATH_CONFIG_PATH", "uipath.json")
+                env.get("UIPATH_CONFIG_PATH", "uipath.json"), **kwargs
             )
             context.config = config
             context.entrypoint = entrypoint
@@ -40,6 +40,7 @@ def llamaindex_run_middleware(
             context.debug = kwargs.get("debug", False)
             context.input_file = kwargs.get("input_file", None)
             context.execution_output_file = kwargs.get("execution_output_file", None)
+            context.is_eval_run = kwargs.get("is_eval_run", False)
             context.logs_min_level = env.get("LOG_LEVEL", "INFO")
             context.job_id = env.get("UIPATH_JOB_KEY")
             context.trace_id = env.get("UIPATH_TRACE_ID")
