@@ -1,14 +1,14 @@
+import logging
 import os
 from enum import Enum
 from typing import Any, Union
-import logging
-import json
+
 from llama_index.llms.azure_openai import AzureOpenAI  # type: ignore
 from openai import PermissionDeniedError
 from uipath._cli._runtime._contracts import UiPathErrorCategory
+from uipath.utils import EndpointManager
 
 from .._cli._runtime._exception import UiPathLlamaIndexRuntimeError
-from llama_index.core.base.llms.types  import CompletionResponse
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,6 @@ class OpenAIModel(Enum):
     TEXT_DAVINCI_003 = "text-davinci-003"
 
 
-# Define your custom AzureOpenAI class with default settings
 class UiPathOpenAI(AzureOpenAI):
     def __init__(
         self,
@@ -50,57 +49,44 @@ class UiPathOpenAI(AzureOpenAI):
         defaults = {
             "model": model_value,
             "deployment_name": model_value,
-            # "azure_endpoint": f"{base_url}/{EndpointManager.get_passthrough_endpoint().format(model=model, api_version=api_version)}",
-            "azure_endpoint": f"{base_url}/llm/openai/deployments/{model_value}/chat/completions?api-version={api_version}",
+            "azure_endpoint": f"{base_url}/{EndpointManager.get_passthrough_endpoint().format(model=model, api_version=api_version)}",
             "api_key": os.environ.get("UIPATH_ACCESS_TOKEN"),
             "api_version": api_version,
             "is_chat_model": True,
             "default_headers": default_headers_dict,
         }
-        print("endpoint", defaults["azure_endpoint"])
         final_kwargs = {**defaults, **kwargs}
         super().__init__(**final_kwargs)
 
-    def _is_license_error(self, e: PermissionDeniedError) -> bool:
-        """Check if the error is a license-related 403 error."""
+    def _handle_permission_denied_error(self, e: PermissionDeniedError) -> None:
+        """Handle PermissionDeniedError and convert license errors to UiPathLlamaIndexRuntimeError."""
         if e.status_code == 403 and e.response:
             try:
                 response_body = e.response.json()
                 if isinstance(response_body, dict):
                     title = response_body.get("title", "").lower()
-                    return title == "license not available"
-            except Exception:
-                pass
-        return False
+                    if title == "license not available":
+                        raise UiPathLlamaIndexRuntimeError(
+                            code="LICENSE_NOT_AVAILABLE",
+                            title=response_body.get("title", "License Not Available"),
+                            detail=response_body.get(
+                                "detail", "License not available for LLM usage"
+                            ),
+                            category=UiPathErrorCategory.DEPLOYMENT,
+                        ) from e
+            except Exception as parse_error:
+                logger.warning(f"Failed to parse 403 response JSON: {parse_error}")
 
-    def _create_license_fallback(self) -> CompletionResponse:
-        """Create a fallback response for license errors."""
-        default_message = "I apologize, but I'm currently unable to process your request due to licensing limitations. Please contact your UiPath administrator to configure LLM licensing for this Agent Hub instance."
-        
-        return CompletionResponse(
-            text=default_message,
-            raw={"id": "license-fallback", "object": "text_completion", "model": self.model}
-        )
-
-    async def acomplete(self, prompt, **kwargs):
-        """Override acomplete to handle license errors universally."""
-        try:
-            return await super().acomplete(prompt, **kwargs)
-        except PermissionDeniedError as e:
-            if self._is_license_error(e):
-                logger.warning("UiPath Agent Hub license not available - returning fallback response")
-                return self._create_license_fallback()
-            raise
+        raise e
 
     async def _achat(self, messages, **kwargs):
         try:
             return await super()._achat(messages, **kwargs)
         except PermissionDeniedError as e:
-            if self._is_license_error(e):
-                raise UiPathLlamaIndexRuntimeError(
-                    code="LICENSE_NOT_AVAILABLE",
-                    title="License Not Available", 
-                    detail="License not available for LLM usage",
-                    category=UiPathErrorCategory.DEPLOYMENT,
-                ) from e
-            raise
+            self._handle_permission_denied_error(e)
+
+    def _chat(self, messages, **kwargs):
+        try:
+            return super()._chat(messages, **kwargs)
+        except PermissionDeniedError as e:
+            self._handle_permission_denied_error(e)
