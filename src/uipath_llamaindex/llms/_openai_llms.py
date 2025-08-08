@@ -1,9 +1,16 @@
 import os
 from enum import Enum
 from typing import Any, Union
+import logging
+import json
+from llama_index.llms.azure_openai import AzureOpenAI
+from openai import PermissionDeniedError
+from uipath._cli._runtime._contracts import UiPathErrorCategory
 
-from llama_index.llms.azure_openai import AzureOpenAI  # type: ignore
-from uipath.utils import EndpointManager
+from .._cli._runtime._exception import UiPathLlamaIndexRuntimeError
+
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIModel(Enum):
@@ -43,11 +50,34 @@ class UiPathOpenAI(AzureOpenAI):
         defaults = {
             "model": model_value,
             "deployment_name": model_value,
-            "azure_endpoint": f"{base_url}/{EndpointManager.get_passthrough_endpoint().format(model=model, api_version=api_version)}",
+            # "azure_endpoint": f"{base_url}/{EndpointManager.get_passthrough_endpoint().format(model=model, api_version=api_version)}",
+            "azure_endpoint": f"{base_url}/llm/openai/deployments/{model_value}/chat/completions?api-version={api_version}",
             "api_key": os.environ.get("UIPATH_ACCESS_TOKEN"),
             "api_version": api_version,
             "is_chat_model": True,
             "default_headers": default_headers_dict,
         }
+        print("endpoint", defaults["azure_endpoint"])
         final_kwargs = {**defaults, **kwargs}
         super().__init__(**final_kwargs)
+
+    async def _achat(self, messages, **kwargs):
+        try:
+            return await super()._achat(messages, **kwargs)
+        except PermissionDeniedError as e:
+            if e.status_code == 403 and e.response:
+                try:
+                    response_body = e.response.json()
+                    if isinstance(response_body, dict):
+                        title = response_body.get("title", "").lower()
+                        if title == "license not available":
+                            raise UiPathLlamaIndexRuntimeError(
+                                code="LICENSE_NOT_AVAILABLE",
+                                title=response_body.get("title", "License Not Available"),
+                                detail=response_body.get("detail", "License not available for LLM usage"),
+                                category=UiPathErrorCategory.DEPLOYMENT,
+                            ) from e
+                except Exception as parse_error:
+                    logger.warning(f"Failed to parse 403 response JSON: {parse_error}")
+                    
+            raise
