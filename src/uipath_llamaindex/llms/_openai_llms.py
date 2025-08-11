@@ -1,9 +1,16 @@
+import logging
 import os
 from enum import Enum
 from typing import Any, Union
 
 from llama_index.llms.azure_openai import AzureOpenAI  # type: ignore
+from openai import PermissionDeniedError
+from uipath._cli._runtime._contracts import UiPathErrorCategory
 from uipath.utils import EndpointManager
+
+from .._cli._runtime._exception import UiPathLlamaIndexRuntimeError
+
+logger = logging.getLogger(__name__)
 
 
 class OpenAIModel(Enum):
@@ -18,7 +25,6 @@ class OpenAIModel(Enum):
     TEXT_DAVINCI_003 = "text-davinci-003"
 
 
-# Define your custom AzureOpenAI class with default settings
 class UiPathOpenAI(AzureOpenAI):
     def __init__(
         self,
@@ -51,3 +57,36 @@ class UiPathOpenAI(AzureOpenAI):
         }
         final_kwargs = {**defaults, **kwargs}
         super().__init__(**final_kwargs)
+
+    def _handle_permission_denied_error(self, e: PermissionDeniedError) -> None:
+        """Handle PermissionDeniedError and convert license errors to UiPathLlamaIndexRuntimeError."""
+        if e.status_code == 403 and e.response:
+            try:
+                response_body = e.response.json()
+                if isinstance(response_body, dict):
+                    title = response_body.get("title", "").lower()
+                    if title == "license not available":
+                        raise UiPathLlamaIndexRuntimeError(
+                            code="LICENSE_NOT_AVAILABLE",
+                            title=response_body.get("title", "License Not Available"),
+                            detail=response_body.get(
+                                "detail", "License not available for LLM usage"
+                            ),
+                            category=UiPathErrorCategory.DEPLOYMENT,
+                        ) from e
+            except Exception as parse_error:
+                logger.warning(f"Failed to parse 403 response JSON: {parse_error}")
+
+        raise e
+
+    async def _achat(self, messages, **kwargs):
+        try:
+            return await super()._achat(messages, **kwargs)
+        except PermissionDeniedError as e:
+            self._handle_permission_denied_error(e)
+
+    def _chat(self, messages, **kwargs):
+        try:
+            return super()._chat(messages, **kwargs)
+        except PermissionDeniedError as e:
+            self._handle_permission_denied_error(e)
