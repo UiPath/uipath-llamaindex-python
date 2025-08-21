@@ -41,22 +41,6 @@ uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 ```
 
-Alternatively, use `pip`:
-
-```bash
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-# On Windows PowerShell: .venv\Scripts\Activate.ps1
-# On Windows CMD: .venv\Scripts\activate
-# On macOS/Linux: source .venv/bin/activate
-source .venv/bin/activate
-
-# Upgrade pip
-python -m pip install --upgrade pip
-```
-
 ### 2. Install Dependencies
 
 ```bash
@@ -78,8 +62,8 @@ Required environment variables:
 - `LLAMACLOUD_API_KEY`: Your LlamaCloud API key
 - `LLAMACLOUD_ORG_ID`: Your LlamaCloud organization ID
 - `LLAMACLOUD_PROJECT_NAME`: Your LlamaCloud project name
-- `LLAMACLOUD_INDEX_1_NAME`: First index name (e.g., "company_policy")
-- `LLAMACLOUD_INDEX_2_NAME`: Second index name (e.g., "personal_preferences")
+- `LLAMACLOUD_INDEX_1_NAME`: First index name (e.g., "company-policy")
+- `LLAMACLOUD_INDEX_2_NAME`: Second index name (e.g., "personal-preferences")
 
 ### 4. Configure LlamaCloud Indexes
 
@@ -116,7 +100,7 @@ Generates comprehensive travel recommendations combining both company policies a
 
 ```bash
 # Run the agent with a query
-uipath run agent '{"query": "What are the travel rates for New York?"}'
+uipath run agent '{"user_msg": "What are the travel rates for New York?"}'
 ```
 
 #### Option 3: Using Input File
