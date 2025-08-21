@@ -1,0 +1,39 @@
+{
+  "entryPoints": [
+    {
+      "filePath": "agent",
+      "uniqueId": "b2c345f2-86cd-4e4b-b2c0-625f64de97ec",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "user_msg": {
+            "title": "Travel Query",
+            "type": "string",
+            "description": "Your travel-related question or request (e.g., 'What are the travel rates for New York?', 'What are my travel preferences?', 'Give me travel recommendations for a business trip')"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "title": "Agent Response",
+            "type": "string",
+            "description": "The agent's response using available tools to search company policies and personal preferences"
+          }
+        },
+        "required": [
+          "response"
+        ]
+      }
+    }
+  ],
+  "bindings": {
+    "version": "2.0",
+    "resources": []
+  }
+} 
