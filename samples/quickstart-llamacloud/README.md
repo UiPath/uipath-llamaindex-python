@@ -1,6 +1,6 @@
 # Quickstart LlamaCloud Agent
 
-This project demonstrates how to integrate UiPath with LlamaIndex and LlamaCloud for document search and travel assistance workflows using a FunctionAgent.
+This project demonstrates how to integrate UiPath with LlamaIndex and LlamaCloud for document search and travel assistance workflows using a `FunctionAgent`.
 
 ## Overview
 
@@ -33,28 +33,9 @@ The Quickstart LlamaCloud Agent provides a FunctionAgent that can:
 We recommend using `uv` for package management:
 
 ```bash
-# Initialize a new uv project
-uv init .
-
 # Create and activate virtual environment
 uv venv
 source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-```
-
-Alternatively, use `pip`:
-
-```bash
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-# On Windows PowerShell: .venv\Scripts\Activate.ps1
-# On Windows CMD: .venv\Scripts\activate
-# On macOS/Linux: source .venv/bin/activate
-source .venv/bin/activate
-
-# Upgrade pip
-python -m pip install --upgrade pip
 ```
 
 ### 2. Install Dependencies
@@ -78,16 +59,54 @@ Required environment variables:
 - `LLAMACLOUD_API_KEY`: Your LlamaCloud API key
 - `LLAMACLOUD_ORG_ID`: Your LlamaCloud organization ID
 - `LLAMACLOUD_PROJECT_NAME`: Your LlamaCloud project name
-- `LLAMACLOUD_INDEX_1_NAME`: First index name (e.g., "company_policy")
-- `LLAMACLOUD_INDEX_2_NAME`: Second index name (e.g., "personal_preferences")
+- `LLAMACLOUD_INDEX_1_NAME`: First index name (e.g., "company-policy")
+- `LLAMACLOUD_INDEX_2_NAME`: Second index name (e.g., "personal-preferences")
 
-### 4. Configure LlamaCloud Indexes
+## 4. Authenticate With UiPath
+
+```shell
+> uipath auth
+⠋ Authenticating with UiPath ...
+🔗 If a browser window did not open, please open the following URL in your browser: [LINK]
+👇 Select tenant:
+  0: Tenant1
+  1: Tenant2
+Select tenant number: 0
+Selected tenant: Tenant1
+✓  Authentication successful.
+```
+
+### 5. Configure LlamaCloud Indexes
 
 - Set up your indexes in LlamaCloud with the names specified in your `.env` file
 - You can drag and drop the files in `/sample_data` into the relevant indexes
 - Update the project name and organization ID in your `.env` file
 - Ensure your API key has access to the specified indexes
 
+### 6. Run Locally
+
+```bash
+# Run the agent with a query
+uipath run agent '{"user_msg": "What are the travel rates for New York?"}'
+```
+
+### 7. Run as a UiPath Deployment
+
+1. **Package your project:**
+   ```bash
+   uipath pack
+   ```
+
+2. **Publish to UiPath Cloud:**
+   ```bash
+   uipath publish --my-workspace
+   ```
+
+3. **Invoke the agent:**
+   ```bash
+   uipath invoke agent '{"user_msg": "What are the travel rates for New York?"}'
+   ```
+   
 ## Available Functions
 
 The agent has access to three main functions:
@@ -107,50 +126,6 @@ Generates comprehensive travel recommendations combining both company policies a
 - **Use case**: "Give me travel recommendations for a business trip"
 - **Returns**: Combined analysis from both indexes
 
-## Usage
-
-### Local Testing
-
-
-#### Using UiPath CLI (Recommended)
-
-```bash
-# Run the agent with a query
-uipath run agent '{"query": "What are the travel rates for New York?"}'
-```
-
-#### Option 3: Using Input File
-
-Create an `input.json` file:
-
-```json
-{
-  "user_msg": "What are the travel rates for California?"
-}
-```
-
-
-### UiPath Deployment
-
-1. **Authenticate with UiPath:**
-   ```bash
-   uipath auth
-   ```
-
-2. **Package your project:**
-   ```bash
-   uipath pack
-   ```
-
-3. **Publish to UiPath Cloud:**
-   ```bash
-   uipath publish --my-workspace
-   ```
-
-4. **Invoke the agent:**
-   ```bash
-   uipath invoke agent '{"user_msg": "What are the travel rates for New York?"}'
-   ```
 
 
 ## Example Queries
