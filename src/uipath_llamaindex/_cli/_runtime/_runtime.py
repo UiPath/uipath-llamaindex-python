@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import pickle
-from contextlib import suppress
 from typing import Optional, cast
 
 from llama_index.core.workflow import (
@@ -13,13 +12,6 @@ from llama_index.core.workflow import (
     WorkflowTimeoutError,
 )
 from llama_index.core.workflow.handler import WorkflowHandler  # type: ignore
-from openinference.instrumentation.llama_index import (
-    LlamaIndexInstrumentor,
-    get_current_span,
-)
-from opentelemetry import trace
-from opentelemetry.sdk.trace import TracerProvider
-from opentelemetry.sdk.trace.export import BatchSpanProcessor
 from uipath._cli._runtime._contracts import (
     UiPathBaseRuntime,
     UiPathErrorCategory,
@@ -28,9 +20,8 @@ from uipath._cli._runtime._contracts import (
     UiPathRuntimeStatus,
 )
 from uipath._cli._runtime._hitl import HitlProcessor, HitlReader
-from uipath.tracing import TracingManager
 
-from .._tracing._oteladapter import LlamaIndexExporter
+from .._utils._config import LlamaIndexConfig
 from ._context import UiPathLlamaIndexRuntimeContext
 from ._exception import UiPathLlamaIndexRuntimeError
 
@@ -57,19 +48,6 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             UiPathLlamaIndexRuntimeError: If execution fails
         """
         await self.validate()
-
-        self.trace_provider = TracerProvider()
-        self.tracer = self.trace_provider.get_tracer("uipath.llamaindex.runtime")
-
-        with suppress(Exception):
-            trace.set_tracer_provider(self.trace_provider)
-            self.trace_provider.add_span_processor(
-                BatchSpanProcessor(LlamaIndexExporter())
-            )
-
-            LlamaIndexInstrumentor().instrument(tracer_provider=self.trace_provider)
-
-            TracingManager.register_current_span_provider(get_current_span)
 
         try:
             if self.context.resume is False and self.context.job_id is None:
@@ -176,8 +154,6 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 detail,
                 UiPathErrorCategory.USER,
             ) from e
-        finally:
-            self.trace_provider.shutdown()
 
     async def validate(self) -> None:
         """Validate runtime inputs and load Llama agent configuration."""
@@ -193,12 +169,14 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             ) from e
 
         if self.context.config is None:
-            raise UiPathLlamaIndexRuntimeError(
-                "CONFIG_MISSING",
-                "Invalid configuration",
-                "Failed to load configuration",
-                UiPathErrorCategory.DEPLOYMENT,
-            )
+            self.context.config = LlamaIndexConfig()
+            if not self.context.config.exists:
+                raise UiPathLlamaIndexRuntimeError(
+                    "CONFIG_MISSING",
+                    "Invalid configuration",
+                    "Failed to load configuration",
+                    UiPathErrorCategory.DEPLOYMENT,
+                )
 
         try:
             self.context.config.load_config()

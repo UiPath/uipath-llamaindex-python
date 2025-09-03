@@ -4,12 +4,17 @@ from os import environ as env
 from typing import Optional
 
 from dotenv import load_dotenv
-from uipath._cli._runtime._contracts import UiPathTraceContext
+from openinference.instrumentation.llama_index import (
+    LlamaIndexInstrumentor,
+    get_current_span,
+)
+from uipath._cli._runtime._contracts import UiPathRuntimeFactory, UiPathTraceContext
 from uipath._cli.middlewares import MiddlewareResult
 
 from ._runtime._context import UiPathLlamaIndexRuntimeContext
 from ._runtime._exception import UiPathLlamaIndexRuntimeError
 from ._runtime._runtime import UiPathLlamaIndexRuntime
+from ._tracing._oteladapter import LlamaIndexExporter
 from ._utils._config import LlamaIndexConfig
 
 logger = logging.getLogger(__name__)
@@ -60,8 +65,16 @@ def llamaindex_run_middleware(
             env["UIPATH_REQUESTING_PRODUCT"] = "uipath-python-sdk"
             env["UIPATH_REQUESTING_FEATURE"] = "llamaindex"
 
-            async with UiPathLlamaIndexRuntime.from_context(context) as runtime:
-                await runtime.execute()
+            runtime_factory = UiPathRuntimeFactory(
+                UiPathLlamaIndexRuntime, UiPathLlamaIndexRuntimeContext
+            )
+
+            if context.job_id:
+                runtime_factory.add_span_exporter(LlamaIndexExporter())
+
+            runtime_factory.add_instrumentor(LlamaIndexInstrumentor, get_current_span)
+
+            await runtime_factory.execute(context)
 
         asyncio.run(execute())
 
