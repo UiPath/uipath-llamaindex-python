@@ -3096,7 +3096,7 @@ wheels = [
 
 [[package]]
 name = "uipath"
-version = "2.1.30"
+version = "2.1.35"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-monitor-opentelemetry" },
@@ -3113,14 +3113,14 @@ dependencies = [
     { name = "tomli" },
     { name = "truststore" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/70/83/dced6b0d69902a654239437627be57e6b79aa32803a34befa05395df6529/uipath-2.1.30.tar.gz", hash = "sha256:eebe8c53ec4c6fcbaec2eb81b1a01dc421d9c57b7b8d2731b1f7e4e1dd6f7fd9", size = 1975410, upload-time = "2025-09-02T15:05:28.103Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/13/b9/3f71c0bc82534a9266dda6b69f390b87eae6ad41d6f378a42bdd345b0e60/uipath-2.1.35.tar.gz", hash = "sha256:08701dc97631e7c72e3508fbf1b6cc79961e9c1369cebb9b7d010facdc1ab171", size = 1976192, upload-time = "2025-09-05T13:59:48.145Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/91/fe/9d6c99b6caf360101f2e540f7b51536a579cd95b5bca6e1b2000744f3678/uipath-2.1.30-py3-none-any.whl", hash = "sha256:83a87443cdcac079568b0f137e077e181dd8b5680e0564bb56329502a557090c", size = 198458, upload-time = "2025-09-02T15:05:26.223Z" },
+    { url = "https://files.pythonhosted.org/packages/5b/ea/822241cf528f279f199f1485195309089563c956a605deed0373f5b8cf23/uipath-2.1.35-py3-none-any.whl", hash = "sha256:32606138fb385a3fe9ea0be286103c0d40963f74aad6bf5cda778b839c022f2b", size = 200002, upload-time = "2025-09-05T13:59:46.144Z" },
 ]
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.0.32"
+version = "0.0.34"
 source = { editable = "." }
 dependencies = [
     { name = "llama-index" },
@@ -3148,7 +3148,7 @@ requires-dist = [
     { name = "llama-index-embeddings-azure-openai", specifier = ">=0.3.8" },
     { name = "llama-index-llms-azure-openai", specifier = ">=0.3.2" },
     { name = "openinference-instrumentation-llama-index", specifier = ">=4.3.0" },
-    { name = "uipath", specifier = ">=2.1.30,<2.2.0" },
+    { name = "uipath", specifier = ">=2.1.35,<2.2.0" },
 ]
 
 [package.metadata.requires-dev]
