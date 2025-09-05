@@ -6,7 +6,7 @@ authors = [{ name = "Tuana Celik", email = "tuana@runllama.ai" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
 dependencies = [
-    "uipath-llamaindex>=0.0.33",
+    "uipath-llamaindex>=0.0.35",
     "llama-index-llms-openai>=0.2.2",
     "llama-cloud-services"
-] 
+]

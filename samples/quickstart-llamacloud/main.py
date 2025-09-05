@@ -1,9 +1,10 @@
 import os
 
 from dotenv import load_dotenv
+from llama_cloud_services import LlamaCloudIndex
 from llama_index.core.agent.workflow import FunctionAgent
-from llama_index.indices.managed.llama_cloud import LlamaCloudIndex
 from llama_index.llms.openai import OpenAI
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -129,6 +130,12 @@ Based on the above information, here are the key considerations for your travel 
         return f"Error generating travel recommendation: {str(e)}"
 
 
+class AgentResponse(BaseModel):
+    response: str = Field(
+        description="The agent's response using available tools to search company policies and personal preferences"
+    )
+
+
 # Create the FunctionAgent with our tools
 agent = FunctionAgent(
     tools=[
@@ -137,6 +144,7 @@ agent = FunctionAgent(
         get_travel_recommendation,
     ],
     llm=llm,
+    output_cls=AgentResponse,
     system_prompt="""You are a helpful travel assistant that can search through company travel policies and personal preferences to provide comprehensive travel guidance.
 
 You have access to three main functions:
