@@ -4,6 +4,7 @@ import os
 import pickle
 from typing import Optional, cast
 
+from llama_index.core.agent.workflow.workflow_events import AgentOutput
 from llama_index.core.workflow import (
     Context,
     HumanResponseEvent,
@@ -102,7 +103,19 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                         UiPathErrorCategory.USER,
                     ) from e
                 try:
-                    serialized_output = self._serialize_object(output)
+                    if isinstance(output, AgentOutput):
+                        structured_response = getattr(
+                            output, "structured_response", None
+                        )
+                        if structured_response is not None:
+                            serialized_output = self._serialize_object(
+                                structured_response
+                            )
+                        else:
+                            serialized_output = self._serialize_object(output)
+                    else:
+                        serialized_output = self._serialize_object(output)
+
                     # create simple kvp from string
                     if type(serialized_output) is str:
                         serialized_output = {"result": serialized_output}
