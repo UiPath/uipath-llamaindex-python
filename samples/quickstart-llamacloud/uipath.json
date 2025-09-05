@@ -22,7 +22,7 @@
         "properties": {
           "response": {
             "title": "Agent Response",
-            "type": "string",
+            "type": "object",
             "description": "The agent's response using available tools to search company policies and personal preferences"
           }
         },
