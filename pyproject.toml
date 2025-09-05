@@ -1,6 +1,6 @@
 [project]
 name = "uipath-llamaindex"
-version = "0.0.33"
+version = "0.0.34"
 description = "UiPath LlamaIndex SDK"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
@@ -9,7 +9,7 @@ dependencies = [
     "llama-index-embeddings-azure-openai>=0.3.8",
     "llama-index-llms-azure-openai>=0.3.2",
     "openinference-instrumentation-llama-index>=4.3.0",
-    "uipath>=2.1.30, <2.2.0",
+    "uipath>=2.1.35, <2.2.0",
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",
