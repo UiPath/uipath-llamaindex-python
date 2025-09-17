@@ -1,12 +1,9 @@
 import os
 
-from dotenv import load_dotenv
 from llama_cloud_services import LlamaCloudIndex
 from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.llms.openai import OpenAI
 from pydantic import BaseModel, Field
-
-load_dotenv()
 
 # Initialize LlamaCloud Index connections
 company_policy_index = LlamaCloudIndex(
