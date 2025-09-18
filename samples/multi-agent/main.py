@@ -1,6 +1,5 @@
 import json
 
-from dotenv import load_dotenv
 from llama_index.core.agent.workflow import AgentWorkflow
 from llama_index.core.workflow import (
     Context,
@@ -9,8 +8,6 @@ from llama_index.core.workflow import (
 from llama_index.llms.openai import OpenAI
 
 from uipath_llamaindex.models import InvokeProcessEvent
-
-load_dotenv()
 
 llm = OpenAI(model="gpt-4o-mini")
 
