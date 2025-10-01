@@ -1,0 +1,5 @@
+{
+  "status": "error",
+  "message": "Invalid PTO request: end date must be after start date",
+  "employee": "Alice Williams"
+}

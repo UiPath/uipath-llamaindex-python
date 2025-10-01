@@ -1,0 +1,50 @@
+{
+    "entryPoints": [
+        {
+            "filePath": "agent",
+            "uniqueId": "03ef4524-afd4-4130-b62f-61c9a236fe9e",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "numbers": {
+                        "items": {
+                            "type": "integer"
+                        },
+                        "title": "Numbers",
+                        "type": "array"
+                    }
+                },
+                "required": [
+                    "numbers"
+                ]
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "sum_result": {
+                        "title": "Sum Result",
+                        "type": "integer"
+                    },
+                    "count": {
+                        "title": "Count",
+                        "type": "integer"
+                    },
+                    "average": {
+                        "title": "Average",
+                        "type": "number"
+                    }
+                },
+                "required": [
+                    "sum_result",
+                    "count",
+                    "average"
+                ]
+            }
+        }
+    ],
+    "bindings": {
+        "version": "2.0",
+        "resources": []
+    }
+}

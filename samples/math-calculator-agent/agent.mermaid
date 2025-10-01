@@ -1,0 +1,17 @@
+flowchart TD
+    step__done["_done"]:::stepStyle
+    step_calculate_average["calculate_average"]:::stepStyle
+    step_calculate_sum["calculate_sum"]:::stepStyle
+    event_ProcessedEvent([<p>ProcessedEvent</p>]):::defaultEventStyle
+    event_ResultEvent([<p>ResultEvent</p>]):::stopEventStyle
+    event_DataEvent([<p>DataEvent</p>]):::defaultEventStyle
+    event_ResultEvent --> step__done
+    step_calculate_average --> event_ResultEvent
+    event_ProcessedEvent --> step_calculate_average
+    step_calculate_sum --> event_ProcessedEvent
+    event_DataEvent --> step_calculate_sum
+    classDef stepStyle fill:#f2f0ff,line-height:1.2
+    classDef externalStyle fill:#f2f0ff,line-height:1.2
+    classDef defaultEventStyle fill-opacity:0
+    classDef stopEventStyle fill:#bfb6fc
+    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2

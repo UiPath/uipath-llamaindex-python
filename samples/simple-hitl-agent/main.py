@@ -4,9 +4,11 @@ from llama_index.core.workflow import (
     HumanResponseEvent,
     InputRequiredEvent,
 )
-from llama_index.llms.openai import OpenAI
 
-llm = OpenAI(model="gpt-4o-mini")
+# from llama_index.llms.openai import OpenAI
+from uipath_llamaindex.llms import UiPathOpenAI
+
+llm = UiPathOpenAI(model="gpt-4o-2024-11-20")
 
 
 async def may_research_company(ctx: Context, company_name: str) -> bool:

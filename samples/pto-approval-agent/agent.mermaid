@@ -1,0 +1,18 @@
+flowchart TD
+    step__done["_done"]:::stepStyle
+    step_handle_approval["handle_approval"]:::stepStyle
+    step_process_pto_request["process_pto_request"]:::stepStyle
+    event_StopEvent([<p>StopEvent</p>]):::stopEventStyle
+    event_ProcessApprovalEvent([<p>ProcessApprovalEvent</p>]):::defaultEventStyle
+    event_PTORequestEvent([<p>PTORequestEvent</p>]):::defaultEventStyle
+    event_StopEvent --> step__done
+    step_handle_approval --> event_StopEvent
+    event_ProcessApprovalEvent --> step_handle_approval
+    step_process_pto_request --> event_ProcessApprovalEvent
+    step_process_pto_request --> event_StopEvent
+    event_PTORequestEvent --> step_process_pto_request
+    classDef stepStyle fill:#f2f0ff,line-height:1.2
+    classDef externalStyle fill:#f2f0ff,line-height:1.2
+    classDef defaultEventStyle fill-opacity:0
+    classDef stopEventStyle fill:#bfb6fc
+    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2

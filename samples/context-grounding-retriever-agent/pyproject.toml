@@ -1,0 +1,12 @@
+[project]
+name = "context-grounding-retriever-agent"
+version = "0.0.4"
+description = "UiPath LLamaIndex agent for context grounding indexes"
+authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.10"
+dependencies = [
+    "langchain-community>=0.3.30",
+    "llama-index>=0.14.3",
+    "uipath-llamaindex>=0.0.36",
+]

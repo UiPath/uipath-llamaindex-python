@@ -1,0 +1,9 @@
+{
+  "status": "approved",
+  "employee": "Charlie Brown",
+  "start_date": "2025-10-10",
+  "end_date": "2025-10-14",
+  "days": 5,
+  "reason": "family emergency",
+  "message": "PTO request APPROVED for Charlie Brown: 5 day(s) from 2025-10-10 to 2025-10-14. Reason: family emergency"
+}
