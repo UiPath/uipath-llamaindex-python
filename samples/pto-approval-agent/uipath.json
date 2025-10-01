@@ -1,0 +1,52 @@
+{
+    "entryPoints": [
+        {
+            "filePath": "agent",
+            "uniqueId": "5793994c-bd95-41a4-a0ef-6f71a9acd163",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "employee_name": {
+                        "title": "Employee Name",
+                        "type": "string"
+                    },
+                    "start_date": {
+                        "title": "Start Date",
+                        "type": "string"
+                    },
+                    "end_date": {
+                        "title": "End Date",
+                        "type": "string"
+                    },
+                    "reason": {
+                        "title": "Reason",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "employee_name",
+                    "start_date",
+                    "end_date",
+                    "reason"
+                ]
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "title": "Result",
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "result"
+                ]
+            }
+        }
+    ],
+    "bindings": {
+        "version": "2.0",
+        "resources": []
+    }
+}
