@@ -2573,6 +2573,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyperclip"
+version = "1.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/52/d87eba7cb129b81563019d1679026e7a112ef76855d6159d24754dbd2a51/pyperclip-1.11.0.tar.gz", hash = "sha256:244035963e4428530d9e3a6101a1ef97209c6825edab1567beac148ccc1db1b6", size = 12185, upload-time = "2025-09-26T14:40:37.245Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/80/fc9d01d5ed37ba4c42ca2b55b4339ae6e200b456be3a1aaddf4a9fa99b8c/pyperclip-1.11.0-py3-none-any.whl", hash = "sha256:299403e9ff44581cb9ba2ffeed69c7aa96a008622ad0c46cb575ca75b5b84273", size = 11063, upload-time = "2025-09-26T14:40:36.069Z" },
+]
+
+[[package]]
 name = "pytest"
 version = "8.4.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3096,7 +3105,7 @@ wheels = [
 
 [[package]]
 name = "uipath"
-version = "2.1.36"
+version = "2.1.71"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "azure-monitor-opentelemetry" },
@@ -3106,6 +3115,7 @@ dependencies = [
     { name = "opentelemetry-sdk" },
     { name = "pathlib" },
     { name = "pydantic" },
+    { name = "pyperclip" },
     { name = "python-dotenv" },
     { name = "rich" },
     { name = "tenacity" },
@@ -3113,14 +3123,14 @@ dependencies = [
     { name = "tomli" },
     { name = "truststore" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/00/45/9172beddd128f5f1114e77d175118c34c5286d53e18a6f0d18129dd42cd5/uipath-2.1.36.tar.gz", hash = "sha256:f8c3dd87d1df529df649093d9c168ebc7fb371c2750b7abd782316e81ddcd1ab", size = 1976210, upload-time = "2025-09-05T15:21:09.523Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/eb/32/000b8f54c48bb46fdf1e65f4e6eb3c98fcd293ad10c5683f5ce1d8b4d9c1/uipath-2.1.71.tar.gz", hash = "sha256:a8a233e068e73eb67ad4be09b7f631c0fd31ca2f904d0830d8e2a6e9eec2fc3b", size = 2038838, upload-time = "2025-10-01T08:03:26.676Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/d3/dd/e33dbf0ed15c398a4a7058c3076eafef34022a643746e430d6f5d12b0827/uipath-2.1.36-py3-none-any.whl", hash = "sha256:ecdb72ff998fa47e40a0e4b9a734c0c00b5eb50a9c0f9649799616eec7594203", size = 199977, upload-time = "2025-09-05T15:21:07.566Z" },
+    { url = "https://files.pythonhosted.org/packages/1e/69/4da6cb11a9362c9ee03cfbcef9badf465b77d7f5c51f88caf8fb60905e8d/uipath-2.1.71-py3-none-any.whl", hash = "sha256:87922d8a027574c489bc6a62ea4aa7e427c7b0ae147c71d47487719bd0d574ca", size = 250695, upload-time = "2025-10-01T08:03:24.567Z" },
 ]
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.0.35"
+version = "0.0.36"
 source = { editable = "." }
 dependencies = [
     { name = "llama-index" },
@@ -3148,7 +3158,7 @@ requires-dist = [
     { name = "llama-index-embeddings-azure-openai", specifier = ">=0.3.8" },
     { name = "llama-index-llms-azure-openai", specifier = ">=0.3.2" },
     { name = "openinference-instrumentation-llama-index", specifier = ">=4.3.0" },
-    { name = "uipath", specifier = ">=2.1.36,<2.2.0" },
+    { name = "uipath", specifier = ">=2.1.54,<2.2.0" },
 ]
 
 [package.metadata.requires-dev]

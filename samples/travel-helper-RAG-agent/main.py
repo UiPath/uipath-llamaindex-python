@@ -2,7 +2,7 @@ import json
 import time
 
 from llama_index.core import get_response_synthesizer
-from llama_index.core.agent.react.base import ReActAgent
+from llama_index.core.agent import ReActAgent
 from llama_index.core.response_synthesizers.type import ResponseMode
 from llama_index.core.tools import QueryEngineTool, ToolMetadata
 from llama_index.core.workflow import (
@@ -24,7 +24,7 @@ personal_preferences_index_name = "personal_preferences"
 company_policy_files_directory = "sample_data/company_policies"
 personal_preferences_files_directory = "sample_data/personal_preferences"
 
-llm = UiPathOpenAI()
+llm = UiPathOpenAI(model="gpt-4o-2024-11-20")
 uipath = UiPath()
 
 
@@ -111,7 +111,7 @@ class SubQuestionQueryEngine(Workflow):
     async def workflow_entrypoint(
         self, ctx: Context, ev: CustomStartEvent
     ) -> QueryEvent | AddDataToIndexEvent:
-        await ctx.set("original_query", ev.query)
+        await ctx.store.set("original_query", ev.query)
 
         if ev.add_data_to_index:
             return AddDataToIndexEvent()
@@ -227,7 +227,7 @@ class SubQuestionQueryEngine(Workflow):
                     "What are the user's preferences?",
                 ]
             }}
-            Here is the user query: {await ctx.get("original_query")}
+            Here is the user query: {await ctx.store.get("original_query")}
 
             And here is the list of tools: {query_engine_tools}
             """
@@ -238,7 +238,7 @@ class SubQuestionQueryEngine(Workflow):
         response_obj = json.loads(str(response))
         sub_questions = response_obj["sub_questions"]
 
-        await ctx.set("sub_question_count", len(sub_questions))
+        await ctx.store.set("sub_question_count", len(sub_questions))
 
         for question in sub_questions:
             ctx.send_event(SubQuestionEvent(question=question))
@@ -254,8 +254,8 @@ class SubQuestionQueryEngine(Workflow):
             response_mode=ResponseMode.SIMPLE_SUMMARIZE
         )
 
-        react_agent = ReActAgent.from_tools(query_engine_tools, llm=llm, verbose=True)
-        response = react_agent.chat(ev.question)
+        react_agent = ReActAgent(tools=query_engine_tools, llm=llm, verbose=True)
+        response = await react_agent.run(user_msg=ev.question)
 
         return AnswerEvent(question=ev.question, answer=str(response))
 
@@ -264,7 +264,7 @@ class SubQuestionQueryEngine(Workflow):
         self, ctx: Context, ev: AnswerEvent
     ) -> OutputEvent | None:
         ready = ctx.collect_events(
-            ev, [AnswerEvent] * await ctx.get("sub_question_count")
+            ev, [AnswerEvent] * await ctx.store.get("sub_question_count")
         )
         if ready is None:
             return None
@@ -294,7 +294,7 @@ class SubQuestionQueryEngine(Workflow):
             ---
             Be concise yet comprehensive in your response.
 
-            Original query: {await ctx.get("original_query")}
+            Original query: {await ctx.store.get("original_query")}
 
             Sub-questions and answers:
             {answers}
