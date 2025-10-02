@@ -6,7 +6,7 @@ authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.10"
 dependencies = [
-    "uipath-llamaindex>=0.0.30",
+    "uipath-llamaindex>=0.0.36, <0.1.0",
     "llama-index-llms-openai>=0.4.7",
     "llama-index-tools-mcp>=0.2.6"
 ]

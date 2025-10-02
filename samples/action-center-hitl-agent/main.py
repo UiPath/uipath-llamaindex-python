@@ -49,7 +49,7 @@ async def may_research_company(ctx: Context, company_name: str) -> bool:
 
 # example user input {"user_msg": "research Uipath company"}
 workflow = AgentWorkflow.from_tools_or_functions(
-    [may_research_company()],
+    [may_research_company],
     llm=llm,
     system_prompt="You are a helpful assistant that can use tools to perform actions requested by user",
 )
