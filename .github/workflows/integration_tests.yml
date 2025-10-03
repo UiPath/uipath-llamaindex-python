@@ -6,31 +6,66 @@ on:
   pull_request:
     branches: [ main ]
 
-jobs:
-  integration-tests:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
+permissions:
+  contents: read
+  pull-requests: write
+  actions: read
 
-    strategy:
-      matrix:
-        include:
-          - build-dir: quickstart-agent
-          - build-dir: simple-hitl-agent
-        
+jobs:
+  discover-testcases:
+    runs-on: ubuntu-latest
+    outputs:
+      testcases: ${{ steps.discover.outputs.testcases }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-
-    - name: Build Docker image (${{ matrix.build-dir }})
+    - name: Discover testcases
+      id: discover
       run: |
-        docker build -f testcases/${{ matrix.build-dir }}/Dockerfile \
-          -t ${{ matrix.build-dir }}:test \
-          --build-arg CLIENT_ID="${{ secrets.ALPHA_TEST_CLIENT_ID }}" \
-          --build-arg CLIENT_SECRET="${{ secrets.ALPHA_TEST_CLIENT_SECRET }}" \
-          --build-arg BASE_URL="${{ secrets.ALPHA_BASE_URL }}" \
-          .
+        # Find all testcase folders (excluding common folders like README, etc.)
+        testcase_dirs=$(find testcases -maxdepth 1 -type d -name "*-*" | sed 's|testcases/||' | sort)
+
+        echo "Found testcase directories:"
+        echo "$testcase_dirs"
+
+        # Convert to JSON array for matrix
+        testcases_json=$(echo "$testcase_dirs" | jq -R -s -c 'split("\n")[:-1]')
+        echo "testcases=$testcases_json" >> $GITHUB_OUTPUT
+
+  integration-tests:
+    needs: [discover-testcases]
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/astral-sh/uv:python3.12-bookworm
+      env:
+        UIPATH_JOB_KEY: "3a03d5cb-fa21-4021-894d-a8e2eda0afe0"
+    strategy:
+      fail-fast: false
+      matrix:
+        testcase: ${{ fromJson(needs.discover-testcases.outputs.testcases) }}
+        environment: [alpha, staging] # temporary disable [cloud]
+
+    name: "${{ matrix.testcase }} / ${{ matrix.environment }}"
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install Dependencies
+      run: uv sync
+
+    - name: Run testcase
+      env:
+        CLIENT_ID:      ${{ matrix.environment == 'alpha' && secrets.ALPHA_TEST_CLIENT_ID || matrix.environment == 'staging' && secrets.STAGING_TEST_CLIENT_ID || matrix.environment == 'cloud' && secrets.CLOUD_TEST_CLIENT_ID }}
+        CLIENT_SECRET:  ${{ matrix.environment == 'alpha' && secrets.ALPHA_TEST_CLIENT_SECRET || matrix.environment == 'staging' && secrets.STAGING_TEST_CLIENT_SECRET || matrix.environment == 'cloud' && secrets.CLOUD_TEST_CLIENT_SECRET }}
+        BASE_URL:       ${{ matrix.environment == 'alpha' && secrets.ALPHA_BASE_URL || matrix.environment == 'staging' && secrets.STAGING_BASE_URL || matrix.environment == 'cloud' && secrets.CLOUD_BASE_URL }}
+      working-directory: testcases/${{ matrix.testcase }}
+      run: |
+        echo "Running testcase: ${{ matrix.testcase }}"
+        echo "Environment: ${{ matrix.environment }}"
+        echo "Working directory: $(pwd)"
+
+        # Execute the testcase run script directly
+        bash run.sh
+        bash ../common/validate_output.sh
