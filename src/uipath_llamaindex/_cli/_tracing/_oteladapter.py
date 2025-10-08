@@ -12,8 +12,21 @@ logger = logging.getLogger(__name__)
 
 class LlamaIndexExporter(LlmOpsHttpExporter):
     # Mapping of old attribute names to new attribute names or (new name, function)
+    @staticmethod
+    def _unwrap_input(s: str) -> Any:
+        """Parse and unwrap LlamaIndex input format.
+
+        LlamaIndex wraps tool arguments in {"kwargs": {...}}, this function
+        unwraps it to match the standard format used by other frameworks.
+        """
+        parsed = json.loads(s)
+        # Unwrap kwargs if it's the only key (LlamaIndex-specific format)
+        if isinstance(parsed, dict) and "kwargs" in parsed and len(parsed) == 1:
+            return parsed["kwargs"]
+        return parsed
+
     ATTRIBUTE_MAPPING = {
-        "input.value": ("input", lambda s: json.loads(s)),
+        "input.value": ("input", lambda s: LlamaIndexExporter._unwrap_input(s)),
         "output.value": ("output", lambda s: json.loads(s)),
         "llm.model_name": "model",
     }

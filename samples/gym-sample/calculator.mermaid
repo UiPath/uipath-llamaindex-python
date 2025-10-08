@@ -1,0 +1,32 @@
+flowchart TD
+    step__done["_done"]:::stepStyle
+    step_chatbot_node["chatbot_node"]:::stepStyle
+    step_end_execution_node["end_execution_node"]:::stepStyle
+    step_prepare_input_step["prepare_input_step"]:::stepStyle
+    step_raise_error_node["raise_error_node"]:::stepStyle
+    step_tools_node["tools_node"]:::stepStyle
+    event_StopEvent([<p>StopEvent</p>]):::stopEventStyle
+    event_ChatbotEvent([<p>ChatbotEvent</p>]):::defaultEventStyle
+    event_ToolEvent([<p>ToolEvent</p>]):::defaultEventStyle
+    event_EndExecutionEvent([<p>EndExecutionEvent</p>]):::defaultEventStyle
+    event_RaiseErrorEvent([<p>RaiseErrorEvent</p>]):::defaultEventStyle
+    event_AgentBaseClassStartEvent([<p>AgentBaseClassStartEvent</p>]):::defaultEventStyle
+    event_StopEvent --> step__done
+    step_chatbot_node --> event_ToolEvent
+    step_chatbot_node --> event_EndExecutionEvent
+    step_chatbot_node --> event_RaiseErrorEvent
+    step_chatbot_node --> event_ChatbotEvent
+    event_ChatbotEvent --> step_chatbot_node
+    step_end_execution_node --> event_StopEvent
+    event_EndExecutionEvent --> step_end_execution_node
+    step_prepare_input_step --> event_ChatbotEvent
+    event_AgentBaseClassStartEvent --> step_prepare_input_step
+    step_raise_error_node --> event_StopEvent
+    event_RaiseErrorEvent --> step_raise_error_node
+    step_tools_node --> event_ChatbotEvent
+    event_ToolEvent --> step_tools_node
+    classDef stepStyle fill:#f2f0ff,line-height:1.2
+    classDef externalStyle fill:#f2f0ff,line-height:1.2
+    classDef defaultEventStyle fill-opacity:0
+    classDef stopEventStyle fill:#bfb6fc
+    classDef inputRequiredStyle fill:#f2f0ff,line-height:1.2

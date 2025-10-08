@@ -1,0 +1,18 @@
+[project]
+name = "gym-sample"
+version = "0.0.1"
+description = "Agent gym sample"
+authors = [{ name = "Andrei Rusu", email = "andrei.rusu@uipath.com" }]
+dependencies = [
+    "llama-index-core>=0.12.0",
+    "llama-index-agent-openai>=0.4.0",
+    "python-dotenv>=1.0.1",
+    "uipath-llamaindex>=0.0.36",
+    "uipath>=2.1.71",
+    "pydantic>=2.10.6",
+    "aiohttp>=3.11.12",
+    "typing-extensions>=4.12.2",
+    "ipython>=8.32.0",
+]
+requires-python = ">=3.10"
+
