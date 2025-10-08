@@ -1,0 +1,67 @@
+{
+    "entryPoints": [
+        {
+            "filePath": "calculator",
+            "uniqueId": "63b26ffd-799f-4624-b0cb-218ce4c61821",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "expression": {
+                        "title": "Expression",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "expression"
+                ]
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "title": "Result",
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "result"
+                ]
+            }
+        },
+        {
+            "filePath": "loan",
+            "uniqueId": "8980017f-c98f-4698-b9c3-e158ad2452b6",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "EmailBody": {
+                        "description": "The body of the request email",
+                        "title": "Emailbody",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "EmailBody"
+                ]
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "title": "Result",
+                        "type": "object"
+                    }
+                },
+                "required": [
+                    "result"
+                ]
+            }
+        }
+    ],
+    "bindings": {
+        "version": "2.0",
+        "resources": []
+    }
+}
