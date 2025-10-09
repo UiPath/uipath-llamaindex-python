@@ -1,0 +1,12 @@
+[project]
+name = "calculator-agent"
+version = "0.0.1"
+description = "UiPath LlamaIndex Calculator Agent"
+authors = [{ name = "UiPath", email = "support@uipath.com" }]
+requires-python = ">=3.10"
+dependencies = [
+    "llama-index-core>=0.12.0",
+    "python-dotenv>=1.0.1",
+    "uipath-llamaindex>=0.0.36",
+]
+

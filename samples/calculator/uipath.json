@@ -1,0 +1,40 @@
+{
+  "entryPoints": [
+    {
+      "filePath": "agent",
+      "uniqueId": "a1b2c3d4-e5f6-4a5b-9c8d-7e6f5a4b3c2d",
+      "type": "agent",
+      "input": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "title": "Query",
+            "type": "string",
+            "description": "Mathematical question or expression to calculate"
+          }
+        },
+        "required": [
+          "query"
+        ]
+      },
+      "output": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "title": "Response",
+            "type": "string",
+            "description": "The calculated result and explanation"
+          }
+        },
+        "required": [
+          "response"
+        ]
+      }
+    }
+  ],
+  "bindings": {
+    "version": "2.0",
+    "resources": []
+  }
+}
+

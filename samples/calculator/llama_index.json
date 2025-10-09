@@ -1,0 +1,8 @@
+{
+  "dependencies": ["."],
+  "workflows": {
+    "agent": "main.py:workflow"
+  },
+  "env": ".env"
+}
+

@@ -1,6 +1,6 @@
 from typing import List
 
-from llama_index.core.tools import BaseTool, FunctionTool
+from llama_index.core.tools import AsyncBaseTool, FunctionTool
 from pydantic import BaseModel
 
 from ..uipath_gym_types import AgentBaseClass, Datapoint
@@ -118,7 +118,7 @@ def multiply(a: float, b: float) -> float:
     return a * b
 
 
-def get_tools() -> List[BaseTool]:
+def get_tools() -> List[AsyncBaseTool]:
     """Get the calculator tools."""
     return [
         FunctionTool.from_defaults(
