@@ -11,5 +11,5 @@ class UiPathLlamaIndexRuntimeContext(UiPathRuntimeContext):
 
     config: Optional[LlamaIndexConfig] = None
     workflow: Optional[Workflow] = None
-    workflow_context: Optional[Context] = None  # type: ignore[type-arg]
+    workflow_context: Optional[Context] = None
     resumed_trigger: Optional[UiPathResumeTrigger] = None

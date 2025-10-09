@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from os import environ as env
-from typing import Optional
+from typing import Any, Optional
 
 from openinference.instrumentation.llama_index import (
     LlamaIndexInstrumentor,
@@ -13,6 +13,7 @@ from uipath._cli.middlewares import MiddlewareResult
 from ._runtime._context import UiPathLlamaIndexRuntimeContext
 from ._runtime._exception import UiPathLlamaIndexRuntimeError
 from ._runtime._runtime import UiPathLlamaIndexRuntime
+from ._tracing._attribute_normalizer import AttributeNormalizingSpanProcessor
 from ._tracing._oteladapter import LlamaIndexExporter
 from ._utils._config import LlamaIndexConfig
 
@@ -20,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def llamaindex_run_middleware(
-    entrypoint: Optional[str], input: Optional[str], resume: bool, **kwargs
+    entrypoint: Optional[str], input: Optional[str], resume: bool, **kwargs: Any
 ) -> MiddlewareResult:
     """Middleware to handle LlamaIndex agent execution"""
 
@@ -64,8 +65,10 @@ def llamaindex_run_middleware(
             env["UIPATH_REQUESTING_FEATURE"] = "llamaindex"
 
             runtime_factory = UiPathRuntimeFactory(
-                UiPathLlamaIndexRuntime, UiPathLlamaIndexRuntimeContext
+                UiPathLlamaIndexRuntime,
+                UiPathLlamaIndexRuntimeContext,
             )
+            runtime_factory.add_span_processor(AttributeNormalizingSpanProcessor())
 
             if context.job_id:
                 runtime_factory.add_span_exporter(LlamaIndexExporter())

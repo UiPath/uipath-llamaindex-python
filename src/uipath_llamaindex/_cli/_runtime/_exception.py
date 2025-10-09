@@ -14,4 +14,4 @@ class UiPathLlamaIndexRuntimeError(UiPathRuntimeError):
         category: UiPathErrorCategory = UiPathErrorCategory.UNKNOWN,
         status: Optional[int] = None,
     ):
-        super().__init__(code, title, detail, category, status, prefix="LlamaIndex")
+        super().__init__(code, title, detail, category, status, prefix="LlamaIndex")  # type: ignore[arg-type]
