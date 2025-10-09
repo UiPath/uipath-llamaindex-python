@@ -17,6 +17,9 @@ from uipath.runtime import (
 from uipath.runtime.errors import UiPathErrorCategory
 from workflows import Workflow
 
+from uipath_llamaindex.runtime._attribute_normalizer import (
+    AttributeNormalizingSpanProcessor,
+)
 from uipath_llamaindex.runtime.config import LlamaIndexConfig
 from uipath_llamaindex.runtime.errors import (
     UiPathLlamaIndexErrorCode,
@@ -54,6 +57,11 @@ class UiPathLlamaIndexRuntimeFactory:
         """Setup tracing and instrumentation."""
         LlamaIndexInstrumentor().instrument()
         UiPathSpanUtils.register_current_span_provider(get_current_span)
+
+        if trace_manager:
+            trace_manager.tracer_provider.add_span_processor(
+                AttributeNormalizingSpanProcessor()
+            )
 
     def _get_storage_path(self) -> str:
         """Get the storage path for workflow state."""
