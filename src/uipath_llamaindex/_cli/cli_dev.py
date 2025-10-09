@@ -12,6 +12,7 @@ from uipath._cli.middlewares import MiddlewareResult
 
 from ._runtime._context import UiPathLlamaIndexRuntimeContext
 from ._runtime._runtime import UiPathLlamaIndexRuntime
+from ._tracing._attribute_normalizer import AttributeNormalizingSpanProcessor
 
 console = ConsoleLogger()
 
@@ -23,6 +24,9 @@ def llamaindex_dev_middleware(interface: Optional[str]) -> MiddlewareResult:
         if interface == "terminal":
             runtime_factory = UiPathRuntimeFactory(
                 UiPathLlamaIndexRuntime, UiPathLlamaIndexRuntimeContext
+            )
+            runtime_factory.tracer_provider.add_span_processor(
+                AttributeNormalizingSpanProcessor()
             )
             runtime_factory.add_instrumentor(LlamaIndexInstrumentor, get_current_span)
             app = UiPathDevTerminal(runtime_factory)
