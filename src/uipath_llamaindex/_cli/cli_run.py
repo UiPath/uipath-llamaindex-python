@@ -68,11 +68,11 @@ def llamaindex_run_middleware(
                 UiPathLlamaIndexRuntime, UiPathLlamaIndexRuntimeContext
             )
 
-            if context.job_id:
-                runtime_factory.add_span_exporter(LlamaIndexExporter())
             runtime_factory.tracer_provider.add_span_processor(
                 AttributeNormalizingSpanProcessor()
             )
+            if context.job_id:
+                runtime_factory.add_span_exporter(LlamaIndexExporter())
 
             runtime_factory.add_instrumentor(LlamaIndexInstrumentor, get_current_span)
 
