@@ -82,7 +82,9 @@ def extract_tool_calls_outputs(spans: Sequence[ReadableSpan]) -> list[ToolOutput
     Returns:
         List of tool calls outputs.
     """
-    potential_output_keys = ["content", "raw_output"]
+    # The default output key after span normalization should be "content"
+    # But we leave this list here for future extensibility
+    potential_output_keys = ["content"]
     tool_calls_outputs = []
     for span in spans:
         if span.attributes and (tool_name := span.attributes.get("tool.name")):

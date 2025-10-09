@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 from gym_sample.tools import RaiseErrorInput, StateBaseClass
 from llama_index.core.llms import LLM, ChatMessage, MessageRole
-from llama_index.core.tools import BaseTool
+from llama_index.core.tools import AsyncBaseTool
 from llama_index.core.workflow import (
     Context,
     Event,
@@ -34,10 +34,10 @@ class AgentBaseClass(BaseModel):
     input_schema: type[BaseModel]
     output_schema: type[BaseModel]
     datapoints: List[Datapoint] = []
-    tools: List[BaseTool] = []
+    tools: List[AsyncBaseTool] = []
 
     @property
-    def end_execution_tool(self) -> BaseTool:
+    def end_execution_tool(self) -> AsyncBaseTool:
         """Create the end_execution tool for this scenario."""
         from llama_index.core.tools import FunctionTool
 
@@ -71,7 +71,7 @@ class AgentBaseClass(BaseModel):
         )
 
     @property
-    def raise_error_tool(self) -> BaseTool:
+    def raise_error_tool(self) -> AsyncBaseTool:
         """Create the raise_error tool for this scenario."""
         from llama_index.core.tools import FunctionTool
 
@@ -334,8 +334,8 @@ class BaseAgentWorkflow(Workflow):
         scenario: AgentBaseClass,
         llm: LLM,
         print_trace: bool,
-        tool_map: Dict[str, BaseTool],
-        all_tools: List[BaseTool],
+        tool_map: Dict[str, AsyncBaseTool],
+        all_tools: List[AsyncBaseTool],
         **kwargs: Any,
     ):
         """Initialize base workflow with required components.
@@ -344,7 +344,7 @@ class BaseAgentWorkflow(Workflow):
             scenario: The agent scenario with input/output schemas and tools
             llm: The LLM instance for generating responses
             print_trace: Whether to print debug traces
-            tool_map: Dictionary mapping tool names to BaseTool instances
+            tool_map: Dictionary mapping tool names to AsyncBaseTool instances
             all_tools: List of all available tools
             **kwargs: Additional arguments for Workflow initialization
         """
@@ -434,10 +434,7 @@ class BaseAgentWorkflow(Workflow):
             tool = self._tool_map.get("end_execution")
             if tool:
                 try:
-                    if hasattr(tool, "call"):
-                        tool.call(**tool_args)  # type: ignore[attr-defined]
-                    else:
-                        tool(**tool_args)
+                    await tool.acall(**tool_args)
                 except Exception:
                     pass  # Validation happens in end_execution_node
             return EndExecutionEvent(messages=state.messages, result=tool_args)
@@ -446,10 +443,7 @@ class BaseAgentWorkflow(Workflow):
             tool = self._tool_map.get("raise_error")
             if tool:
                 try:
-                    if hasattr(tool, "call"):
-                        tool.call(**tool_args)  # type: ignore[attr-defined]
-                    else:
-                        tool(**tool_args)
+                    await tool.acall(**tool_args)
                 except Exception:
                     pass  # Let the error be handled in raise_error_node
             error = RaiseErrorInput.model_validate(tool_args)
@@ -499,12 +493,7 @@ class BaseAgentWorkflow(Workflow):
                 tool = self._tool_map.get(tool_name)
                 if tool:
                     try:
-                        # Use .call() instead of __call__ to avoid duplicate spans in tracing
-                        # (openinference instruments both __call__ and call methods)
-                        if hasattr(tool, "call"):
-                            result = tool.call(**tool_args)  # type: ignore[attr-defined]
-                        else:
-                            result = tool(**tool_args)
+                        result = await tool.acall(**tool_args)
                         tool_output = str(result)
                     except Exception as e:
                         tool_output = f"Error executing {tool_name}: {str(e)}"
@@ -534,12 +523,7 @@ class BaseAgentWorkflow(Workflow):
             tool = self._tool_map.get(tool_name)
             if tool:
                 try:
-                    # Use .call() instead of __call__ to avoid duplicate spans in tracing
-                    # (openinference instruments both __call__ and call methods)
-                    if hasattr(tool, "call"):
-                        result = tool.call(**tool_args)  # type: ignore[attr-defined]
-                    else:
-                        result = tool(**tool_args)
+                    result = await tool.acall(**tool_args)
                     tool_output = str(result)
                 except Exception as e:
                     tool_output = f"Error executing {tool_name}: {str(e)}"

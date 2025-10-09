@@ -1,6 +1,5 @@
 """OpenTelemetry trace collection utilities for agent evaluation."""
 
-import json
 from collections.abc import Sequence
 from typing import List
 
@@ -11,6 +10,10 @@ from opentelemetry.sdk.trace.export import (
     SimpleSpanProcessor,
     SpanExporter,
     SpanExportResult,
+)
+
+from uipath_llamaindex._cli._tracing._attribute_normalizer import (
+    AttributeNormalizingSpanProcessor,
 )
 
 
@@ -29,32 +32,8 @@ class InMemorySpanExporter(SpanExporter):
         if self.is_shutdown:
             return SpanExportResult.FAILURE
 
-        # Normalize spans before storing
-        for span in spans:
-            self._normalize_and_store(span)
-
+        self.spans.extend(spans)
         return SpanExportResult.SUCCESS
-
-    def _normalize_and_store(self, span: ReadableSpan) -> None:
-        """Normalize span attributes and store."""
-        if span.attributes and "input.value" in span.attributes:
-            # Unwrap kwargs wrapper
-            attrs = dict(span.attributes)
-            input_val = attrs["input.value"]
-
-            try:
-                parsed = (
-                    json.loads(input_val) if isinstance(input_val, str) else input_val
-                )
-                # Unwrap {"kwargs": {...}} wrapper (LlamaIndex format)
-                if isinstance(parsed, dict) and "kwargs" in parsed and len(parsed) == 1:
-                    parsed = parsed["kwargs"]
-                attrs["input.value"] = json.dumps(parsed)
-                span._attributes = attrs  # type: ignore
-            except (json.JSONDecodeError, ValueError):
-                pass  # Leave as-is if parsing fails
-
-        self.spans.append(span)
 
     def get_exported_spans(self) -> List[ReadableSpan]:
         return self.spans
@@ -80,6 +59,7 @@ def setup_tracer() -> tuple[InMemorySpanExporter, TracerProvider]:
     provider = TracerProvider()
     trace.set_tracer_provider(provider)
     provider.add_span_processor(SimpleSpanProcessor(exporter))
+    provider.add_span_processor(AttributeNormalizingSpanProcessor())
 
     # Initialize LlamaIndex instrumentation (this creates the spans!)
     LlamaIndexInstrumentor().instrument()

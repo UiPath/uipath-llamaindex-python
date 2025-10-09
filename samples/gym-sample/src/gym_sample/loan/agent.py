@@ -1,6 +1,6 @@
 from typing import List
 
-from llama_index.core.tools import BaseTool, FunctionTool
+from llama_index.core.tools import AsyncBaseTool, FunctionTool
 from pydantic import BaseModel, Field
 
 from ..tools import create_escalation_tool
@@ -76,7 +76,7 @@ class AgentOutputSchema(BaseModel):
     )
 
 
-def get_tools() -> List[BaseTool]:
+def get_tools() -> List[AsyncBaseTool]:
     """Get the loan agent tools."""
     return [
         FunctionTool.from_defaults(
