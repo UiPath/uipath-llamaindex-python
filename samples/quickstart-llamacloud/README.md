@@ -42,7 +42,7 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 ```bash
 # Install the project dependencies
-pip install -e .
+uv sync
 ```
 
 ### 3. Configure Environment Variables
@@ -56,13 +56,17 @@ cp .env.example .env
 
 Required environment variables:
 - `OPENAI_API_KEY`: Your OpenAI API key
-- `LLAMACLOUD_API_KEY`: Your LlamaCloud API key
-- `LLAMACLOUD_ORG_ID`: Your LlamaCloud organization ID
+- `LLAMACLOUD_API_KEY`: Your LlamaCloud API key (find it under API keys in your LlamaCloud account)
+- `LLAMACLOUD_ORG_ID`: Your LlamaCloud organization ID (find it under settings in your LlamaCloud account)
 - `LLAMACLOUD_PROJECT_NAME`: Your LlamaCloud project name
 - `LLAMACLOUD_INDEX_1_NAME`: First index name (e.g., "company-policy")
 - `LLAMACLOUD_INDEX_2_NAME`: Second index name (e.g., "personal-preferences")
 
 ## 4. Authenticate With UiPath
+
+Install the uipath cli, e.g. using `pipx install uipath`.
+
+Next, auth with uipath:
 
 ```shell
 > uipath auth
@@ -86,8 +90,13 @@ Selected tenant: Tenant1
 ### 6. Run Locally
 
 ```bash
-# Run the agent with a query
+# Simply run the agent with a query
 uipath run agent '{"user_msg": "What are the travel rates for New York?"}'
+```
+
+```bash
+# Run the agent in CLI dev mode (you can enter the input user message and look at traces)
+uipath dev
 ```
 
 ### 7. Run as a UiPath Deployment

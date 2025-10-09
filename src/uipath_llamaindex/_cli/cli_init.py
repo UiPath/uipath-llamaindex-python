@@ -2,8 +2,9 @@ import asyncio
 import json
 import os
 import uuid
-from typing import Any, Callable, Dict, overload
+from typing import Any, Callable, Dict, Optional, Type, overload
 
+from llama_index.core.agent.workflow import BaseWorkflowAgent
 from llama_index.core.workflow import (
     HumanResponseEvent,
     InputRequiredEvent,
@@ -15,6 +16,7 @@ from llama_index.core.workflow.utils import (  # type: ignore
     get_steps_from_class,
     get_steps_from_instance,
 )
+from pydantic import BaseModel
 from uipath._cli._utils._console import ConsoleLogger
 from uipath._cli._utils._parse_ast import generate_bindings_json  # type: ignore
 from uipath._cli.middlewares import MiddlewareResult
@@ -71,18 +73,46 @@ def generate_schema_from_workflow(workflow: Workflow) -> Dict[str, Any]:
 
     # Generate input schema from StartEvent using Pydantic's schema method
     try:
-        input_schema = start_event_class.model_json_schema()
-        # Resolve references and handle nullable types
-        input_schema = resolve_refs(input_schema)
-        schema["input"]["properties"] = process_nullable_types(
-            input_schema.get("properties", {})
-        )
-        schema["input"]["required"] = input_schema.get("required", [])
+        if isinstance(workflow, BaseWorkflowAgent):
+            # For workflow agents, define a simple schema with just user_msg
+            schema["input"] = {
+                "type": "object",
+                "properties": {
+                    "user_msg": {
+                        "type": "string",
+                        "title": "User Message",
+                        "description": "The user's question or request",
+                    }
+                },
+                "required": ["user_msg"],
+            }
+        else:
+            input_schema = start_event_class.model_json_schema()
+            # Resolve references and handle nullable types
+            input_schema = resolve_refs(input_schema)
+            schema["input"]["properties"] = process_nullable_types(
+                input_schema.get("properties", {})
+            )
+            schema["input"]["required"] = input_schema.get("required", [])
     except (AttributeError, Exception):
         pass
 
-    # For output schema, check if it's the base StopEvent or a custom subclass
-    if stop_event_class is StopEvent:
+    # Handle output schema - check if it's a workflow agent with output_cls first
+    if isinstance(workflow, BaseWorkflowAgent):
+        output_cls: Optional[Type[BaseModel]] = getattr(workflow, "output_cls", None)
+        if output_cls is not None:
+            try:
+                output_schema = output_cls.model_json_schema()
+                # Resolve references and handle nullable types
+                output_schema = resolve_refs(output_schema)
+                schema["output"]["properties"] = process_nullable_types(
+                    output_schema.get("properties", {})
+                )
+                schema["output"]["required"] = output_schema.get("required", [])
+            except (AttributeError, Exception):
+                pass
+    # Check if it's the base StopEvent or a custom subclass
+    elif stop_event_class is StopEvent:
         # base StopEvent
         schema["output"] = {
             "type": "object",

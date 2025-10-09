@@ -1,5 +1,6 @@
 from uipath._cli.middlewares import Middlewares
 
+from ._cli.cli_dev import llamaindex_dev_middleware
 from ._cli.cli_init import llamaindex_init_middleware
 from ._cli.cli_new import llamaindex_new_middleware
 from ._cli.cli_run import llamaindex_run_middleware
@@ -10,3 +11,4 @@ def register_middleware():
     Middlewares.register("init", llamaindex_init_middleware)
     Middlewares.register("run", llamaindex_run_middleware)
     Middlewares.register("new", llamaindex_new_middleware)
+    Middlewares.register("dev", llamaindex_dev_middleware)
