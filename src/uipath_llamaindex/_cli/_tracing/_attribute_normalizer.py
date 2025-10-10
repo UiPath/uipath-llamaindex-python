@@ -34,19 +34,20 @@ class AttributeNormalizingSpanProcessor(SpanProcessor):
             # Get the mutable internal attributes dict
             attrs: dict = span._attributes  # type: ignore[attr-defined]
 
-            # Normalize tool call attributes
-            for key in ("input.value", "output.value"):
-                if key in attrs:
-                    original = attrs[key]
-                    normalized = self._normalize_attribute(key, original)
+            if attrs.get("openinference.span.kind", None) == "TOOL":
+                # Normalize tool call attributes
+                for key in ("input.value", "output.value"):
+                    if key in attrs:
+                        original = attrs[key]
+                        normalized = self._normalize_attribute(key, original)
 
-                    if normalized != original:
-                        attrs[key] = normalized
-                        if logger.isEnabledFor(logging.DEBUG):
-                            logger.debug(
-                                f"Normalized {key} in span '{span.name}': "
-                                f"{original[:50]}... → {normalized[:50]}..."
-                            )
+                        if normalized != original:
+                            attrs[key] = normalized
+                            if logger.isEnabledFor(logging.DEBUG):
+                                logger.debug(
+                                    f"Normalized {key} in span '{span.name}': "
+                                    f"{original[:50]}... → {normalized[:50]}..."
+                                )
 
         except Exception as e:
             # Don't crash span processing if normalization fails
