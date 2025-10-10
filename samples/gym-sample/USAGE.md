@@ -2,6 +2,10 @@
 
 This sample demonstrates how to build agents that support **both CLI execution** with properly typed inputs **and batch evaluation** across multiple datapoints using two separate graph builders.
 
+# Installation
+
+This needs to be installed first in the path using `uv pip install -e .`
+
 ## Summary
 
 **The Solution:** Use **two separate graph building methods**:

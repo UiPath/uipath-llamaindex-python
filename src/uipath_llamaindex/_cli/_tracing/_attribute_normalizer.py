@@ -69,7 +69,9 @@ class AttributeNormalizingSpanProcessor(SpanProcessor):
                 value = json.dumps(
                     {
                         "content": value.get("raw_output"),
-                        "status": not value.get("is_error", False),
+                        "status": "success"
+                        if not value.get("is_error", False)
+                        else "error",
                         "tool_call_id": value.get("tool_call_id"),
                     }
                 )
