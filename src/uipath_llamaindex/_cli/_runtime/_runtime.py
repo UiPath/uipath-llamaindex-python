@@ -16,6 +16,7 @@ from llama_index.core.workflow.handler import WorkflowHandler  # type: ignore
 from uipath._cli._runtime._contracts import (
     UiPathBaseRuntime,
     UiPathErrorCategory,
+    UiPathErrorCode,
     UiPathResumeTrigger,
     UiPathRuntimeResult,
     UiPathRuntimeStatus,
@@ -24,7 +25,7 @@ from uipath._cli._runtime._hitl import HitlProcessor, HitlReader
 
 from .._utils._config import LlamaIndexConfig
 from ._context import UiPathLlamaIndexRuntimeContext
-from ._exception import UiPathLlamaIndexRuntimeError
+from ._exception import LLamaIndexErrorCode, UiPathLlamaIndexRuntimeError
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 # catch any script exceptions
                 except Exception as e:
                     raise UiPathLlamaIndexRuntimeError(
-                        "AGENT_EXECUTION_FAILURE",
+                        LLamaIndexErrorCode.AGENT_EXECUTION_FAILURE,
                         "There was an exception while executing the agent ",
                         str(e),
                         UiPathErrorCategory.USER,
@@ -128,14 +129,14 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 # check if workflow failed because of timeout constraints
                 except WorkflowTimeoutError as e:
                     raise UiPathLlamaIndexRuntimeError(
-                        "TIMEOUT_ERROR",
+                        LLamaIndexErrorCode.TIMEOUT_ERROR,
                         "Workflow timed out",
                         str(e),
                         UiPathErrorCategory.USER,
                     ) from e
                 except Exception as e:
                     raise UiPathLlamaIndexRuntimeError(
-                        "SERIALIZE_OUTPUT_ERROR",
+                        LLamaIndexErrorCode.SERIALIZE_OUTPUT_ERROR,
                         "Failed to serialize output",
                         str(e),
                         UiPathErrorCategory.SYSTEM,
@@ -162,7 +163,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 raise
             detail = f"Error: {str(e)}"
             raise UiPathLlamaIndexRuntimeError(
-                "EXECUTION_ERROR",
+                UiPathErrorCode.EXECUTION_ERROR,
                 "LlamaIndex Runtime execution failed",
                 detail,
                 UiPathErrorCategory.USER,
@@ -175,7 +176,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
                 self.context.input_json = json.loads(self.context.input)
         except json.JSONDecodeError as e:
             raise UiPathLlamaIndexRuntimeError(
-                "INPUT_INVALID_JSON",
+                UiPathErrorCode.INPUT_INVALID_JSON,
                 "Invalid JSON input",
                 "The input data is not valid JSON.",
                 UiPathErrorCategory.USER,
@@ -185,7 +186,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             self.context.config = LlamaIndexConfig()
             if not self.context.config.exists:
                 raise UiPathLlamaIndexRuntimeError(
-                    "CONFIG_MISSING",
+                    LLamaIndexErrorCode.CONFIG_MISSING,
                     "Invalid configuration",
                     "Failed to load configuration",
                     UiPathErrorCategory.DEPLOYMENT,
@@ -195,7 +196,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             self.context.config.load_config()
         except Exception as e:
             raise UiPathLlamaIndexRuntimeError(
-                "CONFIG_INVALID",
+                LLamaIndexErrorCode.CONFIG_INVALID,
                 "Invalid configuration",
                 f"Failed to load configuration: {str(e)}",
                 UiPathErrorCategory.DEPLOYMENT,
@@ -208,7 +209,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         elif not self.context.entrypoint:
             workflow_names = ", ".join(w.name for w in workflows)
             raise UiPathLlamaIndexRuntimeError(
-                "ENTRYPOINT_MISSING",
+                UiPathErrorCode.ENTRYPOINT_MISSING,
                 "Entrypoint required",
                 f"Multiple workflows available. Please specify one of: {workflow_names}.",
                 UiPathErrorCategory.DEPLOYMENT,
@@ -218,7 +219,7 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
         self.workflow_config = self.context.config.get_workflow(self.context.entrypoint)
         if not self.workflow_config:
             raise UiPathLlamaIndexRuntimeError(
-                "WORKFLOW_NOT_FOUND",
+                LLamaIndexErrorCode.WORKFLOW_NOT_FOUND,
                 "Workflow not found",
                 f"Workflow '{self.context.entrypoint}' not found.",
                 UiPathErrorCategory.DEPLOYMENT,
@@ -227,28 +228,28 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             self.context.workflow = await self.workflow_config.load_workflow()
         except ImportError as e:
             raise UiPathLlamaIndexRuntimeError(
-                "WORKFLOW_IMPORT_ERROR",
+                LLamaIndexErrorCode.WORKFLOW_IMPORT_ERROR,
                 "Workflow import failed",
                 f"Failed to import workflow '{self.context.entrypoint}': {str(e)}",
                 UiPathErrorCategory.USER,
             ) from e
         except TypeError as e:
             raise UiPathLlamaIndexRuntimeError(
-                "WORKFLOW_TYPE_ERROR",
+                LLamaIndexErrorCode.WORKFLOW_TYPE_ERROR,
                 "Invalid workflow type",
                 f"Workflow '{self.context.entrypoint}' is not a valid `Workflow`: {str(e)}",
                 UiPathErrorCategory.USER,
             ) from e
         except ValueError as e:
             raise UiPathLlamaIndexRuntimeError(
-                "WORKFLOW_VALUE_ERROR",
+                LLamaIndexErrorCode.WORKFLOW_VALUE_ERROR,
                 "Invalid workflow value",
                 f"Invalid value in workflow '{self.context.entrypoint}': {str(e)}",
                 UiPathErrorCategory.USER,
             ) from e
         except Exception as e:
             raise UiPathLlamaIndexRuntimeError(
-                "WORKFLOW_LOAD_ERROR",
+                LLamaIndexErrorCode.WORKFLOW_LOAD_ERROR,
                 "Failed to load workflow",
                 f"Unexpected error loading workflow '{self.context.entrypoint}': {str(e)}",
                 UiPathErrorCategory.USER,
