@@ -13,9 +13,6 @@ from llama_index.core.workflow import (
 )
 from llama_index.llms.openai import OpenAI
 from llama_index.tools.openai import OpenAIImageGenerationToolSpec
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
 from uipath import UiPath
 
 
@@ -228,14 +225,7 @@ class CompleteBookFlow(Workflow):
                 f.write(md_content)
             chapter_files[md_filename] = md_path
 
-            # 2. Create PDF file (.pdf)
-            pdf_filename = f"chapter_{chapter['chapter_num']:02d}_{self._sanitize_filename(chapter['title'])}.pdf"
-            pdf_path = os.path.join(temp_dir, pdf_filename)
-
-            self._create_pdf(pdf_path, chapter, ev.book_title, len(ev.chapters_content))
-            chapter_files[pdf_filename] = pdf_path
-
-            # 3. Create JSON metadata file (.json)
+            # 2. Create JSON metadata file (.json)
             json_filename = f"chapter_{chapter['chapter_num']:02d}_metadata.json"
             json_path = os.path.join(temp_dir, json_filename)
 
@@ -249,7 +239,7 @@ class CompleteBookFlow(Workflow):
                 "word_count": len(chapter["content"].split()),
                 "progress": f"{chapter['chapter_num']}/{len(ev.chapters_content)}",
                 "created_at": "2025-06-09",
-                "file_types_generated": ["markdown", "pdf", "json", "txt", "png"],
+                "file_types_generated": ["markdown", "json", "txt", "png"],
             }
 
             with open(json_path, "w", encoding="utf-8") as f:
@@ -302,67 +292,6 @@ BOOK TOPIC: {ev.topic}
             book_title=ev.book_title,
             chapter_files=all_chapter_files,
         )
-
-    def _create_pdf(
-        self,
-        pdf_path: str,
-        chapter: Dict[str, Any],
-        book_title: str,
-        total_chapters: int,
-    ):
-        """Create a professionally formatted PDF."""
-        doc = SimpleDocTemplate(pdf_path, pagesize=letter)
-        styles = getSampleStyleSheet()
-        story = []
-
-        # Book title
-        book_title_p = Paragraph(book_title, styles["Title"])
-        story.append(book_title_p)
-        story.append(Spacer(1, 12))
-
-        # Chapter title
-        chapter_title = Paragraph(
-            f"Chapter {chapter['chapter_num']}: {chapter['title']}", styles["Heading1"]
-        )
-        story.append(chapter_title)
-        story.append(Spacer(1, 20))
-
-        # Chapter description
-        desc = Paragraph(f"<i>{chapter['description']}</i>", styles["Normal"])
-        story.append(desc)
-        story.append(Spacer(1, 20))
-
-        # Add content (split into paragraphs)
-        for paragraph in chapter["content"].split("\n\n"):
-            if paragraph.strip():
-                # Check if it's a heading (starts with # or ##)
-                if paragraph.strip().startswith("#"):
-                    # Remove markdown heading syntax
-                    heading_text = paragraph.strip().lstrip("#").strip()
-                    p = Paragraph(heading_text, styles["Heading2"])
-                else:
-                    p = Paragraph(paragraph.strip(), styles["Normal"])
-                story.append(p)
-                story.append(Spacer(1, 12))
-
-        # Add summary section
-        story.append(Spacer(1, 20))
-        summary_title = Paragraph("Chapter Summary", styles["Heading2"])
-        story.append(summary_title)
-        story.append(Spacer(1, 12))
-
-        summary_p = Paragraph(chapter["summary"], styles["Normal"])
-        story.append(summary_p)
-
-        # Footer
-        story.append(Spacer(1, 30))
-        footer = Paragraph(
-            f"<i>Chapter {chapter['chapter_num']} of {total_chapters} | Generated on 2025-06-09</i>",
-            styles["Normal"],
-        )
-        story.append(footer)
-
-        doc.build(story)
 
     async def _generate_chapter_image(
         self,
@@ -432,7 +361,6 @@ BOOK TOPIC: {ev.topic}
                     extension = os.path.splitext(filename)[1].lower()
                     category_map = {
                         ".md": "markdown_documents",
-                        ".pdf": "pdf_documents",
                         ".json": "metadata_files",
                         ".txt": "text_files",
                         ".png": "illustrations",

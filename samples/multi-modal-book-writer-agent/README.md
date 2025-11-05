@@ -9,12 +9,12 @@ This agent creates a complete book on any given topic by:
 1. **Generating a book outline** with chapter titles and descriptions
 2. **Writing detailed chapter content** with engaging text
 3. **Creating visual illustrations** for each chapter using AI image generation
-4. **Producing PDF documents** for each chapter with formatted text and images
+4. **Generating multiple file formats** for each chapter (Markdown, JSON metadata, text summaries)
 5. **Uploading all files as job attachments** to demonstrate multi-modal file handling
 
 ## Key Features
 
-- **Multi-modal content generation**: Combines text, images, and PDF creation
+- **Multi-modal content generation**: Combines text, images, and multiple document formats
 - **Job attachments demonstration**: Shows how to handle multiple files in UiPath jobs
 - **Workflow-based architecture**: Uses LlamaIndex workflows for structured processing
 - **AI-powered content**: Leverages OpenAI for both text and image generation
@@ -64,4 +64,3 @@ This sample demonstrates how UiPath can handle complex multi-modal workflows tha
 - Python ≥3.10
 - UiPath LlamaIndex integration
 - OpenAI API (for text and image generation)
-- ReportLab (for PDF generation)
