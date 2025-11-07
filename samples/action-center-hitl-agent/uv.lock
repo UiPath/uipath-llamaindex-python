@@ -957,6 +957,21 @@ wheels = [
 ]
 
 [[package]]
+name = "llama-action-center"
+version = "0.0.2"
+source = { virtual = "." }
+dependencies = [
+    { name = "llama-index-llms-openai" },
+    { name = "uipath-llamaindex" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "llama-index-llms-openai", specifier = ">=0.2.2" },
+    { name = "uipath-llamaindex", specifier = ">=0.0.36" },
+]
+
+[[package]]
 name = "llama-cloud"
 version = "0.1.35"
 source = { registry = "https://pypi.org/simple" }
@@ -986,23 +1001,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/8a/0c/8ca87d33bea0340a8ed791f36390112aeb29fd3eebfd64b6aef6204a03f0/llama_cloud_services-0.6.54.tar.gz", hash = "sha256:baf65d9bffb68f9dca98ac6e22908b6675b2038b021e657ead1ffc0e43cbd45d", size = 53468, upload-time = "2025-08-01T20:09:20.988Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/7f/48/4e295e3f791b279885a2e584f71e75cbe4ac84e93bba3c36e2668f60a8ac/llama_cloud_services-0.6.54-py3-none-any.whl", hash = "sha256:07f595f7a0ba40c6a1a20543d63024ca7600fe65c4811d1951039977908997be", size = 63874, upload-time = "2025-08-01T20:09:20.076Z" },
-]
-
-[[package]]
-name = "llama-image-gen-agent"
-version = "0.0.4"
-source = { virtual = "." }
-dependencies = [
-    { name = "llama-index-llms-openai" },
-    { name = "llama-index-tools-openai-image-generation" },
-    { name = "uipath-llamaindex" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "llama-index-llms-openai", specifier = ">=0.3.44" },
-    { name = "llama-index-tools-openai-image-generation", specifier = ">=0.4.0" },
-    { name = "uipath-llamaindex", specifier = ">=0.0.36" },
 ]
 
 [[package]]
@@ -1188,18 +1186,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/b3/77/5bfaab20e6ec8428dbf2352e18be550c957602723d69383908176b5686cd/llama_index_readers_llama_parse-0.5.1.tar.gz", hash = "sha256:2b78b73faa933e30e6c69df351e4e9f36dfe2ae142e2ab3969ddd2ac48930e37", size = 3858, upload-time = "2025-09-08T20:41:29.201Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/68/81/52410c7245dcbf1a54756a9ce3892cdd167ec0b884d696de1304ca3f452e/llama_index_readers_llama_parse-0.5.1-py3-none-any.whl", hash = "sha256:0d41450ed29b0c49c024e206ef6c8e662b1854e77a1c5faefed3b958be54f880", size = 3203, upload-time = "2025-09-08T20:41:28.438Z" },
-]
-
-[[package]]
-name = "llama-index-tools-openai-image-generation"
-version = "0.5.1"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "llama-index-core" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/76/e7/933c476769ed949005cf65f29ef88cf52d6f7baecfd1031189a6213af054/llama_index_tools_openai_image_generation-0.5.1.tar.gz", hash = "sha256:a1ce7ca875223e2d06032794143d848cc769f23e619fc9c69d827677057a6679", size = 5144, upload-time = "2025-09-08T20:36:57.321Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/aa/1696fc4ad7809063b8200fa1870e198ea6be2523e3f3023f7c979f9f6f00/llama_index_tools_openai_image_generation-0.5.1-py3-none-any.whl", hash = "sha256:0ab427c61d258de7ad26d0f851b32be53a558c3d35a7bb8496e145917989fd31", size = 5096, upload-time = "2025-09-08T20:36:56.654Z" },
 ]
 
 [[package]]
