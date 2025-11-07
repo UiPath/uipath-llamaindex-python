@@ -1,0 +1,9 @@
+{
+  "status": "auto-approved",
+  "employee": "John Doe",
+  "start_date": "2025-10-08",
+  "end_date": "2025-10-09",
+  "days": 2,
+  "reason": "medical appointment",
+  "message": "PTO request auto-approved for John Doe: 2 day(s) from 2025-10-08 to 2025-10-09. Reason: medical appointment"
+}
