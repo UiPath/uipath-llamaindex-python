@@ -22,6 +22,7 @@ from uipath._cli._runtime._contracts import (
     UiPathRuntimeStatus,
 )
 from uipath._cli._runtime._hitl import HitlProcessor, HitlReader
+from uipath.models import CreateAction, InvokeProcess, WaitAction, WaitJob
 
 from .._utils._config import LlamaIndexConfig
 from ._context import UiPathLlamaIndexRuntimeContext
@@ -78,9 +79,18 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
             response_applied = False
             async for event in handler.stream_events():
                 # log the received event on trace level
+                allowed_hitl_models = [CreateAction, WaitAction, InvokeProcess, WaitJob]
                 if isinstance(event, InputRequiredEvent):
-                    # for api trigger hitl scenarios only pass the str input for processing
-                    hitl_processor = HitlProcessor(value=event.prefix)
+                    if any(
+                        [
+                            isinstance(event, allowed_hitl_model)
+                            for allowed_hitl_model in allowed_hitl_models
+                        ]
+                    ):
+                        hitl_processor = HitlProcessor(value=event)
+                    else:
+                        # for api trigger hitl scenarios only pass the str input for processing
+                        hitl_processor = HitlProcessor(value=event.prefix)
                     if self.context.resume and not response_applied:
                         # If we are resuming, we need to apply the response to the event stream.
                         response_applied = True
