@@ -31,10 +31,10 @@ version = "0.0.1"
 description = "{project_name}"
 authors = [{{ name = "John Doe", email = "john.doe@myemail.com" }}]
 dependencies = [
-    "uipath-llamaindex>=0.0.27",
+    "uipath-llamaindex>=0.0.38",
     "llama-index-llms-openai>=0.2.2"
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 """
 
     with open(project_toml_path, "w") as f:
