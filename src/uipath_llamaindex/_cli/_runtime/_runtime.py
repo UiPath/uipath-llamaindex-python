@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 import logging
 import os
@@ -77,7 +78,11 @@ class UiPathLlamaIndexRuntime(UiPathBaseRuntime):
 
             response_applied = False
             async for event in handler.stream_events():
-                # log the received event on trace level
+                # LOG all llama events in runtime if LOG_LEVEL env var is set to TRACE
+                if os.getenv("LOG_LEVEL", "").upper() == "TRACE":
+                    logger.debug(f"[TRACE] Event received at {datetime.now()}: {type(event).__name__} -> {event!r}")
+
+                # Workflow-specific handling for InputRequiredEvent
                 if isinstance(event, InputRequiredEvent):
                     # for api trigger hitl scenarios only pass the str input for processing
                     hitl_processor = HitlProcessor(value=event.prefix)
