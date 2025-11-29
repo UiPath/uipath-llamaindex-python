@@ -1,5 +1,5 @@
 from llama_index.core.workflow import InputRequiredEvent
-from uipath.models import CreateAction, InvokeProcess, WaitAction, WaitJob
+from uipath.platform.common import CreateTask, InvokeProcess, WaitJob, WaitTask
 
 
 class InvokeProcessEvent(InvokeProcess, InputRequiredEvent):
@@ -10,9 +10,9 @@ class WaitJobEvent(WaitJob, InputRequiredEvent):
     pass
 
 
-class CreateActionEvent(CreateAction, InputRequiredEvent):
+class CreateTaskEvent(CreateTask, InputRequiredEvent):
     pass
 
 
-class WaitActionEvent(WaitAction, InputRequiredEvent):
+class WaitTaskEvent(WaitTask, InputRequiredEvent):
     pass

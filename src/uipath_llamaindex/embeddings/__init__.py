@@ -1,4 +1,4 @@
-from ._openai_embeddings import (
+from ._openai import (
     OpenAIEmbeddingModel,
     UiPathOpenAIEmbedding,
 )

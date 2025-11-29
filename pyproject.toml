@@ -1,23 +1,22 @@
 [project]
 name = "uipath-llamaindex"
-version = "0.0.38"
+version = "0.1.0"
 description = "UiPath LlamaIndex SDK"
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "llama-index>=0.12.38",
-    "llama-index-embeddings-azure-openai>=0.3.8",
-    "llama-index-llms-azure-openai>=0.3.2",
-    "openinference-instrumentation-llama-index>=4.3.0",
-    "uipath>=2.1.108, <2.2.0",
+    "llama-index>=0.14.8",
+    "llama-index-embeddings-azure-openai>=0.4.1",
+    "llama-index-llms-azure-openai>=0.4.2",
+    "openinference-instrumentation-llama-index>=4.3.9",
+    "uipath>=2.2.7, <2.3.0",
 ]
 classifiers = [
-    "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "Topic :: Software Development :: Build Tools",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 maintainers = [
     { name = "Marius Cosareanu", email = "marius.cosareanu@uipath.com" },
@@ -26,6 +25,9 @@ maintainers = [
 
 [project.entry-points."uipath.middlewares"]
 register = "uipath_llamaindex.middlewares:register_middleware"
+
+[project.entry-points."uipath.runtime.factories"]
+llamaindex = "uipath_llamaindex.runtime:register_runtime_factory"
 
 [project.urls]
 Homepage = "https://uipath.com"
@@ -69,21 +71,18 @@ plugins = [
 exclude = [
     "samples/.*", "testcases/.*"
 ]
-
 follow_imports = "silent"
 warn_redundant_casts = true
 warn_unused_ignores = true
 disallow_any_generics = true
 check_untyped_defs = true
 no_implicit_reexport = true
-
 disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "-ra -q"
-
 
 [[tool.uv.index]]
 name = "testpypi"

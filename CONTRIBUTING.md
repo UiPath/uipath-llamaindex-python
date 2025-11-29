@@ -33,10 +33,10 @@ See `just --list` for linting, formatting and build commands.
 
 ### Use SDK Locally
 1. Create a folder on your own device `mkdir project; cd project`
-2. Initialize the python project `uv` `uv init . --python 3.10`
-3. Obtain the project path `PATH_TO_SDK=/Users/YOU_USER/uipath-mcp-python/uipath-mcp`
+2. Initialize the python project `uv` `uv init . --python 3.11`
+3. Obtain the project path `PATH_TO_SDK=/Users/YOU_USER/uipath-llamaindex-python/uipath-llamaindex`
 4. Install the sdk in editable mode `uv add --editable ${PATH_TO_SDK}`
 
-:information_source: Instead of cloning the project into `.venv/lib/python3.10/site-packages/uipath-mcp`, this mode creates a file named `_uipath-mcp.pth` inside `.venv/lib/python3.10/site-packages`. This file contains the value of `PATH_TO_SDK`, which is added to `sys.path`—the list of directories where python searches for packages. (Run `python -c 'import sys; print(sys.path)'` to see the entries.)
+:information_source: Instead of cloning the project into `.venv/lib/python3.11/site-packages/uipath-llamaindex`, this mode creates a file named `_uipath-mcp.pth` inside `.venv/lib/python3.11/site-packages`. This file contains the value of `PATH_TO_SDK`, which is added to `sys.path`—the list of directories where python searches for packages. (Run `python -c 'import sys; print(sys.path)'` to see the entries.)
 
 

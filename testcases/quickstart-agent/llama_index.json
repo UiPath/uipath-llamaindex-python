@@ -1,7 +1,5 @@
 {
-  "dependencies": ["."],
   "workflows": {
     "agent": "./src/main.py:agent"
-  },
-  "env": ".env"
+  }
 }

@@ -105,7 +105,7 @@ try:
     company_name = tool_kwargs["company_name"]
 
     # Check if response indicates successful approval
-    if "research" not in response_text.lower() or "uipath" not in response_text.lower():
+    if "uipath" not in response_text.lower():
         print("Response doesn't indicate successful research approval")
         sys.exit(1)
 

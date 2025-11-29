@@ -8,7 +8,7 @@ This guide provides step-by-step instructions for setting up, creating, publishi
 
 Before proceeding, ensure you have the following installed:
 
--   Python 3.10 or higher
+-   Python 3.11 or higher
 -   `pip` or `uv` package manager
 -   A UiPath Automation Cloud account with appropriate permissions
 -   An OpenAI API key
@@ -50,12 +50,12 @@ We recommend using `uv` for package management. To create a new project:
 
 ```shell
 # Initialize a new uv project in the current directory
-> uv init . --python 3.10
+> uv init . --python 3.11
 
 # Create a new virtual environment
 # By default, uv creates a virtual environment in a directory called .venv
 > uv venv
-Using CPython 3.10.16 interpreter at: [PATH]
+Using CPython 3.11.16 interpreter at: [PATH]
 Creating virtual environment at: .venv
 Activate with: source .venv/bin/activate
 
@@ -127,7 +127,7 @@ This command creates the following files:
 ⠋ Initializing UiPath project ...
 ✓   Created '.env' file.
 ✓   Created 'agent.mermaid' file.
-✓   Created 'uipath.json' file.
+✓   Created 'entry-points.json' file.
 ```
 
 This command creates the following files:

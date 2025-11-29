@@ -1,14 +1,13 @@
 from enum import Enum
-from typing import Optional, Union
 
-from uipath._cli._runtime._contracts import (
+from uipath.runtime.errors import (
     UiPathBaseRuntimeError,
     UiPathErrorCategory,
     UiPathErrorCode,
 )
 
 
-class LLamaIndexErrorCode(Enum):
+class UiPathLlamaIndexErrorCode(Enum):
     AGENT_EXECUTION_FAILURE = "AGENT_EXECUTION_FAILURE"
     TIMEOUT_ERROR = "TIMEOUT_ERROR"
     SERIALIZE_OUTPUT_ERROR = "SERIALIZE_OUTPUT_ERROR"
@@ -28,11 +27,11 @@ class UiPathLlamaIndexRuntimeError(UiPathBaseRuntimeError):
 
     def __init__(
         self,
-        code: Union[LLamaIndexErrorCode, UiPathErrorCode],
+        code: UiPathLlamaIndexErrorCode | UiPathErrorCode,
         title: str,
         detail: str,
         category: UiPathErrorCategory = UiPathErrorCategory.UNKNOWN,
-        status: Optional[int] = None,
+        status: int | None = None,
     ):
         super().__init__(
             code.value, title, detail, category, status, prefix="LlamaIndex"

@@ -1,12 +1,12 @@
 [project]
 name = "quickstart-llamacloud"
-version = "0.0.4"
+version = "0.0.1"
 description = "UiPath LlamaIndex Quickstart with LlamaCloud Integration"
 authors = [{ name = "Tuana Celik", email = "tuana@runllama.ai" }]
 readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
-    "uipath-llamaindex>=0.0.36, <0.1.0",
+    "uipath-llamaindex>=0.1.0, <0.2.0",
     "llama-index-llms-openai>=0.2.2",
     "llama-cloud-services"
 ]

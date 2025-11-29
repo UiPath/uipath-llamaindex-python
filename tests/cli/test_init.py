@@ -2,7 +2,7 @@ import json
 import os
 
 from click.testing import CliRunner
-from uipath._cli.cli_init import init  # type: ignore
+from uipath._cli.cli_init import init
 
 
 class TestInit:
@@ -24,14 +24,13 @@ class TestInit:
 
             result = runner.invoke(init)
             assert result.exit_code == 0
-            assert os.path.exists("uipath.json")
+            assert os.path.exists("entry-points.json")
 
-            with open("uipath.json", "r") as f:
+            with open("entry-points.json", "r") as f:
                 config = json.load(f)
 
                 # Verify config structure
                 assert "entryPoints" in config
-                assert "bindings" in config
 
                 # Verify entryPoints properties
                 entry = config["entryPoints"][0]
@@ -60,11 +59,6 @@ class TestInit:
                 assert output_schema["required"] == ["result"]
                 assert output_schema["type"] == "object"
 
-                # Verify bindings
-                assert config["bindings"]["version"] == "2.0"
-                assert "resources" in config["bindings"]
-                assert isinstance(config["bindings"]["resources"], list)
-
     def test_init_custom_config_generation(
         self,
         runner: CliRunner,
@@ -83,14 +77,13 @@ class TestInit:
 
             result = runner.invoke(init)
             assert result.exit_code == 0
-            assert os.path.exists("uipath.json")
+            assert os.path.exists("entry-points.json")
 
-            with open("uipath.json", "r") as f:
+            with open("entry-points.json", "r") as f:
                 config = json.load(f)
 
                 # Verify config structure
                 assert "entryPoints" in config
-                assert "bindings" in config
 
                 # Verify entryPoints properties
                 entry = config["entryPoints"][0]
@@ -137,8 +130,3 @@ class TestInit:
 
                 # Verify required fields in output
                 assert output_schema["required"] == ["joke", "critique"]
-
-                # Verify bindings
-                assert config["bindings"]["version"] == "2.0"
-                assert "resources" in config["bindings"]
-                assert isinstance(config["bindings"]["resources"], list)

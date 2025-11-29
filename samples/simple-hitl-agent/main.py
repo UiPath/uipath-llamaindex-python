@@ -40,5 +40,7 @@ async def may_research_company(ctx: Context, company_name: str) -> bool:
 workflow = AgentWorkflow.from_tools_or_functions(
     [may_research_company],
     llm=llm,
-    system_prompt="You are a helpful assistant that can decide whether a company can be researched or not.",
+    system_prompt="""You are a helpful assistant that researches companies.
+
+CRITICAL: You MUST call the may_research_company function BEFORE providing any information about a company. After calling the function and receiving approval, provide your research summary.""",
 )

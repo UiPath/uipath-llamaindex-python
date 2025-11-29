@@ -1,8 +1,6 @@
-from typing import Optional
-
 from llama_index.core.query_engine import CustomQueryEngine
 from llama_index.core.response_synthesizers import BaseSynthesizer
-from uipath import UiPath
+from uipath.platform import UiPath
 
 from uipath_llamaindex.retrievers import ContextGroundingRetriever
 
@@ -14,10 +12,10 @@ class ContextGroundingQueryEngine(CustomQueryEngine):
         self,
         response_synthesizer: BaseSynthesizer,
         index_name: str,
-        folder_path: Optional[str] = None,
-        folder_key: Optional[str] = None,
-        uipath: Optional[UiPath] = None,
-        number_of_results: Optional[int] = 10,
+        folder_path: str | None = None,
+        folder_key: str | None = None,
+        uipath: UiPath | None = None,
+        number_of_results: int | None = 10,
         **kwargs,
     ):
         super().__init__()
