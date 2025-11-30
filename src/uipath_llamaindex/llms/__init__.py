@@ -1,4 +1,4 @@
-from ._openai_llms import (
+from ._openai import (
     OpenAIModel,
     UiPathOpenAI,
 )

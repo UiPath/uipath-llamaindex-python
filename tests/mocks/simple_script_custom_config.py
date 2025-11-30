@@ -1,5 +1,3 @@
-from typing import Optional
-
 from llama_index.core.workflow import (
     Event,
     StartEvent,
@@ -11,7 +9,7 @@ from llama_index.core.workflow import (
 
 class TopicEvent(StartEvent):
     topic: str
-    param: Optional[str] = None
+    param: str | None = None
 
 
 class JokeEvent(Event):
@@ -21,7 +19,7 @@ class JokeEvent(Event):
 class CritiqueEvent(StopEvent):
     joke: str
     critique: str
-    param: Optional[str] = None
+    param: str | None = None
 
 
 class JokeFlow(Workflow):

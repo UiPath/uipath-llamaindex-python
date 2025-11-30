@@ -13,6 +13,9 @@ uv run uipath init
 echo "Packing agent..."
 uv run uipath pack
 
+echo "Environment variables:"
+echo "UIPATH_JOB_KEY: $UIPATH_JOB_KEY"
+
 echo "Running agent..."
 echo "Input from input.json file"
 uv run uipath run agent --file input.json

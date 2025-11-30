@@ -61,6 +61,6 @@ This sample demonstrates how UiPath can handle complex multi-modal workflows tha
 
 ## Dependencies
 
-- Python ≥3.10
+- Python ≥ 3.11
 - UiPath LlamaIndex integration
 - OpenAI API (for text and image generation)

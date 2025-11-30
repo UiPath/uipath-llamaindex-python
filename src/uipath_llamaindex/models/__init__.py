@@ -1,13 +1,15 @@
-from .hitl_models import (
-    CreateActionEvent,
+"""Init file for UiPath LlamaIndex models."""
+
+from .events import (
+    CreateTaskEvent,
     InvokeProcessEvent,
-    WaitActionEvent,
     WaitJobEvent,
+    WaitTaskEvent,
 )
 
 __all__ = [
-    "CreateActionEvent",
-    "WaitActionEvent",
+    "CreateTaskEvent",
+    "WaitTaskEvent",
     "InvokeProcessEvent",
     "WaitJobEvent",
 ]

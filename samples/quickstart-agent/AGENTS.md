@@ -148,7 +148,6 @@ except (BaseUrlMissingError, SecretMissingError) as e:
 ```python
 # src/main.py
 from pydantic import BaseModel
-from typing import Optional
 from dotenv import load_dotenv
 from uipath import UiPath
 
@@ -160,7 +159,7 @@ class AutomationInput(BaseModel):
 
 class AutomationOutput(BaseModel):
     status: str
-    confirmation_code: Optional[str] = None
+    confirmation_code: str | None = None
 
 def main(input: AutomationInput) -> AutomationOutput:
     sdk = UiPath()

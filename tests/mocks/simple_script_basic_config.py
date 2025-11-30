@@ -7,6 +7,10 @@ from llama_index.core.workflow import (
 )
 
 
+class MyStartEvent(StartEvent):
+    topic: str
+
+
 class JokeEvent(Event):
     joke: str
 
@@ -15,7 +19,7 @@ class JokeFlow(Workflow):
     pass
 
     @step
-    async def generate_joke(self, ev: StartEvent) -> JokeEvent:
+    async def generate_joke(self, ev: MyStartEvent) -> JokeEvent:
         topic = ev.topic
 
         prompt = f"Write your best joke about {topic}."

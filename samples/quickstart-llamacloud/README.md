@@ -20,7 +20,7 @@ The Quickstart LlamaCloud Agent provides a FunctionAgent that can:
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.11+
 - UiPath Cloud account
 - OpenAI API key
 - LlamaCloud account with API access
@@ -115,7 +115,7 @@ uipath dev
    ```bash
    uipath invoke agent '{"user_msg": "What are the travel rates for New York?"}'
    ```
-   
+
 ## Available Functions
 
 The agent has access to three main functions:
@@ -149,4 +149,4 @@ Generates comprehensive travel recommendations combining both company policies a
 
 - `uipath-llamaindex`: UiPath LlamaIndex integration
 - `llama-index-llms-openai`: OpenAI LLM integration
-- `llama-cloud-services`: LlamaCloud integration 
+- `llama-cloud-services`: LlamaCloud integration

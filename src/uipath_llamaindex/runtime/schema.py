@@ -1,0 +1,394 @@
+"""Schema extraction utilities for LlamaIndex workflows."""
+
+from typing import Any
+
+from llama_index.core.agent.workflow import BaseWorkflowAgent
+from pydantic import BaseModel
+from uipath.runtime.schema import (
+    UiPathRuntimeEdge,
+    UiPathRuntimeGraph,
+    UiPathRuntimeNode,
+)
+from workflows import Workflow
+from workflows.decorators import StepConfig
+from workflows.events import (
+    HumanResponseEvent,
+    InputRequiredEvent,
+    StopEvent,
+)
+from workflows.utils import (
+    get_steps_from_class,
+    get_steps_from_instance,
+)
+
+
+def get_entrypoints_schema(workflow: Workflow) -> dict[str, Any]:
+    """
+    Extract input/output schema from a LlamaIndex workflow.
+
+    Args:
+        workflow: A LlamaIndex Workflow instance
+
+    Returns:
+        Dictionary with input and output schemas
+    """
+    schema = {
+        "input": {"type": "object", "properties": {}, "required": []},
+        "output": {"type": "object", "properties": {}, "required": []},
+    }
+
+    # Find the actual StartEvent and StopEvent classes used in this workflow
+    start_event_class = workflow._start_event_class
+    stop_event_class = workflow._stop_event_class
+
+    # Generate input schema from StartEvent
+    try:
+        if isinstance(workflow, BaseWorkflowAgent):
+            # For workflow agents, define a simple schema with just user_msg
+            schema["input"] = {
+                "type": "object",
+                "properties": {
+                    "user_msg": {
+                        "type": "string",
+                        "title": "User Message",
+                        "description": "The user's question or request",
+                    }
+                },
+                "required": ["user_msg"],
+            }
+        else:
+            input_schema = start_event_class.model_json_schema()
+            # Resolve references and handle nullable types
+            unpacked_input = _resolve_refs(input_schema)
+            schema["input"]["properties"] = _process_nullable_types(
+                unpacked_input.get("properties", {})
+            )
+            schema["input"]["required"] = unpacked_input.get("required", [])
+    except (AttributeError, Exception):
+        pass
+
+    # Handle output schema - check if it's a workflow agent with output_cls first
+    if isinstance(workflow, BaseWorkflowAgent):
+        output_cls: type[BaseModel] | None = getattr(workflow, "output_cls", None)
+        if output_cls is not None:
+            try:
+                output_schema = output_cls.model_json_schema()
+                # Resolve references and handle nullable types
+                unpacked_output = _resolve_refs(output_schema)
+                schema["output"]["properties"] = _process_nullable_types(
+                    unpacked_output.get("properties", {})
+                )
+                schema["output"]["required"] = unpacked_output.get("required", [])
+            except (AttributeError, Exception):
+                pass
+    # Check if it's the base StopEvent or a custom subclass
+    elif stop_event_class is StopEvent:
+        # base StopEvent
+        schema["output"] = {
+            "type": "object",
+            "properties": {
+                "result": {
+                    "title": "Result",
+                    "type": "object",
+                }
+            },
+            "required": ["result"],
+        }
+    else:
+        # For custom StopEvent subclasses, extract their Pydantic schema
+        try:
+            output_schema = stop_event_class.model_json_schema()
+            # Resolve references and handle nullable types
+            unpacked_output = _resolve_refs(output_schema)
+            schema["output"]["properties"] = _process_nullable_types(
+                unpacked_output.get("properties", {})
+            )
+            schema["output"]["required"] = unpacked_output.get("required", [])
+        except (AttributeError, Exception):
+            pass
+
+    return schema
+
+
+def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
+    """
+    Extract graph structure from a LlamaIndex workflow.
+
+    Args:
+        workflow: A LlamaIndex Workflow instance
+
+    Returns:
+        UiPathRuntimeGraph with nodes and edges representing the workflow structure
+    """
+    nodes: list[UiPathRuntimeNode] = []
+    edges: list[UiPathRuntimeEdge] = []
+
+    # Add __start__ node
+    nodes.append(
+        UiPathRuntimeNode(
+            id="__start__",
+            name="__start__",
+            type="__start__",
+            metadata={},
+            subgraph=None,
+        )
+    )
+
+    # Get all steps from the workflow
+    steps = get_steps_from_class(workflow)
+    if not steps:
+        # If no steps are defined in the class, try to get them from the instance
+        steps = get_steps_from_instance(workflow)
+
+    # Track if we need external step for human interaction
+    has_human_interaction = False
+    current_stop_event: type | None = None
+
+    # First pass: find the StopEvent used in this workflow and check for human interaction
+    for _, step_func in steps.items():
+        step_config: StepConfig | None = getattr(step_func, "__step_config", None)
+        if step_config is None:
+            continue
+
+        for return_type in step_config.return_types:
+            if issubclass(return_type, StopEvent):
+                current_stop_event = return_type
+            if issubclass(return_type, (InputRequiredEvent, HumanResponseEvent)):
+                has_human_interaction = True
+
+        for event_type in step_config.accepted_events:
+            if issubclass(event_type, (InputRequiredEvent, HumanResponseEvent)):
+                has_human_interaction = True
+
+    # Create step nodes (all steps are type "node")
+    for step_name, step_func in steps.items():
+        step_config = getattr(step_func, "__step_config", None)
+        if step_config is None:
+            continue
+
+        # Build metadata for the step
+        metadata: dict[str, Any] = {}
+        if step_config.accepted_events:
+            metadata["accepted_events"] = [
+                e.__name__ for e in step_config.accepted_events
+            ]
+        if step_config.return_types:
+            metadata["return_types"] = [
+                r.__name__ for r in step_config.return_types if r is not type(None)
+            ]
+
+        nodes.append(
+            UiPathRuntimeNode(
+                id=step_name,
+                name=step_name,
+                type="node",
+                metadata=metadata,
+                subgraph=None,
+            )
+        )
+
+    # Add external step node if there are human interactions
+    if has_human_interaction:
+        nodes.append(
+            UiPathRuntimeNode(
+                id="external_step",
+                name="external_step",
+                type="external",
+                metadata={},
+                subgraph=None,
+            )
+        )
+
+    # Add __end__ node
+    nodes.append(
+        UiPathRuntimeNode(
+            id="__end__",
+            name="__end__",
+            type="__end__",
+            metadata={},
+            subgraph=None,
+        )
+    )
+
+    # Create edges based on event flow
+    start_event_class = workflow._start_event_class
+    first_step_found = False
+
+    for step_name, step_func in steps.items():
+        step_config = getattr(step_func, "__step_config", None)
+        if step_config is None:
+            continue
+
+        # Add edge from __start__ to first step that accepts the start event
+        if not first_step_found and step_config.accepted_events:
+            if start_event_class in step_config.accepted_events:
+                edges.append(
+                    UiPathRuntimeEdge(
+                        source="__start__",
+                        target=step_name,
+                        label=start_event_class.__name__,
+                    )
+                )
+                first_step_found = True
+
+        # Add edges between steps based on event flow
+        for return_type in step_config.return_types:
+            if return_type is type(None):
+                continue
+
+            # Find steps that accept this return type
+            for target_step_name, target_step_func in steps.items():
+                target_config: StepConfig | None = getattr(
+                    target_step_func, "__step_config", None
+                )
+                if target_config is None:
+                    continue
+
+                if return_type in target_config.accepted_events:
+                    # Special handling for StopEvent - only connect to the actual StopEvent being used
+                    if issubclass(return_type, StopEvent):
+                        if current_stop_event and return_type == current_stop_event:
+                            edges.append(
+                                UiPathRuntimeEdge(
+                                    source=step_name,
+                                    target=target_step_name,
+                                    label=return_type.__name__,
+                                )
+                            )
+                    else:
+                        edges.append(
+                            UiPathRuntimeEdge(
+                                source=step_name,
+                                target=target_step_name,
+                                label=return_type.__name__,
+                            )
+                        )
+
+            # If this returns the current StopEvent, add edge to __end__
+            if (
+                current_stop_event
+                and issubclass(return_type, StopEvent)
+                and return_type == current_stop_event
+            ):
+                edges.append(
+                    UiPathRuntimeEdge(
+                        source=step_name,
+                        target="__end__",
+                        label=return_type.__name__,
+                    )
+                )
+
+            # If this returns InputRequiredEvent, add edge to external_step
+            if issubclass(return_type, InputRequiredEvent):
+                edges.append(
+                    UiPathRuntimeEdge(
+                        source=step_name,
+                        target="external_step",
+                        label=return_type.__name__,
+                    )
+                )
+
+        # If this accepts HumanResponseEvent, add edge from external_step
+        for event_type in step_config.accepted_events:
+            if issubclass(event_type, HumanResponseEvent):
+                edges.append(
+                    UiPathRuntimeEdge(
+                        source="external_step",
+                        target=step_name,
+                        label=event_type.__name__,
+                    )
+                )
+
+    return UiPathRuntimeGraph(nodes=nodes, edges=edges)
+
+
+def _resolve_refs(
+    schema: dict[str, Any],
+    root: dict[str, Any] | None = None,
+    visited: set[str] | None = None,
+) -> dict[str, Any]:
+    """
+    Recursively resolves $ref references in a JSON schema.
+
+    Args:
+        schema: The schema dictionary to resolve
+        root: The root schema for reference resolution
+        visited: Set of visited references to detect circular dependencies
+
+    Returns:
+        Resolved schema dictionary
+    """
+    if root is None:
+        root = schema
+
+    if visited is None:
+        visited = set()
+
+    if isinstance(schema, dict):
+        if "$ref" in schema:
+            ref_path = schema["$ref"]
+
+            if ref_path in visited:
+                # Circular dependency detected
+                return {
+                    "type": "object",
+                    "description": f"Circular reference to {ref_path}",
+                }
+
+            visited.add(ref_path)
+
+            # Resolve the reference - handle both #/definitions/ and #/$defs/ formats
+            ref_parts = ref_path.lstrip("#/").split("/")
+            ref_schema = root
+            for part in ref_parts:
+                ref_schema = ref_schema.get(part, {})
+
+            result = _resolve_refs(ref_schema, root, visited)
+
+            # Remove from visited after resolution
+            visited.discard(ref_path)
+
+            return result
+
+        return {k: _resolve_refs(v, root, visited) for k, v in schema.items()}
+
+    elif isinstance(schema, list):
+        return [_resolve_refs(item, root, visited) for item in schema]
+
+    return schema
+
+
+def _process_nullable_types(properties: dict[str, Any]) -> dict[str, Any]:
+    """
+    Process properties to handle nullable types correctly.
+
+    This matches the original implementation that adds "nullable": True
+    instead of simplifying the schema structure.
+
+    Args:
+        properties: The properties dictionary from a schema
+
+    Returns:
+        Processed properties with nullable types marked
+    """
+    result = {}
+    for name, prop in properties.items():
+        if "anyOf" in prop:
+            types = [item.get("type") for item in prop["anyOf"] if "type" in item]
+            if "null" in types:
+                non_null_types = [t for t in types if t != "null"]
+                if len(non_null_types) == 1:
+                    result[name] = {"type": non_null_types[0], "nullable": True}
+                else:
+                    result[name] = {"type": non_null_types, "nullable": True}
+            else:
+                result[name] = prop
+        else:
+            result[name] = prop
+    return result
+
+
+__all__ = [
+    "get_entrypoints_schema",
+    "get_workflow_schema",
+]
