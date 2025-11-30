@@ -7,7 +7,7 @@ from llama_index.core.workflow import (
 )
 from llama_index.llms.openai import OpenAI
 
-from uipath_llamaindex.models import CreateActionEvent
+from uipath_llamaindex.models import CreateTaskEvent
 
 llm = OpenAI(model="gpt-4o-mini")
 
@@ -23,7 +23,7 @@ async def may_research_company(ctx: Context, company_name: str) -> bool:
     # emit an event to the external stream to be captured
     agent_name = "Company researcher"
     ctx.write_event_to_stream(
-        CreateActionEvent(
+        CreateTaskEvent(
             prefix="hitl escalation to research company",
             app_name="generic_escalation_app",
             title=f"Action required for {agent_name}",

@@ -1,7 +1,5 @@
 {
-  "dependencies": ["."],
   "workflows": {
     "agent": "main.py:image_flow"
-  },
-  "env": ".env"
+  }
 }

@@ -179,7 +179,6 @@ class UiPathLlamaIndexRuntimeFactory:
             List of workflow names that can be used as entrypoints
         """
         config = self._load_config()
-        print(config)
         if not config.exists:
             return []
         return config.entrypoints

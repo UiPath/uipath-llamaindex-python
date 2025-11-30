@@ -13,7 +13,7 @@ from llama_index.core.workflow import (
 )
 from llama_index.llms.openai import OpenAI
 from llama_index.tools.openai import OpenAIImageGenerationToolSpec
-from uipath import UiPath
+from uipath.platform import UiPath
 
 
 # Define the events

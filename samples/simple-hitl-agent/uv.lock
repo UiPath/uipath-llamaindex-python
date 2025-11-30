@@ -871,6 +871,18 @@ wheels = [
 ]
 
 [[package]]
+name = "linkify-it-py"
+version = "2.0.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "uc-micro-py" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/2a/ae/bb56c6828e4797ba5a4821eec7c43b8bf40f69cda4d4f5f8c8a2810ec96a/linkify-it-py-2.0.3.tar.gz", hash = "sha256:68cda27e162e9215c17d786649d1da0021a451bdc436ef9e0fa0ba5234b9b048", size = 27946, upload-time = "2024-02-04T14:48:04.179Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/04/1e/b832de447dee8b582cac175871d2f6c3d5077cc56d5575cadba1fd1cccfa/linkify_it_py-2.0.3-py3-none-any.whl", hash = "sha256:6bcbc417b0ac14323382aef5c5192c0075bf8a9d6b41820a2b66371eac6b6d79", size = 19820, upload-time = "2024-02-04T14:48:02.496Z" },
+]
+
+[[package]]
 name = "llama-cloud"
 version = "0.1.35"
 source = { registry = "https://pypi.org/simple" }
@@ -1120,11 +1132,19 @@ dependencies = [
     { name = "uipath-llamaindex" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "uipath-dev" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "llama-index-llms-openai", specifier = ">=0.6.10" },
-    { name = "uipath-llamaindex", specifier = "==0.1.0.dev1000850330", index = "https://test.pypi.org/simple/" },
+    { name = "uipath-llamaindex", specifier = ">=0.1.0,<0.2.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "uipath-dev", specifier = ">=0.0.8" }]
 
 [[package]]
 name = "markdown-it-py"
@@ -1136,6 +1156,11 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/5b/f5/4ec618ed16cc4f8fb3b701563655a69816155e79e24a17b651541804721d/markdown_it_py-4.0.0.tar.gz", hash = "sha256:cb0a2b4aa34f932c007117b194e945bd74e0ec24133ceb5bac59009cda1cb9f3", size = 73070, upload-time = "2025-08-11T12:57:52.854Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/94/54/e7d793b573f298e1c9013b8c4dade17d481164aa517d1d7148619c2cedbf/markdown_it_py-4.0.0-py3-none-any.whl", hash = "sha256:87327c59b172c5011896038353a81343b6754500a08cd7a4973bb48c6d578147", size = 87321, upload-time = "2025-08-11T12:57:51.923Z" },
+]
+
+[package.optional-dependencies]
+linkify = [
+    { name = "linkify-it-py" },
 ]
 
 [[package]]
@@ -1222,6 +1247,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ab/5e/5e53d26b42ab75491cda89b871dab9e97c840bf12c63ec58a1919710cd06/marshmallow-3.26.1.tar.gz", hash = "sha256:e6d8affb6cb61d39d26402096dc0aee12d5a26d490a121f118d2e81dc0719dc6", size = 221825, upload-time = "2025-02-03T15:32:25.093Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/34/75/51952c7b2d3873b44a0028b1bd26a25078c18f92f256608e8d1dc61b39fd/marshmallow-3.26.1-py3-none-any.whl", hash = "sha256:3350409f20a70a7e4e11a27661187b77cdcaeb20abca41c1454fe33636bea09c", size = 50878, upload-time = "2025-02-03T15:32:22.295Z" },
+]
+
+[[package]]
+name = "mdit-py-plugins"
+version = "0.5.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown-it-py" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b2/fd/a756d36c0bfba5f6e39a1cdbdbfdd448dc02692467d83816dff4592a1ebc/mdit_py_plugins-0.5.0.tar.gz", hash = "sha256:f4918cb50119f50446560513a8e311d574ff6aaed72606ddae6d35716fe809c6", size = 44655, upload-time = "2025-08-11T07:25:49.083Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/fb/86/dd6e5db36df29e76c7a7699123569a4a18c1623ce68d826ed96c62643cae/mdit_py_plugins-0.5.0-py3-none-any.whl", hash = "sha256:07a08422fc1936a5d26d146759e9155ea466e842f5ab2f7d2266dd084c8dab1f", size = 57205, upload-time = "2025-08-11T07:25:47.597Z" },
 ]
 
 [[package]]
@@ -2122,6 +2159,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pyperclip"
+version = "1.11.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/52/d87eba7cb129b81563019d1679026e7a112ef76855d6159d24754dbd2a51/pyperclip-1.11.0.tar.gz", hash = "sha256:244035963e4428530d9e3a6101a1ef97209c6825edab1567beac148ccc1db1b6", size = 12185, upload-time = "2025-09-26T14:40:37.245Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/80/fc9d01d5ed37ba4c42ca2b55b4339ae6e200b456be3a1aaddf4a9fa99b8c/pyperclip-1.11.0-py3-none-any.whl", hash = "sha256:299403e9ff44581cb9ba2ffeed69c7aa96a008622ad0c46cb575ca75b5b84273", size = 11063, upload-time = "2025-09-26T14:40:36.069Z" },
+]
+
+[[package]]
 name = "pysignalr"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2438,6 +2484,23 @@ wheels = [
 ]
 
 [[package]]
+name = "textual"
+version = "6.7.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "markdown-it-py", extra = ["linkify"] },
+    { name = "mdit-py-plugins" },
+    { name = "platformdirs" },
+    { name = "pygments" },
+    { name = "rich" },
+    { name = "typing-extensions" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/33/8d/c269da513f5c9edd4e82dd78ad02ab68150efaa40740cfd7b3086410fb75/textual-6.7.0.tar.gz", hash = "sha256:ef1fd587a3b5b29777d4b03037e0a8f10d174e63366e99a5d8518a74b5382e38", size = 1580798, upload-time = "2025-11-29T16:33:44.035Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/8c/67/f2dc967db68b984dd71fc0092dc906ddf5d09eea8c22830e02267ce18e19/textual-6.7.0-py3-none-any.whl", hash = "sha256:c5ed36840187c0bdfeb9bd46217d18fe26dca3befcdc695edc848cf24b3133a4", size = 713994, upload-time = "2025-11-29T16:33:42.107Z" },
+]
+
+[[package]]
 name = "tiktoken"
 version = "0.11.0"
 source = { registry = "https://pypi.org/simple" }
@@ -2532,6 +2595,15 @@ wheels = [
 ]
 
 [[package]]
+name = "uc-micro-py"
+version = "1.0.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/91/7a/146a99696aee0609e3712f2b44c6274566bc368dfe8375191278045186b8/uc-micro-py-1.0.3.tar.gz", hash = "sha256:d321b92cff673ec58027c04015fcaa8bb1e005478643ff4a500882eaab88c48a", size = 6043, upload-time = "2024-02-09T16:52:01.654Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/37/87/1f677586e8ac487e29672e4b17455758fce261de06a0d086167bb760361a/uc_micro_py-1.0.3-py3-none-any.whl", hash = "sha256:db1dffff340817673d7b466ec86114a9dc0e9d4d9b5ba229d9d60e5c12600cd5", size = 6229, upload-time = "2024-02-09T16:52:00.371Z" },
+]
+
+[[package]]
 name = "uipath"
 version = "2.2.7"
 source = { registry = "https://pypi.org/simple" }
@@ -2573,9 +2645,23 @@ wheels = [
 ]
 
 [[package]]
+name = "uipath-dev"
+version = "0.0.8"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pyperclip" },
+    { name = "textual" },
+    { name = "uipath-runtime" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1a/1c/cf4ccc947ca2bedcee8886a0a043ac3ca351a290ac3787c70c53de1b97c6/uipath_dev-0.0.8.tar.gz", hash = "sha256:8ed7916a9484a129d81fa55a9cf3df4c1ac5c462ae8857324434be2b283ca500", size = 7584391, upload-time = "2025-11-29T14:34:49.427Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/51/88/d791277917b9336df77dbd4312551e5be2ff3740677e17a7b8a20d86b7a9/uipath_dev-0.0.8-py3-none-any.whl", hash = "sha256:bc0e4f76106bbcfc2ee6f4359214d5d550d323ef88d086c2274fc7706d25f765", size = 36865, upload-time = "2025-11-29T14:34:47.904Z" },
+]
+
+[[package]]
 name = "uipath-llamaindex"
-version = "0.1.0.dev1000850330"
-source = { registry = "https://test.pypi.org/simple/" }
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "llama-index" },
     { name = "llama-index-embeddings-azure-openai" },
@@ -2583,9 +2669,9 @@ dependencies = [
     { name = "openinference-instrumentation-llama-index" },
     { name = "uipath" },
 ]
-sdist = { url = "https://test-files.pythonhosted.org/packages/94/2f/87331061610217f349322cd0639cdbab6977b9bf08c0a37e8d35fdd625d6/uipath_llamaindex-0.1.0.dev1000850330.tar.gz", hash = "sha256:5753187dc1cbe0d4591cbe48781bef18820112002293c233b43758aa1e922a9c", size = 3388741, upload-time = "2025-11-30T10:30:05.854Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3e/84/8540867c8cb46f77ebafe4f820d209d308af8cd1736e2166c5cde6066bcd/uipath_llamaindex-0.1.0.tar.gz", hash = "sha256:e20ed355a42b97b154f2dd12310cad0f93a1c07cc2f49134967af22f16eba58a", size = 3388592, upload-time = "2025-11-30T11:06:34.656Z" }
 wheels = [
-    { url = "https://test-files.pythonhosted.org/packages/59/59/040686d54c422e59e73401460fca09aad9089a577a7bc8fc99902aed2284/uipath_llamaindex-0.1.0.dev1000850330-py3-none-any.whl", hash = "sha256:cffd851fb13ef91ef82bf9bd84e9c982e30f9c5fc676f8d2318b87710b33d4e3", size = 25741, upload-time = "2025-11-30T10:30:07.389Z" },
+    { url = "https://files.pythonhosted.org/packages/a8/b4/fc5174ba913d3170fc03dbaff0ab70a82fe0e5d1ef49bf1c37a81e7ca451/uipath_llamaindex-0.1.0-py3-none-any.whl", hash = "sha256:297eaab6a2e194ee5ada604a115c39c57aeeb0090bd7e951027dcb7081a518c4", size = 25608, upload-time = "2025-11-30T11:06:33.261Z" },
 ]
 
 [[package]]
