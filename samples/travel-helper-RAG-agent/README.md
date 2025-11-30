@@ -169,9 +169,9 @@ On traces tab, we can see the steps that our agent took to complete the task, al
 
 > **IMPORTANT**❗: The `add_data_to_index` should be set to **true**
 > every time new data is added to the sample_data directory. If one wishes to add other file types such as _.csv, .json, .xml etc_ to be ingested by the context grounding index
-> the settings section from `uipath.json` file should be updated. See example below:
+> the packOptions section from `uipath.json` file should be updated. See example below:
 ```json
-  "settings": {
+  "packOptions": {
     "fileExtensionsIncluded": [
       ".txt",
       ".xlsx",

@@ -13,7 +13,7 @@ from llama_index.core.workflow import (
     Workflow,
     step,
 )
-from uipath import UiPath
+from uipath.platform import UiPath
 
 from uipath_llamaindex.llms import UiPathOpenAI
 from uipath_llamaindex.query_engines import ContextGroundingQueryEngine
@@ -25,7 +25,6 @@ company_policy_files_directory = "sample_data/company_policies"
 personal_preferences_files_directory = "sample_data/personal_preferences"
 
 llm = UiPathOpenAI(model="gpt-4o-2024-11-20")
-uipath = UiPath()
 
 
 class CustomStartEvent(StartEvent):
@@ -100,6 +99,7 @@ async def in_progress_ingestion(index_name: str) -> bool:
     """
     returns True if ingestion finished and was successful, False otherwise
     """
+    uipath = UiPath()
     index = await uipath.context_grounding.retrieve_async(
         index_name, folder_path=index_folder_path
     )
@@ -120,6 +120,7 @@ class SubQuestionQueryEngine(Workflow):
     @step
     async def add_data_to_index(self, ev: AddDataToIndexEvent) -> WaitForIndexIngestion:
         async def add_file_to_index(file_path, index_name, ingest_data):
+            uipath = UiPath()
             await uipath.context_grounding.add_to_index_async(
                 name=index_name,
                 folder_path=index_folder_path,
@@ -166,7 +167,7 @@ class SubQuestionQueryEngine(Workflow):
         self, ev: WaitForIndexIngestion
     ) -> QueryEvent | OutputEvent:
         """
-        Since ReAct agents can't handle well 'uipath.models.IngestionInProgressException', we use this node to make sure the data added to indexes was successfully ingested,
+        Since ReAct agents can't handle well 'uipath.platform.errors.IngestionInProgressException', we use this node to make sure the data added to indexes was successfully ingested,
         before moving to 'create_sub_questions_plan' step
         """
         no_of_tries = 10
