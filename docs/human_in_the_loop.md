@@ -7,7 +7,7 @@ It focuses on the **ctx.write_event_to_stream** LlamaIndex functionality.
 
 ### 1. CreateTaskEvent
 
-The `CreateTaskEvent` model is utilized to create an escalation task within the UiPath Action Center as part of an interrupt context. The task will rely on a previously created UiPath app.
+The `CreateTaskEvent` model is utilized to create an escalation task within the UiPath Action Center as part of an interrupt context. The task will rely on a previously created UiPath App.
 After addressing the escalation, the current agent will resume execution.
 For more information on UiPath Apps, refer to the [UiPath Apps User Guide](https://docs.uipath.com/apps/automation-cloud/latest/user-guide/introduction).
 

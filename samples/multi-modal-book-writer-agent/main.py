@@ -1,7 +1,7 @@
 import json
 import os
 import tempfile
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 from llama_index.core.workflow import (
@@ -29,7 +29,7 @@ class BookOutlineEvent(Event):
 
     topic: str
     book_title: str
-    chapters: List[Dict[str, Any]]
+    chapters: list[dict[str, Any]]
 
 
 class ChaptersContentEvent(Event):
@@ -37,7 +37,7 @@ class ChaptersContentEvent(Event):
 
     topic: str
     book_title: str
-    chapters_content: List[Dict[str, Any]]
+    chapters_content: list[dict[str, Any]]
 
 
 class ChaptersFilesEvent(Event):
@@ -45,7 +45,7 @@ class ChaptersFilesEvent(Event):
 
     topic: str
     book_title: str
-    chapter_files: List[Dict[str, Any]]
+    chapter_files: list[dict[str, Any]]
 
 
 class BookCompleteEvent(StopEvent):
@@ -54,7 +54,7 @@ class BookCompleteEvent(StopEvent):
     topic: str
     book_title: str
     total_chapters: int
-    chapter_attachments: List[Dict[str, Any]]
+    chapter_attachments: list[dict[str, Any]]
 
 
 # Define the workflow
@@ -295,11 +295,11 @@ BOOK TOPIC: {ev.topic}
 
     async def _generate_chapter_image(
         self,
-        chapter: Dict[str, Any],
+        chapter: dict[str, Any],
         book_title: str,
         topic: str,
         temp_dir: str,
-        chapter_files: Dict[str, str],
+        chapter_files: dict[str, str],
     ):
         """Generate an illustration for the chapter."""
         prompt = f"""

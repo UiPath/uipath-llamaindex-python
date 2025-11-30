@@ -3,6 +3,11 @@
 from typing import Any
 
 from llama_index.core.agent.workflow import BaseWorkflowAgent
+from llama_index.core.agent.workflow.workflow_events import (
+    AgentOutput,
+    ToolCall,
+    ToolCallResult,
+)
 from pydantic import BaseModel
 from uipath.runtime.schema import (
     UiPathRuntimeEdge,
@@ -166,23 +171,23 @@ def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
         if step_config is None:
             continue
 
-        # Build metadata for the step
-        metadata: dict[str, Any] = {}
-        if step_config.accepted_events:
-            metadata["accepted_events"] = [
-                e.__name__ for e in step_config.accepted_events
-            ]
-        if step_config.return_types:
-            metadata["return_types"] = [
-                r.__name__ for r in step_config.return_types if r is not type(None)
-            ]
+        node_type: str = "node"
+
+        # Steps that execute tools - accept ToolCall
+        for event_type in step_config.accepted_events:
+            if issubclass(event_type, (ToolCall, ToolCallResult)):
+                node_type = "tool"
+
+        # Steps that produce AgentOutput are LLM steps (they call the model)
+        for return_type in step_config.return_types:
+            if return_type is not type(None) and issubclass(return_type, AgentOutput):
+                node_type = "model"
 
         nodes.append(
             UiPathRuntimeNode(
                 id=step_name,
                 name=step_name,
-                type="node",
-                metadata=metadata,
+                type=node_type,
                 subgraph=None,
             )
         )
@@ -198,17 +203,6 @@ def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
                 subgraph=None,
             )
         )
-
-    # Add __end__ node
-    nodes.append(
-        UiPathRuntimeNode(
-            id="__end__",
-            name="__end__",
-            type="__end__",
-            metadata={},
-            subgraph=None,
-        )
-    )
 
     # Create edges based on event flow
     start_event_class = workflow._start_event_class
@@ -263,20 +257,6 @@ def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
                                 label=return_type.__name__,
                             )
                         )
-
-            # If this returns the current StopEvent, add edge to __end__
-            if (
-                current_stop_event
-                and issubclass(return_type, StopEvent)
-                and return_type == current_stop_event
-            ):
-                edges.append(
-                    UiPathRuntimeEdge(
-                        source=step_name,
-                        target="__end__",
-                        label=return_type.__name__,
-                    )
-                )
 
             # If this returns InputRequiredEvent, add edge to external_step
             if issubclass(return_type, InputRequiredEvent):
