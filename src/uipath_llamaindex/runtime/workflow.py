@@ -10,7 +10,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from llama_index.core.workflow import Workflow
+from workflows import Workflow
 
 logger = logging.getLogger(__name__)
 

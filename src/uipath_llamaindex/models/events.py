@@ -1,5 +1,5 @@
-from llama_index.core.workflow import InputRequiredEvent
 from uipath.platform.common import CreateTask, InvokeProcess, WaitJob, WaitTask
+from workflows.events import InputRequiredEvent
 
 
 class InvokeProcessEvent(InvokeProcess, InputRequiredEvent):
