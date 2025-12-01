@@ -14,6 +14,8 @@ from workflows.events import (
     InputRequiredEvent,
 )
 
+from uipath_llamaindex.runtime.schema import get_step_config
+
 
 class DebuggableWorkflow(Protocol):
     context: Context | None = None
@@ -39,17 +41,24 @@ def inject_breakpoints(workflow: Workflow) -> None:
     cls = workflow.__class__
 
     for name, fn in list(vars(cls).items()):
-        if callable(fn) and hasattr(fn, "_step_config"):
-            wrapped = make_wrapper(name, fn)
-            # ensure `self` is bound correctly
-            bound = wrapped.__get__(workflow, cls)  # type: ignore[attr-defined]
-            setattr(workflow, name, bound)
+        step_config = get_step_config(name, fn)
+        if step_config is None or not callable(fn):
+            continue
 
-            # also patch in _step_functions if present
-            if name in cls._step_functions:
-                cls._step_functions[name] = bound
+        wrapped = make_wrapper(name, fn)
+        # ensure `self` is bound correctly
+        bound = wrapped.__get__(workflow, cls)  # type: ignore[attr-defined]
+        setattr(workflow, name, bound)
+
+        # also patch in _step_functions if present
+        if name in cls._step_functions:
+            cls._step_functions[name] = bound
 
     for name, fn in list(cls._step_functions.items()):
+        step_config = get_step_config(name, fn)
+        if step_config is None:
+            continue
+
         wrapped = make_wrapper(name, fn)
 
         # If it was originally a bound method, bind it again

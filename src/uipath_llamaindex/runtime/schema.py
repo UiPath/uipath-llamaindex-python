@@ -21,10 +21,6 @@ from workflows.events import (
     InputRequiredEvent,
     StopEvent,
 )
-from workflows.utils import (
-    get_steps_from_class,
-    get_steps_from_instance,
-)
 
 
 def get_entrypoints_schema(workflow: Workflow) -> dict[str, Any]:
@@ -128,30 +124,24 @@ def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
     nodes: list[UiPathRuntimeNode] = []
     edges: list[UiPathRuntimeEdge] = []
 
-    # Add __start__ node
     nodes.append(
         UiPathRuntimeNode(
             id="__start__",
             name="__start__",
             type="__start__",
-            metadata={},
             subgraph=None,
         )
     )
 
-    # Get all steps from the workflow
-    steps = get_steps_from_class(workflow)
-    if not steps:
-        # If no steps are defined in the class, try to get them from the instance
-        steps = get_steps_from_instance(workflow)
+    steps = workflow._get_steps()
 
     # Track if we need external step for human interaction
     has_human_interaction = False
     current_stop_event: type | None = None
 
     # First pass: find the StopEvent used in this workflow and check for human interaction
-    for _, step_func in steps.items():
-        step_config: StepConfig | None = getattr(step_func, "__step_config", None)
+    for name, step_func in steps.items():
+        step_config: StepConfig | None = get_step_config(name, step_func)
         if step_config is None:
             continue
 
@@ -167,7 +157,7 @@ def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
 
     # Create step nodes (all steps are type "node")
     for step_name, step_func in steps.items():
-        step_config = getattr(step_func, "__step_config", None)
+        step_config = get_step_config(step_name, step_func)
         if step_config is None:
             continue
 
@@ -199,17 +189,25 @@ def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
                 id="external_step",
                 name="external_step",
                 type="external",
-                metadata={},
                 subgraph=None,
             )
         )
+
+    nodes.append(
+        UiPathRuntimeNode(
+            id="__end__",
+            name="__end__",
+            type="__end__",
+            subgraph=None,
+        )
+    )
 
     # Create edges based on event flow
     start_event_class = workflow._start_event_class
     first_step_found = False
 
     for step_name, step_func in steps.items():
-        step_config = getattr(step_func, "__step_config", None)
+        step_config = get_step_config(step_name, step_func)
         if step_config is None:
             continue
 
@@ -230,33 +228,34 @@ def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
             if return_type is type(None):
                 continue
 
+            # If this returns StopEvent, connect to __end__
+            if issubclass(return_type, StopEvent):
+                if current_stop_event and return_type == current_stop_event:
+                    edges.append(
+                        UiPathRuntimeEdge(
+                            source=step_name,
+                            target="__end__",
+                            label=return_type.__name__,
+                        )
+                    )
+                continue  # Don't look for steps that accept StopEvent
+
             # Find steps that accept this return type
             for target_step_name, target_step_func in steps.items():
-                target_config: StepConfig | None = getattr(
-                    target_step_func, "__step_config", None
+                target_config: StepConfig | None = get_step_config(
+                    target_step_name, target_step_func
                 )
                 if target_config is None:
                     continue
 
                 if return_type in target_config.accepted_events:
-                    # Special handling for StopEvent - only connect to the actual StopEvent being used
-                    if issubclass(return_type, StopEvent):
-                        if current_stop_event and return_type == current_stop_event:
-                            edges.append(
-                                UiPathRuntimeEdge(
-                                    source=step_name,
-                                    target=target_step_name,
-                                    label=return_type.__name__,
-                                )
-                            )
-                    else:
-                        edges.append(
-                            UiPathRuntimeEdge(
-                                source=step_name,
-                                target=target_step_name,
-                                label=return_type.__name__,
-                            )
+                    edges.append(
+                        UiPathRuntimeEdge(
+                            source=step_name,
+                            target=target_step_name,
+                            label=return_type.__name__,
                         )
+                    )
 
             # If this returns InputRequiredEvent, add edge to external_step
             if issubclass(return_type, InputRequiredEvent):
@@ -280,6 +279,30 @@ def get_workflow_schema(workflow: Workflow) -> UiPathRuntimeGraph:
                 )
 
     return UiPathRuntimeGraph(nodes=nodes, edges=edges)
+
+
+def get_step_config(step_name: str, step_func: Any) -> StepConfig | None:
+    """
+    Get the step configuration from a step function.
+
+    Returns None if:
+    - The step name starts with underscore (internal method)
+    - No step config is found
+
+    Args:
+        step_name: Name of the step
+        step_func: The step function
+
+    Returns:
+        StepConfig if found and valid, None otherwise
+    """
+    # Skip internal methods
+    if step_name.startswith("_"):
+        return None
+
+    return getattr(step_func, "_step_config", None) or getattr(
+        step_func, "__step_config", None
+    )
 
 
 def _resolve_refs(
