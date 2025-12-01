@@ -3,7 +3,6 @@
 import asyncio
 import os
 
-from llama_index.core.workflow import Workflow
 from openinference.instrumentation.llama_index import (
     LlamaIndexInstrumentor,
     get_current_span,
@@ -16,6 +15,7 @@ from uipath.runtime import (
     UiPathRuntimeProtocol,
 )
 from uipath.runtime.errors import UiPathErrorCategory
+from workflows import Workflow
 
 from uipath_llamaindex.runtime.config import LlamaIndexConfig
 from uipath_llamaindex.runtime.errors import (
@@ -233,6 +233,7 @@ class UiPathLlamaIndexRuntimeFactory:
             runtime_id=runtime_id,
             entrypoint=entrypoint,
             storage=storage,
+            debug_mode=self.context.command == "debug",
         )
 
         trigger_manager = UiPathResumeTriggerHandler()

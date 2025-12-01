@@ -2,7 +2,7 @@
 
 import asyncio
 import json
-from typing import Any, AsyncGenerator
+from typing import Any, AsyncGenerator, cast
 from uuid import uuid4
 
 from llama_index.core.agent.workflow.workflow_events import (
@@ -18,6 +18,7 @@ from uipath.runtime import (
     UiPathRuntimeStatus,
     UiPathStreamOptions,
 )
+from uipath.runtime.debug import UiPathBreakpointResult
 from uipath.runtime.errors import UiPathErrorCategory, UiPathErrorCode
 from uipath.runtime.events import (
     UiPathRuntimeEvent,
@@ -28,11 +29,19 @@ from uipath.runtime.schema import UiPathRuntimeSchema
 from workflows import Context, Workflow
 from workflows.errors import WorkflowTimeoutError
 from workflows.events import (
+    Event,
     HumanResponseEvent,
     InputRequiredEvent,
+    StepStateChanged,
 )
 from workflows.handler import WorkflowHandler
 
+from uipath_llamaindex.runtime.breakpoints import (
+    BreakpointEvent,
+    BreakpointResumeEvent,
+    DebuggableWorkflow,
+    inject_breakpoints,
+)
 from uipath_llamaindex.runtime.errors import (
     UiPathLlamaIndexErrorCode,
     UiPathLlamaIndexRuntimeError,
@@ -54,6 +63,7 @@ class UiPathLlamaIndexRuntime:
         runtime_id: str | None = None,
         entrypoint: str | None = None,
         storage: PickleResumableStorage | None = None,
+        debug_mode: bool = False,
     ):
         """
         Initialize the runtime.
@@ -67,7 +77,11 @@ class UiPathLlamaIndexRuntime:
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
         self.storage: PickleResumableStorage | None = storage
+        self.debug_mode: bool = debug_mode
         self._context: Context | None = None
+
+        if debug_mode:
+            inject_breakpoints(self.workflow)
 
     async def execute(
         self,
@@ -125,17 +139,24 @@ class UiPathLlamaIndexRuntime:
         """
         workflow_input = input or {}
 
-        is_resuming = options and options.resume
+        is_resuming = bool(options and options.resume)
 
-        if not self._context:
-            if is_resuming:
-                self._context = self._load_context()
-            else:
-                self._context = Context(self.workflow)
+        if is_resuming:
+            self._context = self._load_context()
+        else:
+            self._context = Context(self.workflow)
+
+        # Make the Context discoverable from inside steps
+        if self.debug_mode and self._context is not None:
+            debug_workflow = cast(DebuggableWorkflow, self.workflow)
+            debug_workflow.context = self._context
 
         if is_resuming:
             handler: WorkflowHandler = self.workflow.run(ctx=self._context)
-            handler.ctx.send_event(HumanResponseEvent(**workflow_input))
+            if workflow_input:
+                handler.ctx.send_event(HumanResponseEvent(**workflow_input))
+            else:
+                handler.ctx.send_event(BreakpointResumeEvent())
         else:
             start_event_class = self.workflow._start_event_class
             start_event = (
@@ -143,11 +164,12 @@ class UiPathLlamaIndexRuntime:
             )
             handler = self.workflow.run(start_event=start_event, ctx=self._context)
 
-        event_stream = handler.stream_events()
+        event_stream = handler.stream_events(expose_internal=True)
         suspended_event: InputRequiredEvent | None = None
 
         is_resumed: bool = False
         async for event in event_stream:
+            node_name = self._get_node_name(event)
             if stream_events:
                 if isinstance(
                     event,
@@ -155,17 +177,34 @@ class UiPathLlamaIndexRuntime:
                 ):
                     message_event = UiPathRuntimeMessageEvent(
                         payload=serialize_output(event),
-                        node_name=type(event).__name__,
+                        node_name=node_name,
                         execution_id=self.runtime_id,
                     )
                     yield message_event
-                else:
+                elif not isinstance(event, BreakpointEvent):
                     state_event = UiPathRuntimeStateEvent(
                         payload=serialize_output(event),
-                        node_name=type(event).__name__,
+                        node_name=node_name,
                         execution_id=self.runtime_id,
                     )
                     yield state_event
+
+            if isinstance(event, BreakpointEvent):
+                # Check if we should actually pause at this breakpoint
+                active_breakpoints = options.breakpoints if options else None
+                should_pause = active_breakpoints == "*" or (
+                    active_breakpoints and event.breakpoint_node in active_breakpoints
+                )
+
+                if should_pause:
+                    # Actually pause execution
+                    suspended_event = event
+                    break
+                else:
+                    # Auto-resume - don't pause, just send the resume event
+                    handler.ctx.send_event(BreakpointResumeEvent())
+                    # Continue processing events
+                    continue
 
             if isinstance(event, InputRequiredEvent):
                 if not is_resumed and is_resuming:
@@ -178,7 +217,10 @@ class UiPathLlamaIndexRuntime:
             await asyncio.sleep(0)  # Yield control to event loop
             self._save_context()
             await handler.cancel_run()
-            yield self._create_suspended_result(suspended_event)
+            if isinstance(suspended_event, BreakpointEvent):
+                yield self._create_breakpoint_result(suspended_event)
+            else:
+                yield self._create_suspended_result(suspended_event)
         else:
             yield self._create_success_result(await handler)
 
@@ -193,6 +235,26 @@ class UiPathLlamaIndexRuntime:
             input=schema_details.get("input", {}),
             output=schema_details.get("output", {}),
             graph=get_workflow_schema(self.workflow),
+        )
+
+    def _get_node_name(self, event: Event) -> str:
+        """Get the node name from an event."""
+        if isinstance(event, StepStateChanged):
+            return event.name
+        elif isinstance(event, BreakpointEvent):
+            return event.breakpoint_node
+        return type(event).__name__
+
+    def _create_breakpoint_result(
+        self,
+        event: Event,
+    ) -> UiPathBreakpointResult:
+        """Create result for execution paused at a breakpoint."""
+        return UiPathBreakpointResult(
+            breakpoint_node=self._get_node_name(event),
+            breakpoint_type="before",
+            current_state=serialize_output(event),
+            next_nodes=[],  # We don't know what's next in the stream
         )
 
     def _create_suspended_result(

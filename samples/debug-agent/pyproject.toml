@@ -1,0 +1,15 @@
+[project]
+name = "llama-debug-agent"
+version = "0.0.1"
+description = "UiPath LlamaIndex Debug Agent"
+authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
+requires-python = ">=3.11"
+dependencies = [
+    "uipath-llamaindex>=0.1.2",
+]
+
+[dependency-groups]
+dev = [
+    "uipath-dev>=0.0.8",
+]
+
