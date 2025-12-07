@@ -15,7 +15,7 @@ from opentelemetry.sdk.trace import ReadableSpan, Span, SpanProcessor
 logger = logging.getLogger(__name__)
 
 
-class AttributeNormalizingSpanProcessor(SpanProcessor):
+class ToolCallAttributeNormalizer(SpanProcessor):
     """Normalizes LlamaIndex tool call attributes to match other frameworks.
 
     Unwraps {"kwargs": {...}} to flat {...} format for consistency with LangChain.

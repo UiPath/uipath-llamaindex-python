@@ -1,15 +1,16 @@
 [project]
 name = "uipath-llamaindex"
-version = "0.1.4"
+version = "0.1.5"
 description = "UiPath LlamaIndex SDK"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
 dependencies = [
+    "aiosqlite>=0.21.0",
     "llama-index>=0.14.8",
     "llama-index-embeddings-azure-openai>=0.4.1",
     "llama-index-llms-azure-openai>=0.4.2",
     "openinference-instrumentation-llama-index>=4.3.9",
-    "uipath>=2.2.16, <2.3.0",
+    "uipath>=2.2.26, <2.3.0",
 ]
 classifiers = [
     "Intended Audience :: Developers",

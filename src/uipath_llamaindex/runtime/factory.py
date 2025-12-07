@@ -17,8 +17,8 @@ from uipath.runtime import (
 from uipath.runtime.errors import UiPathErrorCategory
 from workflows import Workflow
 
-from uipath_llamaindex.runtime._attribute_normalizer import (
-    AttributeNormalizingSpanProcessor,
+from uipath_llamaindex.runtime._telemetry import (
+    ToolCallAttributeNormalizer,
 )
 from uipath_llamaindex.runtime.config import LlamaIndexConfig
 from uipath_llamaindex.runtime.errors import (
@@ -26,7 +26,7 @@ from uipath_llamaindex.runtime.errors import (
     UiPathLlamaIndexRuntimeError,
 )
 from uipath_llamaindex.runtime.runtime import UiPathLlamaIndexRuntime
-from uipath_llamaindex.runtime.storage import PickleResumableStorage
+from uipath_llamaindex.runtime.storage import SQLiteResumableStorage
 from uipath_llamaindex.runtime.workflow import LlamaIndexWorkflowLoader
 
 
@@ -45,11 +45,13 @@ class UiPathLlamaIndexRuntimeFactory:
         """
         self.context = context
         self._config: LlamaIndexConfig | None = None
-        self._storage_path: str | None = None
 
         self._workflow_cache: dict[str, Workflow] = {}
         self._workflow_loaders: dict[str, LlamaIndexWorkflowLoader] = {}
         self._workflow_lock = asyncio.Lock()
+
+        self._storage_lock = asyncio.Lock()
+        self._storage: SQLiteResumableStorage | None = None
 
         self._setup_instrumentation(self.context.trace_manager)
 
@@ -60,26 +62,37 @@ class UiPathLlamaIndexRuntimeFactory:
 
         if trace_manager:
             trace_manager.tracer_provider.add_span_processor(
-                AttributeNormalizingSpanProcessor()
+                ToolCallAttributeNormalizer()
             )
 
     def _get_storage_path(self) -> str:
         """Get the storage path for workflow state."""
-        if self._storage_path is None:
-            if self.context.runtime_dir and self.context.state_file:
-                path = os.path.join(self.context.runtime_dir, self.context.state_file)
-                if not self.context.resume and self.context.job_id is None:
-                    # If not resuming and no job id, delete the previous state file
-                    if os.path.exists(path):
-                        os.remove(path)
-                os.makedirs(self.context.runtime_dir, exist_ok=True)
-                self._storage_path = path
-            else:
-                default_path = os.path.join("__uipath", "state.db")
-                os.makedirs(os.path.dirname(default_path), exist_ok=True)
-                self._storage_path = default_path
+        if self.context.runtime_dir and self.context.state_file:
+            path = os.path.join(self.context.runtime_dir, self.context.state_file)
+            if not self.context.resume and self.context.job_id is None:
+                # If not resuming and no job id, delete the previous state file
+                if os.path.exists(path):
+                    os.remove(path)
+            os.makedirs(self.context.runtime_dir, exist_ok=True)
+            return path
 
-        return self._storage_path
+        default_path = os.path.join("__uipath", "state.db")
+        os.makedirs(os.path.dirname(default_path), exist_ok=True)
+        return default_path
+
+    async def _get_storage(self) -> SQLiteResumableStorage:
+        """Get or create the shared storage instance."""
+        if self._storage is not None:
+            return self._storage
+
+        async with self._storage_lock:
+            if self._storage is not None:
+                return self._storage
+
+            storage_path = self._get_storage_path()
+            self._storage = SQLiteResumableStorage(storage_path)
+            await self._storage.setup()
+            return self._storage
 
     def _load_config(self) -> LlamaIndexConfig:
         """Load llama_index.json configuration."""
@@ -199,7 +212,6 @@ class UiPathLlamaIndexRuntimeFactory:
             List of LlamaIndexRuntime instances, one per entrypoint
         """
         entrypoints = self.discover_entrypoints()
-        storage_path = self._get_storage_path()
 
         runtimes: list[UiPathRuntimeProtocol] = []
         for entrypoint in entrypoints:
@@ -209,7 +221,6 @@ class UiPathLlamaIndexRuntimeFactory:
                 workflow=workflow,
                 runtime_id=entrypoint,
                 entrypoint=entrypoint,
-                storage_path=storage_path,
             )
             runtimes.append(runtime)
 
@@ -220,7 +231,6 @@ class UiPathLlamaIndexRuntimeFactory:
         workflow: Workflow,
         runtime_id: str,
         entrypoint: str,
-        storage_path: str,
     ) -> UiPathRuntimeProtocol:
         """
         Create a runtime instance from a workflow.
@@ -229,12 +239,12 @@ class UiPathLlamaIndexRuntimeFactory:
             workflow: The workflow
             runtime_id: Unique identifier for the runtime instance
             entrypoint: Workflow entrypoint name
-            storage_path: Path for state storage
 
         Returns:
             Configured runtime instance
         """
-        storage = PickleResumableStorage(storage_path)
+
+        storage = await self._get_storage()
 
         base_runtime = UiPathLlamaIndexRuntime(
             workflow=workflow,
@@ -265,15 +275,12 @@ class UiPathLlamaIndexRuntimeFactory:
         Returns:
             Configured runtime instance with workflow
         """
-        storage_path = self._get_storage_path()
-
         workflow = await self._resolve_workflow(entrypoint)
 
         return await self._create_runtime_instance(
             workflow=workflow,
             runtime_id=runtime_id,
             entrypoint=entrypoint,
-            storage_path=storage_path,
         )
 
     async def dispose(self) -> None:
