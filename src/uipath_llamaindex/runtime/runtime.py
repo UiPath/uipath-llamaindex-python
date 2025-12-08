@@ -47,7 +47,7 @@ from uipath_llamaindex.runtime.errors import (
     UiPathLlamaIndexRuntimeError,
 )
 from uipath_llamaindex.runtime.schema import get_entrypoints_schema, get_workflow_schema
-from uipath_llamaindex.runtime.storage import PickleResumableStorage
+from uipath_llamaindex.runtime.storage import SQLiteResumableStorage
 
 from ._serialize import serialize_output
 
@@ -62,7 +62,7 @@ class UiPathLlamaIndexRuntime:
         workflow: Workflow,
         runtime_id: str | None = None,
         entrypoint: str | None = None,
-        storage: PickleResumableStorage | None = None,
+        storage: SQLiteResumableStorage | None = None,
         debug_mode: bool = False,
     ):
         """
@@ -76,7 +76,7 @@ class UiPathLlamaIndexRuntime:
         self.workflow: Workflow = workflow
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
-        self.storage: PickleResumableStorage | None = storage
+        self.storage: SQLiteResumableStorage | None = storage
         self.debug_mode: bool = debug_mode
         self._context: Context | None = None
 
@@ -142,7 +142,7 @@ class UiPathLlamaIndexRuntime:
         is_resuming = bool(options and options.resume)
 
         if is_resuming:
-            self._context = self._load_context()
+            self._context = await self._load_context()
         else:
             self._context = Context(self.workflow)
 
@@ -215,7 +215,7 @@ class UiPathLlamaIndexRuntime:
 
         if suspended_event is not None:
             await asyncio.sleep(0)  # Yield control to event loop
-            self._save_context()
+            await self._save_context()
             await handler.cancel_run()
             if isinstance(suspended_event, BreakpointEvent):
                 yield self._create_breakpoint_result(suspended_event)
@@ -325,12 +325,12 @@ class UiPathLlamaIndexRuntime:
             UiPathErrorCategory.USER,
         )
 
-    def _load_context(self) -> Context:
+    async def _load_context(self) -> Context:
         """Load the workflow context from storage."""
         if not self.storage:
             return Context(self.workflow)
 
-        context_dict = self.storage.load_context()
+        context_dict = await self.storage.load_context(runtime_id=self.runtime_id)
 
         if context_dict:
             from workflows.context.serializers import JsonPickleSerializer
@@ -344,7 +344,7 @@ class UiPathLlamaIndexRuntime:
         else:
             return Context(self.workflow)
 
-    def _save_context(self) -> None:
+    async def _save_context(self) -> None:
         """Save the current workflow context to storage."""
         if not self.storage or not self._context:
             return None
@@ -354,7 +354,9 @@ class UiPathLlamaIndexRuntime:
         serializer = JsonPickleSerializer()
         context_dict = self._context.to_dict(serializer=serializer)
 
-        self.storage.save_context(context_dict)
+        await self.storage.save_context(
+            runtime_id=self.runtime_id, context_dict=context_dict
+        )
 
     async def dispose(self) -> None:
         """Cleanup runtime resources."""
