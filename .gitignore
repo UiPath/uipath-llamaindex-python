@@ -177,3 +177,8 @@ cython_debug/
 **/.uipath
 **/**.nupkg
 **/__uipath/
+.claude/settings.local.json
+
+/.vscode/launch.json
+
+playground.py

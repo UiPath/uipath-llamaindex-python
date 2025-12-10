@@ -1,6 +1,6 @@
 [project]
 name = "uipath-llamaindex"
-version = "0.1.5"
+version = "0.1.6"
 description = "UiPath LlamaIndex SDK"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
@@ -22,6 +22,18 @@ classifiers = [
 maintainers = [
     { name = "Marius Cosareanu", email = "marius.cosareanu@uipath.com" },
     { name = "Cristian Pufu", email = "cristian.pufu@uipath.com" }
+]
+
+[project.optional-dependencies]
+bedrock = [
+    "llama-index-llms-bedrock>=0.3.0",
+    "llama-index-llms-bedrock-converse>=0.3.0",
+    "boto3>=1.28.0",
+    "aiobotocore>=2.5.0",
+]
+vertex = [
+    "llama-index-llms-google-genai>=0.8.0",
+    "google-genai>=1.0.0",
 ]
 
 [project.entry-points."uipath.middlewares"]
@@ -58,6 +70,8 @@ select = ["E", "F", "B", "I"]
 
 [tool.ruff.lint.per-file-ignores]
 "*" = ["E501"]
+"src/uipath_llamaindex/llms/bedrock.py" = ["E402"]
+"src/uipath_llamaindex/llms/vertex.py" = ["E402"]
 
 [tool.ruff.format]
 quote-style = "double"

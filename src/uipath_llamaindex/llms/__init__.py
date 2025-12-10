@@ -1,9 +1,13 @@
-from ._openai import (
+from ._openai import UiPathOpenAI
+from .supported_models import (
+    BedrockModel,
+    GeminiModel,
     OpenAIModel,
-    UiPathOpenAI,
 )
 
 __all__ = [
     "UiPathOpenAI",
     "OpenAIModel",
+    "GeminiModel",
+    "BedrockModel",
 ]

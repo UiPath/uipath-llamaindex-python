@@ -1,0 +1,15 @@
+[project]
+name = "chat-models-agent"
+version = "0.0.1"
+description = "Chat models testing agent for UiPath LlamaIndex"
+authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
+dependencies = [
+    "python-dotenv>=1.0.1",
+    "uipath-llamaindex",
+    "pydantic>=2.10.6",
+    "typing-extensions>=4.12.2",
+]
+requires-python = ">=3.11"
+
+[tool.uv.sources]
+uipath-llamaindex = { path = "../../", editable = true }
