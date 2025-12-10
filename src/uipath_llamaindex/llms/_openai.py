@@ -1,21 +1,10 @@
 import os
-from enum import Enum
 from typing import Any
 
 from llama_index.llms.azure_openai import AzureOpenAI  # type: ignore
 from uipath.utils import EndpointManager
 
-
-class OpenAIModel(Enum):
-    GPT_4_1_2025_04_14 = "gpt-4.1-2025-04-14"
-    GPT_4_1_MINI_2025_04_14 = "gpt-4.1-mini-2025-04-14"
-    GPT_4_1_NANO_2025_04_14 = "gpt-4.1-nano-2025-04-14"
-    GPT_4O_2024_05_13 = "gpt-4o-2024-05-13"
-    GPT_4O_2024_08_06 = "gpt-4o-2024-08-06"
-    GPT_4O_2024_11_20 = "gpt-4o-2024-11-20"
-    GPT_4O_MINI_2024_07_18 = "gpt-4o-mini-2024-07-18"
-    O3_MINI_2025_01_31 = "o3-mini-2025-01-31"
-    TEXT_DAVINCI_003 = "text-davinci-003"
+from .supported_models import OpenAIModel
 
 
 class UiPathOpenAI(AzureOpenAI):
@@ -42,7 +31,7 @@ class UiPathOpenAI(AzureOpenAI):
         defaults = {
             "model": model_value,
             "deployment_name": model_value,
-            "azure_endpoint": f"{base_url}/{EndpointManager.get_passthrough_endpoint().format(model=model, api_version=api_version)}",
+            "azure_endpoint": f"{base_url}/{EndpointManager.get_passthrough_endpoint().format(model=model_value, api_version=api_version)}",
             "api_key": os.environ.get("UIPATH_ACCESS_TOKEN"),
             "api_version": api_version,
             "is_chat_model": True,
