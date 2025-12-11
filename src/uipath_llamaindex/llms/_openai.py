@@ -1,10 +1,44 @@
 import os
 from typing import Any
 
+import httpx
 from llama_index.llms.azure_openai import AzureOpenAI  # type: ignore
+from uipath._utils._ssl_context import get_httpx_client_kwargs
 from uipath.utils import EndpointManager
 
 from .supported_models import OpenAIModel
+
+
+class _UiPathSyncURLRewriteTransport(httpx.HTTPTransport):
+    def handle_request(self, request: httpx.Request) -> httpx.Response:
+        original_url = str(request.url)
+
+        if "/openai/deployments/" in original_url:
+            base_url = original_url.split("/openai/deployments/")[0]
+            query_string = request.url.params
+            new_url_str = f"{base_url}/completions"
+            if query_string:
+                request.url = httpx.URL(new_url_str, params=query_string)
+            else:
+                request.url = httpx.URL(new_url_str)
+
+        return super().handle_request(request)
+
+
+class _UiPathAsyncURLRewriteTransport(httpx.AsyncHTTPTransport):
+    async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
+        original_url = str(request.url)
+
+        if "/openai/deployments/" in original_url:
+            base_url = original_url.split("/openai/deployments/")[0]
+            query_string = request.url.params
+            new_url_str = f"{base_url}/completions"
+            if query_string:
+                request.url = httpx.URL(new_url_str, params=query_string)
+            else:
+                request.url = httpx.URL(new_url_str)
+
+        return await super().handle_async_request(request)
 
 
 class UiPathOpenAI(AzureOpenAI):
@@ -28,14 +62,28 @@ class UiPathOpenAI(AzureOpenAI):
                 "UIPATH_URL environment variable is not set. Please run uipath auth."
             )
 
+        vendor_endpoint = (
+            EndpointManager.get_vendor_endpoint()
+            .format(vendor="openai", model=model_value)
+            .replace("/completions", "")
+        )
+
         defaults = {
             "model": model_value,
             "deployment_name": model_value,
-            "azure_endpoint": f"{base_url}/{EndpointManager.get_passthrough_endpoint().format(model=model_value, api_version=api_version)}",
+            "azure_endpoint": f"{base_url}/{vendor_endpoint}",
             "api_key": os.environ.get("UIPATH_ACCESS_TOKEN"),
             "api_version": api_version,
             "is_chat_model": True,
             "default_headers": default_headers_dict,
+            "http_client": httpx.Client(
+                transport=_UiPathSyncURLRewriteTransport(),
+                **get_httpx_client_kwargs(),
+            ),
+            "async_http_client": httpx.AsyncClient(
+                transport=_UiPathAsyncURLRewriteTransport(),
+                **get_httpx_client_kwargs(),
+            ),
         }
         final_kwargs = {**defaults, **kwargs}
         super().__init__(**final_kwargs)

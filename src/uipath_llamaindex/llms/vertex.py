@@ -5,6 +5,7 @@ from typing import Any, Generator, Optional, Sequence
 import httpx
 from llama_index.core.callbacks import CallbackManager
 from llama_index.core.constants import DEFAULT_NUM_OUTPUTS, DEFAULT_TEMPERATURE
+from uipath._utils._ssl_context import get_httpx_client_kwargs
 from uipath.utils import EndpointManager
 
 from .supported_models import GeminiModel
@@ -178,12 +179,12 @@ class UiPathVertex(GoogleGenAI):
             httpx_client=httpx.Client(
                 transport=_UrlRewriteTransport(uipath_url),
                 headers=headers,
-                follow_redirects=True,
+                **get_httpx_client_kwargs(),
             ),
             httpx_async_client=httpx.AsyncClient(
                 transport=_AsyncUrlRewriteTransport(uipath_url),
                 headers=headers,
-                follow_redirects=True,
+                **get_httpx_client_kwargs(),
             ),
         )
 
@@ -330,7 +331,7 @@ class UiPathVertex(GoogleGenAI):
             httpx_client=httpx.Client(
                 transport=_UrlRewriteTransport(uipath_url),
                 headers=headers,
-                follow_redirects=True,
+                **get_httpx_client_kwargs(),
             ),
         )
 
