@@ -49,7 +49,7 @@ class UiPathOpenAI(AzureOpenAI):
         **kwargs: Any,
     ):
         default_headers_dict = {
-            "X-UIPATH-STREAMING-ENABLED": "false",
+            "X-UiPath-LlmGateway-ApiFlavor": "auto",
             "X-UiPath-LlmGateway-RequestingProduct": "uipath-python-sdk",
             "X-UiPath-LlmGateway-RequestingFeature": "llama-index-agent",
         }
