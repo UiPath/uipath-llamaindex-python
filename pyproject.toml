@@ -1,6 +1,6 @@
 [project]
 name = "uipath-llamaindex"
-version = "0.1.8"
+version = "0.2.0"
 description = "UiPath LlamaIndex SDK"
 readme = { file = "README.md", content-type = "text/markdown" }
 requires-python = ">=3.11"
@@ -10,7 +10,8 @@ dependencies = [
     "llama-index-embeddings-azure-openai>=0.4.1",
     "llama-index-llms-azure-openai>=0.4.2",
     "openinference-instrumentation-llama-index>=4.3.9",
-    "uipath>=2.2.26, <2.3.0",
+    "uipath>=2.3.0, <2.4.0",
+    "uipath-runtime>=0.3.2, <0.4.0",
 ]
 classifiers = [
     "Intended Audience :: Developers",
@@ -58,6 +59,7 @@ dev = [
     "pytest-cov>=4.1.0",
     "pytest-mock>=3.11.1",
     "pre-commit>=4.1.0",
+    "pytest-asyncio>=1.0.0",
     "numpy>=1.24.0",
 ]
 
@@ -98,10 +100,11 @@ disallow_untyped_defs = false
 testpaths = ["tests"]
 python_files = "test_*.py"
 addopts = "-ra -q"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
 
 [[tool.uv.index]]
 name = "testpypi"
 url = "https://test.pypi.org/simple/"
 publish-url = "https://test.pypi.org/legacy/"
 explicit = true
-
