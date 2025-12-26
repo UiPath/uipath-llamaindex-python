@@ -260,6 +260,7 @@ class UiPathLlamaIndexRuntimeFactory:
             delegate=base_runtime,
             storage=storage,
             trigger_manager=trigger_manager,
+            runtime_id=runtime_id,
         )
 
     async def new_runtime(

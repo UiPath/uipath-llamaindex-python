@@ -138,7 +138,6 @@ class UiPathLlamaIndexRuntime:
         Core workflow execution logic used by both execute() and stream().
         """
         workflow_input = input or {}
-
         is_resuming = bool(options and options.resume)
 
         if is_resuming:
@@ -154,7 +153,11 @@ class UiPathLlamaIndexRuntime:
         if is_resuming:
             handler: WorkflowHandler = self.workflow.run(ctx=self._context)
             if workflow_input:
-                handler.ctx.send_event(HumanResponseEvent(**workflow_input))
+                handler.ctx.send_event(
+                    HumanResponseEvent(
+                        **workflow_input.get(self.runtime_id, workflow_input)
+                    )
+                )
             else:
                 handler.ctx.send_event(BreakpointResumeEvent())
         else:
@@ -267,13 +270,14 @@ class UiPathLlamaIndexRuntime:
             if hasattr(event, "_data") and "prefix" in event._data:
                 prefix = event._data["prefix"]
 
+            resume_map = {self.runtime_id: prefix or ""}
             return UiPathRuntimeResult(
-                output=prefix,
+                output=resume_map,
                 status=UiPathRuntimeStatus.SUSPENDED,
             )
 
         return UiPathRuntimeResult(
-            output=event,
+            output={self.runtime_id: event},
             status=UiPathRuntimeStatus.SUSPENDED,
         )
 
