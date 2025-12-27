@@ -2,7 +2,8 @@
 
 import asyncio
 import json
-from pathlib import Path
+import os
+import tempfile
 from typing import Any
 
 import pytest
@@ -13,7 +14,7 @@ from uipath.runtime import (
     UiPathResumeTriggerType,
 )
 
-from uipath_llamaindex.runtime.storage import SQLiteResumableStorage
+from uipath_llamaindex.runtime.storage import SqliteResumableStorage
 
 
 class ComplexModel(BaseModel):
@@ -29,15 +30,21 @@ class TestIntegrationScenarios:
     """Test realistic integration scenarios."""
 
     @pytest.fixture
-    async def storage(self, tmp_path: Path):
-        """Create and setup a storage instance."""
-        db_path = tmp_path / "integration_test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-        await storage.setup()
-        return storage
+    async def storage(self):
+        """Create a SqliteResumableStorage instance with temporary database file."""
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+        temp_db.close()
+
+        try:
+            async with SqliteResumableStorage(str(temp_db.name)) as storage:
+                await storage.setup()
+                yield storage
+        finally:
+            if os.path.exists(temp_db.name):
+                os.remove(temp_db.name)
 
     @pytest.mark.asyncio
-    async def test_full_workflow_lifecycle(self, storage: SQLiteResumableStorage):
+    async def test_full_workflow_lifecycle(self, storage: SqliteResumableStorage):
         """Test a complete workflow lifecycle with all storage operations."""
         runtime_id = "workflow-123"
 
@@ -103,7 +110,7 @@ class TestIntegrationScenarios:
         assert status == "in_progress"
 
     @pytest.mark.asyncio
-    async def test_multiple_parallel_workflows(self, storage: SQLiteResumableStorage):
+    async def test_multiple_parallel_workflows(self, storage: SqliteResumableStorage):
         """Test handling multiple parallel workflows."""
         workflows: list[tuple[str, UiPathResumeTrigger | None, dict[str, Any]]] = []
         trigger: UiPathResumeTrigger | None
@@ -152,7 +159,7 @@ class TestIntegrationScenarios:
             assert status == "active"
 
     @pytest.mark.asyncio
-    async def test_workflow_state_updates(self, storage: SQLiteResumableStorage):
+    async def test_workflow_state_updates(self, storage: SqliteResumableStorage):
         """Test updating workflow state multiple times."""
         runtime_id = "stateful-workflow"
 
@@ -183,15 +190,21 @@ class TestEdgeCases:
     """Test edge cases and boundary conditions."""
 
     @pytest.fixture
-    async def storage(self, tmp_path: Path):
-        """Create and setup a storage instance."""
-        db_path = tmp_path / "edge_test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-        await storage.setup()
-        return storage
+    async def storage(self):
+        """Create a SqliteResumableStorage instance with temporary database file."""
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+        temp_db.close()
+
+        try:
+            async with SqliteResumableStorage(str(temp_db.name)) as storage:
+                await storage.setup()
+                yield storage
+        finally:
+            if os.path.exists(temp_db.name):
+                os.remove(temp_db.name)
 
     @pytest.mark.asyncio
-    async def test_very_large_context(self, storage: SQLiteResumableStorage):
+    async def test_very_large_context(self, storage: SqliteResumableStorage):
         """Test handling of very large context data."""
         runtime_id = "large-context"
 
@@ -210,7 +223,7 @@ class TestEdgeCases:
 
     @pytest.mark.asyncio
     async def test_unicode_and_special_characters(
-        self, storage: SQLiteResumableStorage
+        self, storage: SqliteResumableStorage
     ):
         """Test handling of Unicode and special characters."""
         runtime_id = "unicode-test"
@@ -230,7 +243,7 @@ class TestEdgeCases:
         assert loaded == context
 
     @pytest.mark.asyncio
-    async def test_empty_string_values(self, storage: SQLiteResumableStorage):
+    async def test_empty_string_values(self, storage: SqliteResumableStorage):
         """Test handling of empty strings."""
         runtime_id = "empty-strings"
 
@@ -240,7 +253,7 @@ class TestEdgeCases:
         assert value == ""
 
     @pytest.mark.asyncio
-    async def test_whitespace_only_values(self, storage: SQLiteResumableStorage):
+    async def test_whitespace_only_values(self, storage: SqliteResumableStorage):
         """Test handling of whitespace-only strings."""
         runtime_id = "whitespace"
 
@@ -259,7 +272,7 @@ class TestEdgeCases:
             assert value == expected
 
     @pytest.mark.asyncio
-    async def test_nested_dict_with_none_values(self, storage: SQLiteResumableStorage):
+    async def test_nested_dict_with_none_values(self, storage: SqliteResumableStorage):
         """Test handling of nested dictionaries with None values."""
         runtime_id = "nested-none"
 
@@ -274,7 +287,7 @@ class TestEdgeCases:
         assert loaded == nested
 
     @pytest.mark.asyncio
-    async def test_very_long_runtime_id(self, storage: SQLiteResumableStorage):
+    async def test_very_long_runtime_id(self, storage: SqliteResumableStorage):
         """Test handling of very long runtime IDs."""
         runtime_id = "a" * 500  # Very long runtime ID
 
@@ -293,7 +306,7 @@ class TestEdgeCases:
         assert triggers[0].item_key == "test-key"
 
     @pytest.mark.asyncio
-    async def test_special_characters_in_keys(self, storage: SQLiteResumableStorage):
+    async def test_special_characters_in_keys(self, storage: SqliteResumableStorage):
         """Test handling of special characters in namespace and key names."""
         runtime_id = "special-chars"
 
@@ -313,7 +326,7 @@ class TestEdgeCases:
             assert value == f"value-{ns}-{key}"
 
     @pytest.mark.asyncio
-    async def test_json_with_escaped_characters(self, storage: SQLiteResumableStorage):
+    async def test_json_with_escaped_characters(self, storage: SqliteResumableStorage):
         """Test handling of JSON with escaped characters."""
         runtime_id = "escaped-json"
 
@@ -330,7 +343,7 @@ class TestEdgeCases:
         assert retrieved == data
 
     @pytest.mark.asyncio
-    async def test_deeply_nested_structures(self, storage: SQLiteResumableStorage):
+    async def test_deeply_nested_structures(self, storage: SqliteResumableStorage):
         """Test handling of deeply nested data structures."""
         runtime_id = "deep-nest"
 
@@ -348,7 +361,7 @@ class TestEdgeCases:
         assert loaded == {"root": deep_structure}
 
     @pytest.mark.asyncio
-    async def test_trigger_with_complex_payload(self, storage: SQLiteResumableStorage):
+    async def test_trigger_with_complex_payload(self, storage: SqliteResumableStorage):
         """Test trigger with complex nested payload."""
         runtime_id = "complex-payload"
 
@@ -396,15 +409,21 @@ class TestDataConsistency:
     """Test data consistency and isolation."""
 
     @pytest.fixture
-    async def storage(self, tmp_path: Path):
-        """Create and setup a storage instance."""
-        db_path = tmp_path / "consistency_test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-        await storage.setup()
-        return storage
+    async def storage(self):
+        """Create a SqliteResumableStorage instance with temporary database file."""
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+        temp_db.close()
+
+        try:
+            async with SqliteResumableStorage(str(temp_db.name)) as storage:
+                await storage.setup()
+                yield storage
+        finally:
+            if os.path.exists(temp_db.name):
+                os.remove(temp_db.name)
 
     @pytest.mark.asyncio
-    async def test_concurrent_reads(self, storage: SQLiteResumableStorage):
+    async def test_concurrent_reads(self, storage: SqliteResumableStorage):
         """Test concurrent reads of the same data."""
         runtime_id = "concurrent-read-test"
 
@@ -421,7 +440,7 @@ class TestDataConsistency:
             assert result == context
 
     @pytest.mark.asyncio
-    async def test_kv_isolation_stress_test(self, storage: SQLiteResumableStorage):
+    async def test_kv_isolation_stress_test(self, storage: SqliteResumableStorage):
         """Stress test KV store isolation."""
         tasks = []
 
@@ -451,7 +470,7 @@ class TestDataConsistency:
                     assert value == expected, f"Expected {expected}, got {value}"
 
     @pytest.mark.asyncio
-    async def test_update_race_condition(self, storage: SQLiteResumableStorage):
+    async def test_update_race_condition(self, storage: SqliteResumableStorage):
         """Test that concurrent updates don't cause data corruption."""
         runtime_id = "race-condition-test"
 
