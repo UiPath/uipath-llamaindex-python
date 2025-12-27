@@ -47,7 +47,7 @@ from uipath_llamaindex.runtime.errors import (
     UiPathLlamaIndexRuntimeError,
 )
 from uipath_llamaindex.runtime.schema import get_entrypoints_schema, get_workflow_schema
-from uipath_llamaindex.runtime.storage import SQLiteResumableStorage
+from uipath_llamaindex.runtime.storage import SqliteResumableStorage
 
 from ._serialize import serialize_output
 
@@ -62,7 +62,7 @@ class UiPathLlamaIndexRuntime:
         workflow: Workflow,
         runtime_id: str | None = None,
         entrypoint: str | None = None,
-        storage: SQLiteResumableStorage | None = None,
+        storage: SqliteResumableStorage | None = None,
         debug_mode: bool = False,
     ):
         """
@@ -76,7 +76,7 @@ class UiPathLlamaIndexRuntime:
         self.workflow: Workflow = workflow
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
-        self.storage: SQLiteResumableStorage | None = storage
+        self.storage: SqliteResumableStorage | None = storage
         self.debug_mode: bool = debug_mode
         self._context: Context | None = None
 

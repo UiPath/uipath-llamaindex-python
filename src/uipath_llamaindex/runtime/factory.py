@@ -26,7 +26,7 @@ from uipath_llamaindex.runtime.errors import (
     UiPathLlamaIndexRuntimeError,
 )
 from uipath_llamaindex.runtime.runtime import UiPathLlamaIndexRuntime
-from uipath_llamaindex.runtime.storage import SQLiteResumableStorage
+from uipath_llamaindex.runtime.storage import SqliteResumableStorage
 from uipath_llamaindex.runtime.workflow import LlamaIndexWorkflowLoader
 
 
@@ -51,7 +51,7 @@ class UiPathLlamaIndexRuntimeFactory:
         self._workflow_lock = asyncio.Lock()
 
         self._storage_lock = asyncio.Lock()
-        self._storage: SQLiteResumableStorage | None = None
+        self._storage: SqliteResumableStorage | None = None
 
         self._setup_instrumentation(self.context.trace_manager)
 
@@ -80,7 +80,7 @@ class UiPathLlamaIndexRuntimeFactory:
         os.makedirs(os.path.dirname(default_path), exist_ok=True)
         return default_path
 
-    async def _get_storage(self) -> SQLiteResumableStorage:
+    async def _get_storage(self) -> SqliteResumableStorage:
         """Get or create the shared storage instance."""
         if self._storage is not None:
             return self._storage
@@ -90,7 +90,7 @@ class UiPathLlamaIndexRuntimeFactory:
                 return self._storage
 
             storage_path = self._get_storage_path()
-            self._storage = SQLiteResumableStorage(storage_path)
+            self._storage = SqliteResumableStorage(storage_path)
             await self._storage.setup()
             return self._storage
 
@@ -291,3 +291,7 @@ class UiPathLlamaIndexRuntimeFactory:
 
         self._workflow_loaders.clear()
         self._workflow_cache.clear()
+
+        if self._storage:
+            await self._storage.dispose()
+            self._storage = None
