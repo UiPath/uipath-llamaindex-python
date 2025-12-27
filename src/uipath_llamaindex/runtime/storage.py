@@ -1,11 +1,12 @@
 """SQLite implementation of UiPathResumableStorageProtocol."""
 
+from __future__ import annotations
+
 import json
 import os
 import pickle
 from typing import Any, cast
 
-import aiosqlite
 from pydantic import BaseModel
 from uipath.core.errors import ErrorCategory, UiPathFaultedTriggerError
 from uipath.runtime import (
@@ -15,8 +16,10 @@ from uipath.runtime import (
     UiPathResumeTriggerType,
 )
 
+from ._sqlite import AsyncSqlite
 
-class SQLiteResumableStorage:
+
+class SqliteResumableStorage:
     """SQLite database storage for resume triggers and workflow context."""
 
     def __init__(self, storage_path: str):
@@ -27,6 +30,29 @@ class SQLiteResumableStorage:
             storage_path: Path to the SQLite database file
         """
         self.storage_path = storage_path
+        self._db: AsyncSqlite | None = None
+
+    async def _get_db(self) -> AsyncSqlite:
+        """Get or create database connection."""
+        if self._db is None:
+            self._db = AsyncSqlite(self.storage_path, timeout=30.0)
+            await self._db.connect()
+        return self._db
+
+    async def dispose(self) -> None:
+        """Dispose of the storage and close database connection."""
+        if self._db:
+            await self._db.close()
+            self._db = None
+
+    async def __aenter__(self) -> SqliteResumableStorage:
+        """Async context manager entry."""
+        await self.setup()
+        return self
+
+    async def __aexit__(self, *args) -> None:
+        """Async context manager exit."""
+        await self.dispose()
 
     async def setup(self) -> None:
         """Ensure storage directory and database tables exist."""
@@ -35,54 +61,50 @@ class SQLiteResumableStorage:
             os.makedirs(dir_name, exist_ok=True)
 
         try:
-            async with aiosqlite.connect(self.storage_path, timeout=30.0) as conn:
-                await self._apply_connection_pragmas(conn)
+            db = await self._get_db()
 
-                # WAL mode is persistent (stored in DB file), only needs to be set once
-                await conn.execute("PRAGMA journal_mode=WAL")
-
-                # Table for workflow contexts
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS workflow_contexts (
-                        runtime_id TEXT PRIMARY KEY,
-                        context_data BLOB NOT NULL
-                    )
-                """)
-
-                # Table for resume triggers
-                await conn.execute("""
-                    CREATE TABLE IF NOT EXISTS resume_triggers (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        runtime_id TEXT NOT NULL,
-                        interrupt_id TEXT NOT NULL,
-                        trigger_data TEXT NOT NULL,
-                        timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                    )
-                """)
-
-                await conn.execute(
-                    """
-                    CREATE INDEX IF NOT EXISTS idx_resume_triggers_runtime_id
-                    ON resume_triggers(runtime_id)
-                    """
+            # Table for workflow contexts
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS workflow_contexts (
+                    runtime_id TEXT PRIMARY KEY,
+                    context_data BLOB NOT NULL
                 )
+            """)
 
-                await conn.execute(
-                    """
-                    CREATE TABLE IF NOT EXISTS runtime_kv (
-                        runtime_id TEXT NOT NULL,
-                        namespace TEXT NOT NULL,
-                        key TEXT NOT NULL,
-                        value TEXT,
-                        timestamp DATETIME DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'utc')),
-                        PRIMARY KEY (runtime_id, namespace, key)
-                    )
-                    """
+            # Table for resume triggers
+            await db.execute("""
+                CREATE TABLE IF NOT EXISTS resume_triggers (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    runtime_id TEXT NOT NULL,
+                    interrupt_id TEXT NOT NULL,
+                    trigger_data TEXT NOT NULL,
+                    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
+            """)
 
-                await conn.commit()
-        except aiosqlite.Error as exc:
-            msg = f"Failed to initialize SQLite storage at {self.storage_path!r}: {exc.sqlite_errorname} {exc.sqlite_errorcode}"
+            await db.execute(
+                """
+                CREATE INDEX IF NOT EXISTS idx_resume_triggers_runtime_id
+                ON resume_triggers(runtime_id)
+                """
+            )
+
+            await db.execute(
+                """
+                CREATE TABLE IF NOT EXISTS runtime_kv (
+                    runtime_id TEXT NOT NULL,
+                    namespace TEXT NOT NULL,
+                    key TEXT NOT NULL,
+                    value TEXT,
+                    timestamp DATETIME DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now', 'utc')),
+                    PRIMARY KEY (runtime_id, namespace, key)
+                )
+                """
+            )
+
+            await db.commit()
+        except Exception as exc:
+            msg = f"Failed to initialize SQLite storage at {self.storage_path!r}: {exc}"
             raise UiPathFaultedTriggerError(ErrorCategory.SYSTEM, msg) from exc
 
     async def save_triggers(
@@ -90,47 +112,41 @@ class SQLiteResumableStorage:
     ) -> None:
         """Save resume trigger to SQLite database."""
         try:
-            async with aiosqlite.connect(self.storage_path, timeout=30.0) as conn:
-                await self._apply_connection_pragmas(conn)
+            db = await self._get_db()
 
-                # Delete all existing triggers for this runtime_id
-                await conn.execute(
-                    """
-                    DELETE FROM resume_triggers
-                    WHERE runtime_id = ?
-                    """,
-                    (runtime_id,),
-                )
-                # Insert new triggers
-                for trigger in triggers:
-                    trigger_dict = self._serialize_trigger(trigger)
-                    trigger_json = json.dumps(trigger_dict)
-                    await conn.execute(
-                        "INSERT INTO resume_triggers (runtime_id, interrupt_id, trigger_data) VALUES (?, ?, ?)",
-                        (runtime_id, trigger.interrupt_id, trigger_json),
-                    )
-                await conn.commit()
-        except aiosqlite.Error as exc:
-            msg = (
-                f"Failed to save resume triggers "
-                f"to database {self.storage_path!r}:"
-                f" {exc.sqlite_errorname} {exc.sqlite_errorcode}"
+            # Delete all existing triggers for this runtime_id
+            await db.execute(
+                """
+                DELETE FROM resume_triggers
+                WHERE runtime_id = ?
+                """,
+                (runtime_id,),
             )
+
+            # Insert new triggers
+            for trigger in triggers:
+                trigger_dict = self._serialize_trigger(trigger)
+                trigger_json = json.dumps(trigger_dict)
+                await db.execute(
+                    "INSERT INTO resume_triggers (runtime_id, interrupt_id, trigger_data) VALUES (?, ?, ?)",
+                    (runtime_id, trigger.interrupt_id, trigger_json),
+                )
+
+            await db.commit()
+        except Exception as exc:
+            msg = f"Failed to save resume triggers to database {self.storage_path!r}: {exc}"
             raise UiPathFaultedTriggerError(ErrorCategory.SYSTEM, msg) from exc
 
     async def get_triggers(self, runtime_id: str) -> list[UiPathResumeTrigger] | None:
         """Get most recent trigger from SQLite database."""
         try:
-            async with aiosqlite.connect(self.storage_path, timeout=30.0) as conn:
-                await self._apply_connection_pragmas(conn)
-
-                cursor = await conn.execute(
-                    "SELECT trigger_data FROM resume_triggers WHERE runtime_id = ? ORDER BY id ASC",
-                    (runtime_id,),
-                )
-                rows = await cursor.fetchall()
-        except aiosqlite.Error as exc:
-            msg = f"Failed to retrieve resume triggers from database {self.storage_path!r}: {exc.sqlite_errorname} {exc.sqlite_errorcode}"
+            db = await self._get_db()
+            rows = await db.fetchall(
+                "SELECT trigger_data FROM resume_triggers WHERE runtime_id = ? ORDER BY id ASC",
+                (runtime_id,),
+            )
+        except Exception as exc:
+            msg = f"Failed to retrieve resume triggers from database {self.storage_path!r}: {exc}"
             raise UiPathFaultedTriggerError(ErrorCategory.SYSTEM, msg) from exc
 
         if not rows:
@@ -147,22 +163,17 @@ class SQLiteResumableStorage:
     ) -> None:
         """Delete resume trigger from storage."""
         try:
-            async with aiosqlite.connect(self.storage_path, timeout=30.0) as conn:
-                await self._apply_connection_pragmas(conn)
-
-                await conn.execute(
-                    """
-                    DELETE FROM resume_triggers
-                    WHERE runtime_id = ? AND interrupt_id = ?
-                    """,
-                    (
-                        runtime_id,
-                        trigger.interrupt_id,
-                    ),
-                )
-                await conn.commit()
-        except aiosqlite.Error as exc:
-            msg = f"Failed to delete resume trigger from database {self.storage_path!r}: {exc.sqlite_errorname} {exc.sqlite_errorcode}"
+            db = await self._get_db()
+            await db.execute(
+                """
+                DELETE FROM resume_triggers
+                WHERE runtime_id = ? AND interrupt_id = ?
+                """,
+                (runtime_id, trigger.interrupt_id),
+            )
+            await db.commit()
+        except Exception as exc:
+            msg = f"Failed to delete resume trigger from database {self.storage_path!r}: {exc}"
             raise UiPathFaultedTriggerError(ErrorCategory.SYSTEM, msg) from exc
 
     async def save_context(self, runtime_id: str, context_dict: dict[str, Any]) -> None:
@@ -176,21 +187,19 @@ class SQLiteResumableStorage:
         context_blob = pickle.dumps(context_dict)
 
         try:
-            async with aiosqlite.connect(self.storage_path, timeout=30.0) as conn:
-                await self._apply_connection_pragmas(conn)
-
-                await conn.execute(
-                    """
-                    INSERT INTO workflow_contexts (runtime_id, context_data)
-                    VALUES (?, ?)
-                    ON CONFLICT(runtime_id) DO UPDATE SET
-                        context_data = excluded.context_data
-                    """,
-                    (runtime_id, context_blob),
-                )
-                await conn.commit()
-        except aiosqlite.Error as exc:
-            msg = f"Failed to save workflow context to database {self.storage_path!r}: {exc.sqlite_errorname} {exc.sqlite_errorcode}"
+            db = await self._get_db()
+            await db.execute(
+                """
+                INSERT INTO workflow_contexts (runtime_id, context_data)
+                VALUES (?, ?)
+                ON CONFLICT(runtime_id) DO UPDATE SET
+                    context_data = excluded.context_data
+                """,
+                (runtime_id, context_blob),
+            )
+            await db.commit()
+        except Exception as exc:
+            msg = f"Failed to save workflow context to database {self.storage_path!r}: {exc}"
             raise UiPathFaultedTriggerError(ErrorCategory.SYSTEM, msg) from exc
 
     async def load_context(self, runtime_id: str) -> dict[str, Any] | None:
@@ -204,16 +213,13 @@ class SQLiteResumableStorage:
             Serialized workflow context dictionary or None if not found
         """
         try:
-            async with aiosqlite.connect(self.storage_path, timeout=30.0) as conn:
-                await self._apply_connection_pragmas(conn)
-
-                cursor = await conn.execute(
-                    "SELECT context_data FROM workflow_contexts WHERE runtime_id = ?",
-                    (runtime_id,),
-                )
-                row = await cursor.fetchone()
-        except aiosqlite.Error as exc:
-            msg = f"Failed to load workflow context from database {self.storage_path!r}: {exc.sqlite_errorname} {exc.sqlite_errorcode}"
+            db = await self._get_db()
+            row = await db.fetchone(
+                "SELECT context_data FROM workflow_contexts WHERE runtime_id = ?",
+                (runtime_id,),
+            )
+        except Exception as exc:
+            msg = f"Failed to load workflow context from database {self.storage_path!r}: {exc}"
             raise UiPathFaultedTriggerError(ErrorCategory.SYSTEM, msg) from exc
 
         if not row:
@@ -239,37 +245,32 @@ class SQLiteResumableStorage:
 
         value_text = self._dump_value(value)
 
-        async with aiosqlite.connect(self.storage_path, timeout=30.0) as conn:
-            await self._apply_connection_pragmas(conn)
-
-            await conn.execute(
-                """
-                INSERT INTO runtime_kv (runtime_id, namespace, key, value)
-                VALUES (?, ?, ?, ?)
-                ON CONFLICT(runtime_id, namespace, key)
-                DO UPDATE SET
-                    value = excluded.value,
-                    timestamp = (strftime('%Y-%m-%d %H:%M:%S', 'now', 'utc'))
-                """,
-                (runtime_id, namespace, key, value_text),
-            )
-            await conn.commit()
+        db = await self._get_db()
+        await db.execute(
+            """
+            INSERT INTO runtime_kv (runtime_id, namespace, key, value)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(runtime_id, namespace, key)
+            DO UPDATE SET
+                value = excluded.value,
+                timestamp = (strftime('%Y-%m-%d %H:%M:%S', 'now', 'utc'))
+            """,
+            (runtime_id, namespace, key, value_text),
+        )
+        await db.commit()
 
     async def get_value(self, runtime_id: str, namespace: str, key: str) -> Any:
         """Get arbitrary key-value pair from database (scoped by runtime_id + namespace)."""
-        async with aiosqlite.connect(self.storage_path, timeout=30.0) as conn:
-            await self._apply_connection_pragmas(conn)
-
-            cur = await conn.execute(
-                """
-                SELECT value
-                FROM runtime_kv
-                WHERE runtime_id = ? AND namespace = ? AND key = ?
-                LIMIT 1
-                """,
-                (runtime_id, namespace, key),
-            )
-            row = await cur.fetchone()
+        db = await self._get_db()
+        row = await db.fetchone(
+            """
+            SELECT value
+            FROM runtime_kv
+            WHERE runtime_id = ? AND namespace = ? AND key = ?
+            LIMIT 1
+            """,
+            (runtime_id, namespace, key),
+        )
 
         if not row:
             return None
@@ -343,10 +344,3 @@ class SQLiteResumableStorage:
         if raw.startswith("j:"):
             return json.loads(raw[2:])
         return raw
-
-    async def _apply_connection_pragmas(self, conn: aiosqlite.Connection) -> None:
-        """Apply per-connection PRAGMA settings for optimal concurrency."""
-        await conn.execute("PRAGMA busy_timeout=30000")
-        await conn.execute("PRAGMA synchronous=NORMAL")
-        await conn.execute("PRAGMA cache_size=10000")
-        await conn.execute("PRAGMA temp_store=MEMORY")

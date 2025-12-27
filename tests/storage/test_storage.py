@@ -1,6 +1,8 @@
-"""Tests for SQLiteResumableStorage class."""
+"""Tests for SqliteResumableStorage class."""
 
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +16,7 @@ from uipath.runtime import (
     UiPathResumeTriggerType,
 )
 
-from uipath_llamaindex.runtime.storage import SQLiteResumableStorage
+from uipath_llamaindex.runtime.storage import SqliteResumableStorage
 
 
 class SampleModel(BaseModel):
@@ -24,100 +26,94 @@ class SampleModel(BaseModel):
     value: int
 
 
-class TestSQLiteResumableStorageInitialization:
+class TestSqliteResumableStorageInitialization:
     """Test storage initialization and setup."""
 
     @pytest.mark.asyncio
     async def test_setup_creates_database_file(self, tmp_path: Path):
         """Test that setup creates the database file."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-
-        await storage.setup()
-
-        assert db_path.exists()
+        async with SqliteResumableStorage(str(db_path)) as storage:
+            await storage.setup()
+            assert db_path.exists()
 
     @pytest.mark.asyncio
     async def test_setup_creates_directory_if_missing(self, tmp_path: Path):
         """Test that setup creates parent directories if they don't exist."""
         db_path = tmp_path / "subdir" / "another" / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-
-        await storage.setup()
-
-        assert db_path.exists()
-        assert db_path.parent.exists()
+        async with SqliteResumableStorage(str(db_path)) as storage:
+            await storage.setup()
+            assert db_path.exists()
+            assert db_path.parent.exists()
 
     @pytest.mark.asyncio
     async def test_setup_creates_workflow_contexts_table(self, tmp_path: Path):
         """Test that setup creates the workflow_contexts table."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-
-        await storage.setup()
-
-        async with aiosqlite.connect(str(db_path)) as conn:
-            cursor = await conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='workflow_contexts'"
-            )
-            result = await cursor.fetchone()
-            assert result is not None
+        async with SqliteResumableStorage(str(db_path)) as storage:
+            await storage.setup()
+            async with aiosqlite.connect(str(db_path)) as conn:
+                cursor = await conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='workflow_contexts'"
+                )
+                result = await cursor.fetchone()
+                assert result is not None
 
     @pytest.mark.asyncio
     async def test_setup_creates_resume_triggers_table(self, tmp_path: Path):
         """Test that setup creates the resume_triggers table."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-
-        await storage.setup()
-
-        async with aiosqlite.connect(str(db_path)) as conn:
-            cursor = await conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='resume_triggers'"
-            )
-            result = await cursor.fetchone()
-            assert result is not None
+        async with SqliteResumableStorage(str(db_path)) as storage:
+            await storage.setup()
+            async with aiosqlite.connect(str(db_path)) as conn:
+                cursor = await conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='resume_triggers'"
+                )
+                result = await cursor.fetchone()
+                assert result is not None
 
     @pytest.mark.asyncio
     async def test_setup_creates_runtime_kv_table(self, tmp_path: Path):
         """Test that setup creates the runtime_kv table."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-
-        await storage.setup()
-
-        async with aiosqlite.connect(str(db_path)) as conn:
-            cursor = await conn.execute(
-                "SELECT name FROM sqlite_master WHERE type='table' AND name='runtime_kv'"
-            )
-            result = await cursor.fetchone()
-            assert result is not None
+        async with SqliteResumableStorage(str(db_path)) as storage:
+            await storage.setup()
+            async with aiosqlite.connect(str(db_path)) as conn:
+                cursor = await conn.execute(
+                    "SELECT name FROM sqlite_master WHERE type='table' AND name='runtime_kv'"
+                )
+                result = await cursor.fetchone()
+                assert result is not None
 
     @pytest.mark.asyncio
     async def test_setup_is_idempotent(self, tmp_path: Path):
         """Test that setup can be called multiple times safely."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-
-        await storage.setup()
-        await storage.setup()  # Should not raise
-
-        assert db_path.exists()
+        async with SqliteResumableStorage(str(db_path)) as storage:
+            await storage.setup()
+            await storage.setup()  # Should not raise
+            assert db_path.exists()
 
 
 class TestTriggerOperations:
     """Test resume trigger save and retrieval operations."""
 
     @pytest.fixture
-    async def storage(self, tmp_path: Path):
-        """Create and setup a storage instance."""
-        db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-        await storage.setup()
-        return storage
+    async def storage(self):
+        """Create a SqliteResumableStorage instance with temporary database file."""
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+        temp_db.close()
+
+        try:
+            async with SqliteResumableStorage(str(temp_db.name)) as storage:
+                await storage.setup()
+                yield storage
+        finally:
+            if os.path.exists(temp_db.name):
+                os.remove(temp_db.name)
 
     @pytest.mark.asyncio
-    async def test_save_trigger_basic(self, storage: SQLiteResumableStorage):
+    async def test_save_trigger_basic(self, storage: SqliteResumableStorage):
         """Test saving a basic resume trigger."""
         trigger = UiPathResumeTrigger(
             trigger_type=UiPathResumeTriggerType.QUEUE_ITEM,
@@ -140,7 +136,7 @@ class TestTriggerOperations:
         assert triggers[0].item_key == "queue-123"
 
     @pytest.mark.asyncio
-    async def test_save_trigger_with_api_type(self, storage: SQLiteResumableStorage):
+    async def test_save_trigger_with_api_type(self, storage: SqliteResumableStorage):
         """Test saving an API type trigger."""
         trigger = UiPathResumeTrigger(
             trigger_type=UiPathResumeTriggerType.API,
@@ -166,7 +162,7 @@ class TestTriggerOperations:
 
     @pytest.mark.asyncio
     async def test_save_trigger_with_dict_payload(
-        self, storage: SQLiteResumableStorage
+        self, storage: SqliteResumableStorage
     ):
         """Test saving trigger with dictionary payload."""
         payload_dict = {"key1": "value1", "key2": 123, "nested": {"a": "b"}}
@@ -188,7 +184,7 @@ class TestTriggerOperations:
 
     @pytest.mark.asyncio
     async def test_save_trigger_with_none_payload(
-        self, storage: SQLiteResumableStorage
+        self, storage: SqliteResumableStorage
     ):
         """Test saving trigger with None payload."""
         trigger = UiPathResumeTrigger(
@@ -208,7 +204,7 @@ class TestTriggerOperations:
 
     @pytest.mark.asyncio
     async def test_get_latest_trigger_multiple_triggers(
-        self, storage: SQLiteResumableStorage
+        self, storage: SqliteResumableStorage
     ):
         """Test that get_latest_trigger returns the most recent trigger."""
         # Save multiple triggers for the same runtime
@@ -242,7 +238,7 @@ class TestTriggerOperations:
 
     @pytest.mark.asyncio
     async def test_get_latest_trigger_nonexistent(
-        self, storage: SQLiteResumableStorage
+        self, storage: SqliteResumableStorage
     ):
         """Test getting trigger for non-existent runtime_id."""
         result = await storage.get_triggers("nonexistent")
@@ -250,7 +246,7 @@ class TestTriggerOperations:
 
     @pytest.mark.asyncio
     async def test_save_trigger_different_runtimes(
-        self, storage: SQLiteResumableStorage
+        self, storage: SqliteResumableStorage
     ):
         """Test that triggers are properly isolated by runtime_id."""
         trigger1 = UiPathResumeTrigger(
@@ -283,15 +279,21 @@ class TestContextOperations:
     """Test workflow context save and load operations."""
 
     @pytest.fixture
-    async def storage(self, tmp_path: Path):
-        """Create and setup a storage instance."""
-        db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-        await storage.setup()
-        return storage
+    async def storage(self):
+        """Create a SqliteResumableStorage instance with temporary database file."""
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+        temp_db.close()
+
+        try:
+            async with SqliteResumableStorage(str(temp_db.name)) as storage:
+                await storage.setup()
+                yield storage
+        finally:
+            if os.path.exists(temp_db.name):
+                os.remove(temp_db.name)
 
     @pytest.mark.asyncio
-    async def test_save_and_load_context_basic(self, storage: SQLiteResumableStorage):
+    async def test_save_and_load_context_basic(self, storage: SqliteResumableStorage):
         """Test saving and loading a basic context."""
         context = {"step": 1, "data": "test data", "flags": {"active": True}}
 
@@ -301,7 +303,7 @@ class TestContextOperations:
         assert loaded == context
 
     @pytest.mark.asyncio
-    async def test_save_and_load_context_complex(self, storage: SQLiteResumableStorage):
+    async def test_save_and_load_context_complex(self, storage: SqliteResumableStorage):
         """Test saving and loading complex context with nested structures."""
         context = {
             "variables": {"counter": 42, "name": "test", "items": [1, 2, 3, 4, 5]},
@@ -318,7 +320,7 @@ class TestContextOperations:
 
     @pytest.mark.asyncio
     async def test_save_context_overwrites_existing(
-        self, storage: SQLiteResumableStorage
+        self, storage: SqliteResumableStorage
     ):
         """Test that saving context overwrites existing context."""
         context1 = {"step": 1}
@@ -332,13 +334,13 @@ class TestContextOperations:
         assert loaded != context1
 
     @pytest.mark.asyncio
-    async def test_load_context_nonexistent(self, storage: SQLiteResumableStorage):
+    async def test_load_context_nonexistent(self, storage: SqliteResumableStorage):
         """Test loading context for non-existent runtime_id."""
         result = await storage.load_context("nonexistent")
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_save_context_empty_dict(self, storage: SQLiteResumableStorage):
+    async def test_save_context_empty_dict(self, storage: SqliteResumableStorage):
         """Test saving empty dictionary as context."""
         context: dict[str, Any] = {}
 
@@ -349,7 +351,7 @@ class TestContextOperations:
 
     @pytest.mark.asyncio
     async def test_contexts_isolated_by_runtime_id(
-        self, storage: SQLiteResumableStorage
+        self, storage: SqliteResumableStorage
     ):
         """Test that contexts are properly isolated by runtime_id."""
         context_a = {"runtime": "a", "value": 100}
@@ -369,15 +371,21 @@ class TestKeyValueOperations:
     """Test key-value storage operations."""
 
     @pytest.fixture
-    async def storage(self, tmp_path: Path):
-        """Create and setup a storage instance."""
-        db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-        await storage.setup()
-        return storage
+    async def storage(self):
+        """Create a SqliteResumableStorage instance with temporary database file."""
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+        temp_db.close()
+
+        try:
+            async with SqliteResumableStorage(str(temp_db.name)) as storage:
+                await storage.setup()
+                yield storage
+        finally:
+            if os.path.exists(temp_db.name):
+                os.remove(temp_db.name)
 
     @pytest.mark.asyncio
-    async def test_set_and_get_string_value(self, storage: SQLiteResumableStorage):
+    async def test_set_and_get_string_value(self, storage: SqliteResumableStorage):
         """Test setting and getting a string value."""
         await storage.set_value("runtime-1", "namespace1", "key1", "test_value")
 
@@ -385,7 +393,7 @@ class TestKeyValueOperations:
         assert value == "test_value"
 
     @pytest.mark.asyncio
-    async def test_set_and_get_dict_value(self, storage: SQLiteResumableStorage):
+    async def test_set_and_get_dict_value(self, storage: SqliteResumableStorage):
         """Test setting and getting a dictionary value."""
         test_dict = {"name": "John", "age": 30, "active": True}
 
@@ -395,7 +403,7 @@ class TestKeyValueOperations:
         assert value == test_dict
 
     @pytest.mark.asyncio
-    async def test_set_and_get_pydantic_model(self, storage: SQLiteResumableStorage):
+    async def test_set_and_get_pydantic_model(self, storage: SqliteResumableStorage):
         """Test setting and getting a Pydantic model."""
         model = SampleModel(name="test", value=42)
 
@@ -405,7 +413,7 @@ class TestKeyValueOperations:
         assert value == model.model_dump()
 
     @pytest.mark.asyncio
-    async def test_set_and_get_none_value(self, storage: SQLiteResumableStorage):
+    async def test_set_and_get_none_value(self, storage: SqliteResumableStorage):
         """Test setting and getting None value."""
         await storage.set_value("runtime-4", "namespace4", "key4", None)
 
@@ -413,7 +421,7 @@ class TestKeyValueOperations:
         assert value is None
 
     @pytest.mark.asyncio
-    async def test_set_value_invalid_type(self, storage: SQLiteResumableStorage):
+    async def test_set_value_invalid_type(self, storage: SqliteResumableStorage):
         """Test that setting invalid type raises TypeError."""
         with pytest.raises(
             TypeError, match="Value must be str, dict, BaseModel or None"
@@ -426,7 +434,7 @@ class TestKeyValueOperations:
             await storage.set_value("runtime-5", "namespace5", "key5", [1, 2, 3])
 
     @pytest.mark.asyncio
-    async def test_set_value_overwrites_existing(self, storage: SQLiteResumableStorage):
+    async def test_set_value_overwrites_existing(self, storage: SqliteResumableStorage):
         """Test that setting a value overwrites existing value."""
         await storage.set_value("runtime-6", "namespace6", "key6", "first")
         await storage.set_value("runtime-6", "namespace6", "key6", "second")
@@ -435,13 +443,13 @@ class TestKeyValueOperations:
         assert value == "second"
 
     @pytest.mark.asyncio
-    async def test_get_value_nonexistent(self, storage: SQLiteResumableStorage):
+    async def test_get_value_nonexistent(self, storage: SqliteResumableStorage):
         """Test getting non-existent value returns None."""
         value = await storage.get_value("nonexistent", "namespace", "key")
         assert value is None
 
     @pytest.mark.asyncio
-    async def test_values_isolated_by_runtime_id(self, storage: SQLiteResumableStorage):
+    async def test_values_isolated_by_runtime_id(self, storage: SqliteResumableStorage):
         """Test that values are isolated by runtime_id."""
         await storage.set_value("runtime-a", "ns", "key", "value-a")
         await storage.set_value("runtime-b", "ns", "key", "value-b")
@@ -453,7 +461,7 @@ class TestKeyValueOperations:
         assert value_b == "value-b"
 
     @pytest.mark.asyncio
-    async def test_values_isolated_by_namespace(self, storage: SQLiteResumableStorage):
+    async def test_values_isolated_by_namespace(self, storage: SqliteResumableStorage):
         """Test that values are isolated by namespace."""
         await storage.set_value("runtime-1", "ns-a", "key", "value-a")
         await storage.set_value("runtime-1", "ns-b", "key", "value-b")
@@ -465,7 +473,7 @@ class TestKeyValueOperations:
         assert value_b == "value-b"
 
     @pytest.mark.asyncio
-    async def test_values_isolated_by_key(self, storage: SQLiteResumableStorage):
+    async def test_values_isolated_by_key(self, storage: SqliteResumableStorage):
         """Test that values are isolated by key."""
         await storage.set_value("runtime-1", "ns", "key-a", "value-a")
         await storage.set_value("runtime-1", "ns", "key-b", "value-b")
@@ -481,14 +489,20 @@ class TestSerializationMethods:
     """Test internal serialization/deserialization methods."""
 
     @pytest.fixture
-    async def storage(self, tmp_path: Path):
-        """Create a storage instance."""
-        db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
-        await storage.setup()
-        return storage
+    async def storage(self):
+        """Create a SqliteResumableStorage instance with temporary database file."""
+        temp_db = tempfile.NamedTemporaryFile(delete=False, suffix=".db")
+        temp_db.close()
 
-    def test_serialize_trigger_queue_type(self, storage: SQLiteResumableStorage):
+        try:
+            async with SqliteResumableStorage(str(temp_db.name)) as storage:
+                await storage.setup()
+                yield storage
+        finally:
+            if os.path.exists(temp_db.name):
+                os.remove(temp_db.name)
+
+    def test_serialize_trigger_queue_type(self, storage: SqliteResumableStorage):
         """Test serialization of queue type trigger."""
         trigger = UiPathResumeTrigger(
             trigger_type=UiPathResumeTriggerType.QUEUE_ITEM,
@@ -510,7 +524,7 @@ class TestSerializationMethods:
         assert serialized["interrupt_id"] == "interrupt-456"
         assert json.loads(serialized["payload"]) == {"test": "data"}
 
-    def test_serialize_trigger_api_type(self, storage: SQLiteResumableStorage):
+    def test_serialize_trigger_api_type(self, storage: SqliteResumableStorage):
         """Test serialization of API type trigger."""
         trigger = UiPathResumeTrigger(
             trigger_type=UiPathResumeTriggerType.API,
@@ -530,7 +544,7 @@ class TestSerializationMethods:
         assert serialized["payload"] == "string payload"
         assert serialized["interrupt_id"] == "interrupt-123"
 
-    def test_deserialize_trigger_queue_type(self, storage: SQLiteResumableStorage):
+    def test_deserialize_trigger_queue_type(self, storage: SqliteResumableStorage):
         """Test deserialization of queue type trigger."""
         trigger_data = {
             "type": UiPathResumeTriggerType.QUEUE_ITEM.value,
@@ -550,7 +564,7 @@ class TestSerializationMethods:
         assert trigger.folder_path == "/test"
         assert trigger.folder_key == "folder-123"
 
-    def test_deserialize_trigger_api_type(self, storage: SQLiteResumableStorage):
+    def test_deserialize_trigger_api_type(self, storage: SqliteResumableStorage):
         """Test deserialization of API type trigger."""
         trigger_data = {
             "type": UiPathResumeTriggerType.API.value,
@@ -566,43 +580,43 @@ class TestSerializationMethods:
         assert trigger.api_resume.inbox_id == "inbox-abc"
         assert trigger.api_resume.request == "request data"
 
-    def test_dump_value_string(self, storage: SQLiteResumableStorage):
+    def test_dump_value_string(self, storage: SqliteResumableStorage):
         """Test _dump_value with string."""
         result = storage._dump_value("test string")
         assert result == "s:test string"
 
-    def test_dump_value_dict(self, storage: SQLiteResumableStorage):
+    def test_dump_value_dict(self, storage: SqliteResumableStorage):
         """Test _dump_value with dictionary."""
         result = storage._dump_value({"key": "value"})
         assert result == 'j:{"key": "value"}'
 
-    def test_dump_value_pydantic_model(self, storage: SQLiteResumableStorage):
+    def test_dump_value_pydantic_model(self, storage: SqliteResumableStorage):
         """Test _dump_value with Pydantic model."""
         model = SampleModel(name="test", value=42)
         result = storage._dump_value(model)
         assert result == 'j:{"name": "test", "value": 42}'
 
-    def test_dump_value_none(self, storage: SQLiteResumableStorage):
+    def test_dump_value_none(self, storage: SqliteResumableStorage):
         """Test _dump_value with None."""
         result = storage._dump_value(None)
         assert result is None
 
-    def test_load_value_string(self, storage: SQLiteResumableStorage):
+    def test_load_value_string(self, storage: SqliteResumableStorage):
         """Test _load_value with string."""
         result = storage._load_value("s:test string")
         assert result == "test string"
 
-    def test_load_value_json(self, storage: SQLiteResumableStorage):
+    def test_load_value_json(self, storage: SqliteResumableStorage):
         """Test _load_value with JSON."""
         result = storage._load_value('j:{"key": "value"}')
         assert result == {"key": "value"}
 
-    def test_load_value_none(self, storage: SQLiteResumableStorage):
+    def test_load_value_none(self, storage: SqliteResumableStorage):
         """Test _load_value with None."""
         result = storage._load_value(None)
         assert result is None
 
-    def test_load_value_raw_string(self, storage: SQLiteResumableStorage):
+    def test_load_value_raw_string(self, storage: SqliteResumableStorage):
         """Test _load_value with raw string (no prefix)."""
         result = storage._load_value("raw string")
         assert result == "raw string"
@@ -615,7 +629,7 @@ class TestErrorHandling:
     async def test_context_with_non_picklable_object(self, tmp_path: Path):
         """Test handling of non-picklable objects in context."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
+        storage = SqliteResumableStorage(str(db_path))
         await storage.setup()
 
         # Lambda functions are not picklable
@@ -632,7 +646,7 @@ class TestErrorHandling:
         import asyncio
 
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
+        storage = SqliteResumableStorage(str(db_path))
         await storage.setup()
 
         async def save_trigger(runtime_id: str, key: str):
@@ -674,7 +688,7 @@ class TestDatabaseSchema:
     async def test_runtime_kv_primary_key_constraint(self, tmp_path: Path):
         """Test that runtime_kv primary key constraint works."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
+        storage = SqliteResumableStorage(str(db_path))
         await storage.setup()
 
         # First insert
@@ -690,7 +704,7 @@ class TestDatabaseSchema:
     async def test_workflow_contexts_primary_key_constraint(self, tmp_path: Path):
         """Test that workflow_contexts primary key constraint works."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
+        storage = SqliteResumableStorage(str(db_path))
         await storage.setup()
 
         # First save
@@ -706,7 +720,7 @@ class TestDatabaseSchema:
     async def test_resume_triggers_autoincrement(self, tmp_path: Path):
         """Test that resume_triggers id autoincrement works."""
         db_path = tmp_path / "test.db"
-        storage = SQLiteResumableStorage(str(db_path))
+        storage = SqliteResumableStorage(str(db_path))
         await storage.setup()
 
         trigger1 = UiPathResumeTrigger(
