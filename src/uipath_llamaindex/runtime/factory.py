@@ -264,7 +264,7 @@ class UiPathLlamaIndexRuntimeFactory:
         )
 
     async def new_runtime(
-        self, entrypoint: str, runtime_id: str
+        self, entrypoint: str, runtime_id: str, **kwargs
     ) -> UiPathRuntimeProtocol:
         """
         Create a new LlamaIndex runtime instance.
