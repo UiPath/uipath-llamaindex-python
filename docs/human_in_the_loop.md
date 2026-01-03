@@ -74,6 +74,9 @@ from uipath_llamaindex.models import InvokeProcessEvent
 ctx.write_event_to_stream(InvokeProcessEvent(name="MyProcess", process_folder_path="MyFolderPath", input_arguments={"arg1": "value1"}))
 job_data = await ctx.wait_for_event(HumanResponseEvent)
 ```
+/// info
+The return value of the event is the job output. If the job did not produce any output, the return value will be the job state, e.g., `{"state": "successful"}`.
+///
 
 /// warning
 An agent can invoke itself if needed, but this must be done with caution. Be mindful that using the same name for invocation may lead to unintentional loops. To prevent recursion issues, implement safeguards like exit conditions.
@@ -100,3 +103,6 @@ from uipath_llamaindex.models import WaitJobEvent
 ctx.write_event_to_stream(WaitJobEvent(job=my_job_instance, process_folder_path="MyFolderPath"))
 job_data = await ctx.wait_for_event(HumanResponseEvent)
 ```
+/// info
+The return value of the event is the job output. If the job did not produce any output, the return value will be the job state, e.g., `{"state": "successful"}`.
+///
