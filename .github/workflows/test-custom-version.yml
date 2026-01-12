@@ -18,7 +18,7 @@ jobs:
     uses: ./.github/workflows/discover-packages.yml
 
   test-core-dev-version:
-    name: Test ${{ matrix.package }} - Core Dev Version
+    name: Test Core Dev Version
     needs: [discover-packages]
     runs-on: ${{ matrix.os }}
     if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
@@ -65,7 +65,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: "packages/${{ matrix.package }}/.python-version"
+          python-version: ${{ matrix.python-version }}
 
       - name: Modify pyproject.toml for custom UiPath version
         shell: bash
@@ -95,7 +95,7 @@ jobs:
           grep -A5 -B5 "uipath\|testpypi" pyproject.toml || true
 
       - name: Install dependencies with specific UiPath version
-        run: uv sync --all-extras
+        run: uv sync --all-extras --python ${{ matrix.python-version }}
 
       - name: Run all tests
         run: uv run pytest
