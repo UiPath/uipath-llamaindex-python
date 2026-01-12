@@ -7,6 +7,14 @@ on:
 jobs:
   publish-dev:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ${{ matrix.package.path }}
+    strategy:
+      matrix:
+        package:
+          - name: uipath-llamaindex
+            path: packages/uipath-llamaindex
     permissions:
       contents: read
       pull-requests: write
@@ -26,7 +34,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: ".python-version"
+          python-version-file: "${{ matrix.package.path }}/.python-version"
 
       - name: Install dependencies
         run: uv sync --all-extras
@@ -36,7 +44,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          $pyprojcontent = Get-Content pyproject.toml -Raw
+          $pyprojPath = "pyproject.toml"
+          $pyprojcontent = Get-Content $pyprojPath -Raw
 
           $PROJECT_NAME    = ($pyprojcontent | Select-String -Pattern '(?m)^\[(project|tool\.poetry)\][^\[]*?name\s*=\s*"([^"]*)"' -AllMatches).Matches[0].Groups[2].Value
           $CURRENT_VERSION = ($pyprojcontent | Select-String -Pattern '(?m)^\[(project|tool\.poetry)\][^\[]*?version\s*=\s*"([^"]*)"' -AllMatches).Matches[0].Groups[2].Value
@@ -55,9 +64,9 @@ jobs:
           $DEV_VERSION = "$CURRENT_VERSION.dev1$PADDED_PR$PADDED_RUN"
 
           # Update version in pyproject.toml
-          (Get-Content pyproject.toml) -replace "version = `"$CURRENT_VERSION`"", "version = `"$DEV_VERSION`"" | Set-Content pyproject.toml
+          (Get-Content $pyprojPath) -replace "version = `"$CURRENT_VERSION`"", "version = `"$DEV_VERSION`"" | Set-Content $pyprojPath
 
-          Write-Output "Package version set to $DEV_VERSION"
+          Write-Output "Package $PROJECT_NAME version set to $DEV_VERSION"
 
           $dependencyMessage = @"
           ## Development Package

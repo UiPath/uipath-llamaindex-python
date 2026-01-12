@@ -4,11 +4,19 @@ on:
   workflow_call:
 
 jobs:
+  discover-packages:
+    uses: ./.github/workflows/discover-packages.yml
+
   test:
-    name: Test
+    name: Test ${{ matrix.package }}
+    needs: [discover-packages]
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
     strategy:
       matrix:
+        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
         python-version: ["3.11", "3.12", "3.13"]
         os: [ubuntu-latest, windows-latest]
 
@@ -34,7 +42,7 @@ jobs:
         if: "!contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')"
         uses: actions/setup-python@v5
         with:
-          python-version-file: ".python-version"
+          python-version-file: "packages/${{ matrix.package }}/.python-version"
 
       - name: Install dependencies
         if: "!contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')"

@@ -28,7 +28,7 @@ ctx.write_event_to_stream(CreateTaskEvent(app_name="AppName", app_folder_path="M
 task_data = await ctx.wait_for_event(HumanResponseEvent)
 ```
 
-For a practical implementation of the `CreateTaskEvent` model, refer to the [action-center-hitl-agent](https://github.com/UiPath/uipath-llamaindex-python/tree/main/samples/action-center-hitl-agent). This sample demonstrates how to create a task with dynamic input.
+For a practical implementation of the `CreateTaskEvent` model, refer to the [action-center-hitl-agent](https://github.com/UiPath/uipath-integrations-python/tree/main/packages/uipath-llamaindex/samples/action-center-hitl-agent). This sample demonstrates how to create a task with dynamic input.
 
 
 ---
@@ -79,7 +79,7 @@ job_data = await ctx.wait_for_event(HumanResponseEvent)
 An agent can invoke itself if needed, but this must be done with caution. Be mindful that using the same name for invocation may lead to unintentional loops. To prevent recursion issues, implement safeguards like exit conditions.
 ///
 
-For a practical implementation of the `InvokeProcessEvent` model, refer to the [multi-agent sample](https://github.com/UiPath/uipath-llamaindex-python/tree/main/samples/multi-agent). This sample demonstrates how to invoke a process with dynamic input arguments, showcasing the integration of the interrupt functionality within a multi-agent system or a system where an agent integrates with RPA processes and API workflows.
+For a practical implementation of the `InvokeProcessEvent` model, refer to the [multi-agent sample](https://github.com/UiPath/uipath-integrations-python/tree/main/packages/uipath-llamaindex/samples/multi-agent). This sample demonstrates how to invoke a process with dynamic input arguments, showcasing the integration of the interrupt functionality within a multi-agent system or a system where an agent integrates with RPA processes and API workflows.
 
 ---
 

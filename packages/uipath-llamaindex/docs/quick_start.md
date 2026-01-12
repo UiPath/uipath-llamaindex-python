@@ -318,4 +318,4 @@ section, as agent input:
 
 Congratulations! You have successfully set up, created, published, and run a UiPath LlamaIndex Agent. 🚀
 
-For more advanced agents and agent samples, please refer to our [samples section](https://github.com/UiPath/uipath-llamaindex-python/tree/main/samples) in GitHub.
+For more advanced agents and agent samples, please refer to our [samples section](https://github.com/UiPath/uipath-integrations-python/tree/main/packages/uipath-llamaindex/samples) in GitHub.

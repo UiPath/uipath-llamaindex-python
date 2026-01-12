@@ -89,18 +89,18 @@ That's it! Next, we'll deploy the agent.
 ### Deploy the agent
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/UiPath/uipath-llamaindex-python.git
+   git clone https://github.com/UiPath/uipath-integrations-python.git
    ```
 
 2. **Navigate to the Sample Directory**
    - **Windows:**
      ```bash
-     cd .\uipath-llamaindex-python\samples\travel-helper-RAG-agent
+     cd .\uipath-integrations-python\packages\uipath-llamaindex\samples\travel-helper-RAG-agent
      ```
 
    - **Unix-like Systems (Linux, macOS):**
      ```bash
-     cd ./uipath-llamaindex-python/samples/travel-helper-RAG-agent
+     cd ./uipath-integrations-python/packages/uipath-llamaindex/samples/travel-helper-RAG-agent
      ```
 
 3. **Create and Activate a Virtual Python Environment**

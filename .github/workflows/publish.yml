@@ -16,14 +16,21 @@ jobs:
     uses: ./.github/workflows/test.yml
 
   build:
-    name: Build
+    name: Build ${{ matrix.package }}
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+    strategy:
+      matrix:
+        package:
+          - uipath-llamaindex
 
     needs:
       - lint
       - test
 
-    if: ${{ github.repository == 'UiPath/uipath-llamaindex-python' }}
+    if: ${{ github.repository == 'UiPath/uipath-integrations-python' }}
     permissions:
       contents: read
       actions: write
@@ -40,7 +47,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: ".python-version"
+          python-version-file: "packages/${{ matrix.package }}/.python-version"
 
       - name: Install dependencies
         run: uv sync --all-extras
@@ -51,13 +58,17 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-dists
-          path: dist/
+          name: release-dists-${{ matrix.package }}
+          path: packages/${{ matrix.package }}/dist/
 
   pypi-publish:
-    name: Upload release to PyPI
+    name: Upload ${{ matrix.package }} to PyPI
     runs-on: ubuntu-latest
     environment: pypi
+    strategy:
+      matrix:
+        package:
+          - uipath-llamaindex
 
     needs:
       - build
@@ -69,7 +80,7 @@ jobs:
       - name: Retrieve release distributions
         uses: actions/download-artifact@v4
         with:
-          name: release-dists
+          name: release-dists-${{ matrix.package }}
           path: dist/
 
       - name: Publish package distributions to PyPI

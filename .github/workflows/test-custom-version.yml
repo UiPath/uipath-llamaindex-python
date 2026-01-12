@@ -13,12 +13,21 @@ on:
     types: [opened, synchronize, labeled, unlabeled]
 
 jobs:
+  discover-packages:
+    if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
+    uses: ./.github/workflows/discover-packages.yml
+
   test-core-dev-version:
-    name: Test Core Dev Version
+    name: Test ${{ matrix.package }} - Core Dev Version
+    needs: [discover-packages]
     runs-on: ${{ matrix.os }}
     if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
     strategy:
       matrix:
+        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
         python-version: ["3.11", "3.12", "3.13"]
         os: [ubuntu-latest, windows-latest]
 
@@ -56,7 +65,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version-file: "packages/${{ matrix.package }}/.python-version"
 
       - name: Modify pyproject.toml for custom UiPath version
         shell: bash
@@ -98,5 +107,4 @@ jobs:
       - name: Restore original pyproject.toml
         if: always()
         shell: bash
-        run: |
-          mv pyproject.toml.backup pyproject.toml
+        run: mv pyproject.toml.backup pyproject.toml

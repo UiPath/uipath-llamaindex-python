@@ -5,13 +5,16 @@ on:
     branches:
       - main
     paths:
-      - "docs/**"
-      - "pyproject.toml"
+      - "packages/*/docs/**"
+      - "packages/*/pyproject.toml"
+
+permissions:
+  contents: read
 
 jobs:
   publish-docs:
     runs-on: ubuntu-latest
-    if: ${{ github.repository == 'UiPath/uipath-llamaindex-python' }}
+    if: ${{ github.repository == 'UiPath/uipath-integrations-python' }}
     steps:
       - name: Trigger Publish Docs
         run: |
