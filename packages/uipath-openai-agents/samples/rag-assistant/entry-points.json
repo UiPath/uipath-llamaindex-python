@@ -1,0 +1,94 @@
+{
+    "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+    "$id": "entry-points.json",
+    "entryPoints": [
+        {
+            "filePath": "agent",
+            "uniqueId": "f3f04855-8064-46b5-a746-929568a6224d",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "message": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            }
+                        ],
+                        "title": "Message",
+                        "description": "User message(s) to send to the agent"
+                    }
+                },
+                "required": [
+                    "message"
+                ]
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "title": "Result",
+                        "description": "The agent's response",
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "result"
+                ]
+            },
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "__start__",
+                        "name": "__start__",
+                        "type": "__start__",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "assistant_agent",
+                        "name": "assistant_agent",
+                        "type": "model",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "__end__",
+                        "name": "__end__",
+                        "type": "__end__",
+                        "subgraph": null
+                    }
+                ],
+                "edges": [
+                    {
+                        "source": "__start__",
+                        "target": "assistant_agent",
+                        "label": "input"
+                    },
+                    {
+                        "source": "assistant_agent",
+                        "target": "__end__",
+                        "label": "output"
+                    }
+                ]
+            }
+        }
+    ]
+}

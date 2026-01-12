@@ -15,6 +15,8 @@ jobs:
         package:
           - name: uipath-llamaindex
             path: packages/uipath-llamaindex
+          - name: uipath-openai-agents
+            path: packages/uipath-openai-agents
     permissions:
       contents: read
       pull-requests: write
@@ -69,9 +71,7 @@ jobs:
           Write-Output "Package $PROJECT_NAME version set to $DEV_VERSION"
 
           $dependencyMessage = @"
-          ## Development Package
-
-          - Add this package as a dependency in your pyproject.toml:
+          ### $PROJECT_NAME
 
           ``````toml
           [project]
@@ -110,12 +110,23 @@ jobs:
           $currentBody = $pr.body
 
           # Check if there's already a development package section
-          if ($currentBody -match '## Development Package') {
-            # Replace the existing section with the new dependency message
-            $newBody = $currentBody -replace '## Development Package(\r?\n|.)*?(?=##|$)', $dependencyMessage
+          if ($currentBody -match '## Development Packages') {
+            # Check if this specific package already has a section
+            if ($currentBody -match "### $PROJECT_NAME") {
+              # Replace the existing package section
+              $newBody = $currentBody -replace "### $PROJECT_NAME(\r?\n|.)*?(?=###|##|$)", $dependencyMessage
+            } else {
+              # Append this package to the Development Packages section
+              $newBody = $currentBody -replace '(## Development Packages)', "`$1`n`n$dependencyMessage"
+            }
           } else {
-            # Append the dependency message to the end of the description
-            $newBody = if ($currentBody) { "$currentBody`n`n$dependencyMessage" } else { $dependencyMessage }
+            # Create the Development Packages section with this package
+            $packageSection = @"
+          ## Development Packages
+
+          $dependencyMessage
+          "@
+            $newBody = if ($currentBody) { "$currentBody`n`n$packageSection" } else { $packageSection }
           }
 
           # Update the PR description
@@ -125,10 +136,10 @@ jobs:
 
           Invoke-RestMethod -Uri $prUri -Method Patch -Headers $headers -Body $updateBody -ContentType "application/json"
 
-          Write-Output "Updated PR description with development package information"
+          Write-Output "Updated PR description with development package information for $PROJECT_NAME"
 
       - name: Build package
-        run: uv build
+        run: uv build --package ${{ matrix.package.name }}
 
       - name: Publish
         run: uv publish --index testpypi

@@ -1,0 +1,28 @@
+from agents import Agent
+from openai import OpenAI
+
+
+def get_weather(location: str) -> str:
+    """Get the current weather for a location.
+
+    Args:
+        location: The city and state, e.g. "San Francisco, CA"
+
+    Returns:
+        Weather information for the location
+    """
+    # This is a mock implementation
+    return f"The weather in {location} is sunny and 72°F"
+
+
+# Initialize the OpenAI client
+client = OpenAI()
+
+# Create an agent with tools
+agent = Agent(
+    name="weather_agent",
+    instructions="You are a helpful weather assistant. Use the get_weather tool to provide weather information.",
+    model="gpt-4o-mini",
+    tools=[get_weather],
+    client=client,
+)

@@ -1,0 +1,18 @@
+[project]
+name = "rag-assistant"
+version = "0.1.0"
+description = "RAG Assistant sample using UiPath OpenAI Agents"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "uipath-openai-agents>=0.1.0, <0.2.0",
+    "openai-agents>=0.6.5",
+]
+
+[dependency-groups]
+dev = [
+    "uipath-dev>=0.0.8",
+]
+
+[tool.uv.sources]
+uipath-openai-agents = { path = "../..", editable = true }

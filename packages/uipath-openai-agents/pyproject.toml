@@ -1,0 +1,98 @@
+[project]
+name = "uipath-openai-agents"
+version = "0.1.0"
+description = "UiPath OpenAI Agents SDK"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "aiosqlite>=0.20.0",
+    "openai>=1.0.0",
+    "openai-agents>=0.6.5",
+    "uipath>=2.4.0, <2.5.0",
+    "uipath-runtime>=0.4.0, <0.5.0",
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Topic :: Software Development :: Build Tools",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+maintainers = [
+    { name = "Marius Cosareanu", email = "marius.cosareanu@uipath.com" },
+    { name = "Cristian Pufu", email = "cristian.pufu@uipath.com" }
+]
+
+[project.entry-points."uipath.middlewares"]
+register = "uipath_openai_agents.middlewares:register_middleware"
+
+[project.entry-points."uipath.runtime.factories"]
+openai-agents = "uipath_openai_agents.runtime:register_runtime_factory"
+
+[project.urls]
+Homepage = "https://uipath.com"
+Repository = "https://github.com/UiPath/uipath-llamaindex-python"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.14.1",
+    "ruff>=0.9.4",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.1",
+    "pre-commit>=4.1.0",
+    "pytest-asyncio>=1.0.0",
+]
+
+[tool.ruff]
+line-length = 88
+indent-width = 4
+
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"*" = ["E501"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
+[tool.mypy]
+plugins = [
+  "pydantic.mypy"
+]
+exclude = [
+    "samples/.*"
+]
+follow_imports = "silent"
+warn_redundant_casts = true
+warn_unused_ignores = false
+disallow_any_generics = true
+check_untyped_defs = true
+no_implicit_reexport = true
+disallow_untyped_defs = false
+
+[[tool.mypy.overrides]]
+module = "agents"
+ignore_missing_imports = true
+ignore_errors = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+addopts = "-ra -q"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_mode = "auto"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
