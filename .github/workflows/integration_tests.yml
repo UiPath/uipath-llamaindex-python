@@ -24,7 +24,7 @@ jobs:
       id: discover
       run: |
         # Find all testcase folders (excluding common folders like README, etc.)
-        testcase_dirs=$(find testcases -maxdepth 1 -type d -name "*-*" | sed 's|testcases/||' | sort)
+        testcase_dirs=$(find packages/uipath-llamaindex/testcases -maxdepth 1 -type d -name "*-*" | sed 's|packages/uipath-llamaindex/testcases/||' | sort)
 
         echo "Found testcase directories:"
         echo "$testcase_dirs"
@@ -61,7 +61,7 @@ jobs:
         CLIENT_ID:      ${{ matrix.environment == 'alpha' && secrets.ALPHA_TEST_CLIENT_ID || matrix.environment == 'staging' && secrets.STAGING_TEST_CLIENT_ID || matrix.environment == 'cloud' && secrets.CLOUD_TEST_CLIENT_ID }}
         CLIENT_SECRET:  ${{ matrix.environment == 'alpha' && secrets.ALPHA_TEST_CLIENT_SECRET || matrix.environment == 'staging' && secrets.STAGING_TEST_CLIENT_SECRET || matrix.environment == 'cloud' && secrets.CLOUD_TEST_CLIENT_SECRET }}
         BASE_URL:       ${{ matrix.environment == 'alpha' && secrets.ALPHA_BASE_URL || matrix.environment == 'staging' && secrets.STAGING_BASE_URL || matrix.environment == 'cloud' && secrets.CLOUD_BASE_URL }}
-      working-directory: testcases/${{ matrix.testcase }}
+      working-directory: packages/uipath-llamaindex/testcases/${{ matrix.testcase }}
       run: |
         echo "Running testcase: ${{ matrix.testcase }}"
         echo "Environment: ${{ matrix.environment }}"

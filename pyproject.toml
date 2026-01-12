@@ -1,58 +1,8 @@
-[project]
-name = "uipath-llamaindex"
-version = "0.3.0"
-description = "UiPath LlamaIndex SDK"
-readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.11"
-dependencies = [
-    "aiosqlite>=0.21.0",
-    "llama-index>=0.14.8",
-    "llama-index-embeddings-azure-openai>=0.4.1",
-    "llama-index-llms-azure-openai>=0.4.2",
-    "openinference-instrumentation-llama-index>=4.3.9",
-    "uipath>=2.4.0, <2.5.0",
-    "uipath-runtime>=0.4.0, <0.5.0",
-]
-classifiers = [
-    "Intended Audience :: Developers",
-    "Topic :: Software Development :: Build Tools",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-]
-maintainers = [
-    { name = "Marius Cosareanu", email = "marius.cosareanu@uipath.com" },
-    { name = "Cristian Pufu", email = "cristian.pufu@uipath.com" }
-]
+[tool.uv.workspace]
+members = ["packages/*"]
 
-[project.optional-dependencies]
-bedrock = [
-    "llama-index-llms-bedrock>=0.3.0",
-    "llama-index-llms-bedrock-converse>=0.3.0",
-    "boto3>=1.28.0",
-    "aiobotocore>=2.5.0",
-]
-vertex = [
-    "llama-index-llms-google-genai>=0.8.0",
-    "google-genai>=1.0.0",
-]
-
-[project.entry-points."uipath.middlewares"]
-register = "uipath_llamaindex.middlewares:register_middleware"
-
-[project.entry-points."uipath.runtime.factories"]
-llamaindex = "uipath_llamaindex.runtime:register_runtime_factory"
-
-[project.urls]
-Homepage = "https://uipath.com"
-Repository = "https://github.com/UiPath/uipath-llamaindex-python"
-
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[dependency-groups]
-dev = [
+[tool.uv]
+dev-dependencies = [
     "mypy>=1.14.1",
     "ruff>=0.9.4",
     "pytest>=7.4.0",
@@ -72,8 +22,6 @@ select = ["E", "F", "B", "I"]
 
 [tool.ruff.lint.per-file-ignores]
 "*" = ["E501"]
-"src/uipath_llamaindex/llms/bedrock.py" = ["E402"]
-"src/uipath_llamaindex/llms/vertex.py" = ["E402"]
 
 [tool.ruff.format]
 quote-style = "double"
@@ -97,11 +45,12 @@ no_implicit_reexport = true
 disallow_untyped_defs = false
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["packages/*/tests"]
 python_files = "test_*.py"
 addopts = "-ra -q"
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
+norecursedirs = ["samples", "testcases", ".venv", "dist", "build"]
 
 [[tool.uv.index]]
 name = "testpypi"
