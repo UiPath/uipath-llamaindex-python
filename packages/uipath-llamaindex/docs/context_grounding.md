@@ -70,5 +70,5 @@ response = react_agent.chat("Answer user questions as best as you can using the 
 
 
 /// tip
-Check our [travel-helper-RAG-agent sample](https://github.com/UiPath/uipath-llamaindex-python/tree/main/samples/travel-helper-RAG-agent) to see context grounding query engines in action.
+Check our [travel-helper-RAG-agent sample](https://github.com/UiPath/uipath-integrations-python/tree/main/packages/uipath-llamaindex/samples/travel-helper-RAG-agent) to see context grounding query engines in action.
 ///

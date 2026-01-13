@@ -5,10 +5,13 @@ on:
     branches:
       - main
     paths-ignore:
-      - pyproject.toml
+      - packages/*/pyproject.toml
   pull_request:
     branches:
       - main
+
+permissions:
+  contents: read
 
 jobs:
   commit-lint:

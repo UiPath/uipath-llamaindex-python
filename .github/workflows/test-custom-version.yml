@@ -13,12 +13,21 @@ on:
     types: [opened, synchronize, labeled, unlabeled]
 
 jobs:
+  discover-packages:
+    if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
+    uses: ./.github/workflows/discover-packages.yml
+
   test-core-dev-version:
     name: Test Core Dev Version
+    needs: [discover-packages]
     runs-on: ${{ matrix.os }}
     if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
     strategy:
       matrix:
+        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
         python-version: ["3.11", "3.12", "3.13"]
         os: [ubuntu-latest, windows-latest]
 
@@ -86,7 +95,7 @@ jobs:
           grep -A5 -B5 "uipath\|testpypi" pyproject.toml || true
 
       - name: Install dependencies with specific UiPath version
-        run: uv sync --all-extras
+        run: uv sync --all-extras --python ${{ matrix.python-version }}
 
       - name: Run all tests
         run: uv run pytest
@@ -98,5 +107,4 @@ jobs:
       - name: Restore original pyproject.toml
         if: always()
         shell: bash
-        run: |
-          mv pyproject.toml.backup pyproject.toml
+        run: mv pyproject.toml.backup pyproject.toml

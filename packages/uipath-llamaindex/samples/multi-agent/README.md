@@ -12,8 +12,8 @@ This UiPath LlamaIndex agent assists in researching companies using AI and human
 ### 1. Clone the Repository
 
 ```sh
-git clone https://github.com/your-org/uipath-llamaindex-python.git
-cd uipath-llamaindex-python/samples/multi-agent
+git clone https://github.com/UiPath/uipath-integrations-python.git
+cd uipath-integrations-python/packages/uipath-llamaindex/samples/multi-agent
 ```
 
 ### 2. Set Up Python Environment

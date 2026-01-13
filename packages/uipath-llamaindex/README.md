@@ -8,7 +8,7 @@ A Python SDK that enables developers to build and deploy LlamaIndex agents to th
 
 This package is an extension to the [UiPath Python SDK](https://github.com/UiPath/uipath-python) and implements the [UiPath Runtime Protocol](https://github.com/UiPath/uipath-runtime-python).
 
-Check out these [sample projects](https://github.com/UiPath/uipath-integrations-python/tree/main/packages/uipath-llamaindex/samples) to see the SDK in action.
+Check out these [sample projects](https://github.com/UiPath/uipath-llamaindex-python/tree/main/samples) to see the SDK in action.
 
 ## Requirements
 
@@ -114,7 +114,7 @@ Check out [uipath-dev](https://github.com/uipath/uipath-dev-python) - an interac
 
 ### Setting Up a Development Environment
 
-Please read our [contribution guidelines](https://github.com/UiPath/uipath-integrations-python/packages/uipath-llamaindex/blob/main/CONTRIBUTING.md) before submitting a pull request.
+Please read our [contribution guidelines](https://github.com/UiPath/uipath-llamaindex-python/blob/main/CONTRIBUTING.md) before submitting a pull request.
 
 ### Special Thanks
 

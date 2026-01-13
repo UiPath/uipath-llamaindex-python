@@ -6,10 +6,21 @@ on:
     types: [opened, synchronize, labeled, unlabeled]
 
 jobs:
+  discover-packages:
+    if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
+    uses: ./.github/workflows/discover-packages.yml
+
   lint-with-custom-version:
-    name: Lint with Custom UiPath Version
+    name: Lint ${{ matrix.package }} - Custom Version
+    needs: [discover-packages]
     runs-on: ubuntu-latest
     if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+    strategy:
+      matrix:
+        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
     permissions:
       contents: read
       pull-requests: read
@@ -44,7 +55,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version-file: ".python-version"
+          python-version-file: "packages/${{ matrix.package }}/.python-version"
 
       - name: Modify pyproject.toml for custom UiPath version
         shell: bash
