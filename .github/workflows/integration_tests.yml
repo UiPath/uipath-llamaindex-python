@@ -14,7 +14,6 @@ permissions:
 jobs:
   discover-testcases:
     uses: ./.github/workflows/discover-testcases.yml
-
   integration-tests:
     needs: [discover-testcases]
     runs-on: ubuntu-latest

@@ -1,0 +1,15 @@
+flowchart TB
+  __start__(__start__)
+  orchestrator_agent(orchestrator_agent)
+  translate_to_spanish(translate_to_spanish)
+  translate_to_french(translate_to_french)
+  translate_to_italian(translate_to_italian)
+  __end__(__end__)
+  __start__ --> |input|orchestrator_agent
+  orchestrator_agent --> |tool_call|translate_to_spanish
+  translate_to_spanish --> |tool_result|orchestrator_agent
+  orchestrator_agent --> |tool_call|translate_to_french
+  translate_to_french --> |tool_result|orchestrator_agent
+  orchestrator_agent --> |tool_call|translate_to_italian
+  translate_to_italian --> |tool_result|orchestrator_agent
+  orchestrator_agent --> |output|__end__
