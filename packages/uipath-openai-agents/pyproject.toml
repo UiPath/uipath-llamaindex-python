@@ -36,6 +36,17 @@ Repository = "https://github.com/UiPath/uipath-llamaindex-python"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
+[dependency-groups]
+dev = [
+    "mypy>=1.14.1",
+    "ruff>=0.9.4",
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.1",
+    "pre-commit>=4.1.0",
+    "pytest-asyncio>=1.0.0",
+]
+
 [tool.ruff]
 line-length = 88
 indent-width = 4
@@ -56,7 +67,9 @@ line-ending = "auto"
 plugins = [
   "pydantic.mypy"
 ]
-exclude = []
+exclude = [
+    "samples/.*"
+]
 follow_imports = "silent"
 warn_redundant_casts = true
 warn_unused_ignores = false
@@ -76,3 +89,9 @@ python_files = "test_*.py"
 addopts = "-ra -q"
 asyncio_default_fixture_loop_scope = "function"
 asyncio_mode = "auto"
+
+[[tool.uv.index]]
+name = "testpypi"
+url = "https://test.pypi.org/simple/"
+publish-url = "https://test.pypi.org/legacy/"
+explicit = true
