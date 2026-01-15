@@ -244,6 +244,15 @@ wheels = [
 ]
 
 [[package]]
+name = "applicationinsights"
+version = "0.11.10"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/f2/46a75ac6096d60da0e71a068015b610206e697de01fa2fb5bba8564b0798/applicationinsights-0.11.10.tar.gz", hash = "sha256:0b761f3ef0680acf4731906dfc1807faa6f2a57168ae74592db0084a6099f7b3", size = 44722, upload-time = "2021-04-22T23:22:45.71Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/f4/0d/cb6b23164eb55eebaa5f9f302dfe557cfa751bd7b2779863f1abd0343b6b/applicationinsights-0.11.10-py2.py3-none-any.whl", hash = "sha256:e89a890db1c6906b6a7d0bcfd617dac83974773c64573147c8d6654f9cf2a6ea", size = 55068, upload-time = "2021-04-22T23:22:44.451Z" },
+]
+
+[[package]]
 name = "attrs"
 version = "25.4.0"
 source = { registry = "https://pypi.org/simple" }
@@ -764,11 +773,11 @@ wheels = [
 
 [[package]]
 name = "filelock"
-version = "3.20.1"
+version = "3.20.3"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a7/23/ce7a1126827cedeb958fc043d61745754464eb56c5937c35bbf2b8e26f34/filelock-3.20.1.tar.gz", hash = "sha256:b8360948b351b80f420878d8516519a2204b07aefcdcfd24912a5d33127f188c", size = 19476, upload-time = "2025-12-15T23:54:28.027Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1d/65/ce7f1b70157833bf3cb851b556a37d4547ceafc158aa9b34b36782f23696/filelock-3.20.3.tar.gz", hash = "sha256:18c57ee915c7ec61cff0ecf7f0f869936c7c30191bb0cf406f1341778d0834e1", size = 19485, upload-time = "2026-01-09T17:55:05.421Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e3/7f/a1a97644e39e7316d850784c642093c99df1290a460df4ede27659056834/filelock-3.20.1-py3-none-any.whl", hash = "sha256:15d9e9a67306188a44baa72f569d2bfd803076269365fdea0934385da4dc361a", size = 16666, upload-time = "2025-12-15T23:54:26.874Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/36/7fb70f04bf00bc646cd5bb45aa9eddb15e19437a28b8fb2b4a5249fac770/filelock-3.20.3-py3-none-any.whl", hash = "sha256:4b0dda527ee31078689fc205ec4f1c1bf7d56cf88b6dc9426c4f230e46c2dce1", size = 16701, upload-time = "2026-01-09T17:55:04.334Z" },
 ]
 
 [[package]]
@@ -3325,9 +3334,10 @@ wheels = [
 
 [[package]]
 name = "uipath"
-version = "2.4.0"
+version = "2.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
+    { name = "applicationinsights" },
     { name = "click" },
     { name = "coverage" },
     { name = "httpx" },
@@ -3345,9 +3355,9 @@ dependencies = [
     { name = "uipath-core" },
     { name = "uipath-runtime" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/99/d1/939761d99f8f4a85bf25e5bcd2649ff6e52d1703f7911ef135633fbeaa16/uipath-2.4.0.tar.gz", hash = "sha256:1eacb14c53a7dad2505baf05e73482667681d53253691ddafa20d316898a20b3", size = 3410258, upload-time = "2026-01-03T06:17:23.776Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/4c/62/de6137c448a4436876e0e57c3cbd08718a7b45c998bdb9e81865ce0c082c/uipath-2.5.tar.gz", hash = "sha256:6ef338d27763e03098d65318fbf126f8a0010f5aa07136ee0486a8283e951ad1", size = 3883309, upload-time = "2026-01-15T07:02:16.8Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f3/da/f722c3320262e9a13fda0d381608e36683bc09c19a07490be3697d28f4c8/uipath-2.4.0-py3-none-any.whl", hash = "sha256:deef0dca5fde9f6a48651f27c672e34f6c7cc1c41ffbd281a4a16134ffb813dc", size = 402801, upload-time = "2026-01-03T06:17:21.822Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/63/8254f1941351b3ee9386d0b073fb3c033e7de9c67ba588a47d5511506e17/uipath-2.5-py3-none-any.whl", hash = "sha256:19f6b5d7408e32e0a9df869dc041a158919758288fdd26bbfe337b9dea12373c", size = 437244, upload-time = "2026-01-15T07:02:14.911Z" },
 ]
 
 [[package]]
@@ -3366,7 +3376,7 @@ wheels = [
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.3.0"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
@@ -3392,6 +3402,7 @@ vertex = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "filelock" },
     { name = "mypy" },
     { name = "numpy" },
     { name = "pre-commit" },
@@ -3400,6 +3411,7 @@ dev = [
     { name = "pytest-cov" },
     { name = "pytest-mock" },
     { name = "ruff" },
+    { name = "virtualenv" },
 ]
 
 [package.metadata]
@@ -3415,33 +3427,35 @@ requires-dist = [
     { name = "llama-index-llms-bedrock-converse", marker = "extra == 'bedrock'", specifier = ">=0.3.0" },
     { name = "llama-index-llms-google-genai", marker = "extra == 'vertex'", specifier = ">=0.8.0" },
     { name = "openinference-instrumentation-llama-index", specifier = ">=4.3.9" },
-    { name = "uipath", specifier = ">=2.4.0,<2.5.0" },
-    { name = "uipath-runtime", specifier = ">=0.4.0,<0.5.0" },
+    { name = "uipath", specifier = ">=2.5.0,<2.6.0" },
+    { name = "uipath-runtime", specifier = ">=0.5.0,<0.6.0" },
 ]
 provides-extras = ["bedrock", "vertex"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "filelock", specifier = ">=3.20.3" },
     { name = "mypy", specifier = ">=1.14.1" },
     { name = "numpy", specifier = ">=1.24.0" },
-    { name = "pre-commit", specifier = ">=4.1.0" },
+    { name = "pre-commit", specifier = ">=4.5.1" },
     { name = "pytest", specifier = ">=7.4.0" },
     { name = "pytest-asyncio", specifier = ">=1.0.0" },
     { name = "pytest-cov", specifier = ">=4.1.0" },
     { name = "pytest-mock", specifier = ">=3.11.1" },
     { name = "ruff", specifier = ">=0.9.4" },
+    { name = "virtualenv", specifier = ">=20.36.1" },
 ]
 
 [[package]]
 name = "uipath-runtime"
-version = "0.4.0"
+version = "0.5.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "uipath-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/78/6f/683b258720c18f8ec0e68ec712a05f42ede6ecf63e75710aa555b8d52092/uipath_runtime-0.4.0.tar.gz", hash = "sha256:129933b08c6f589d13c2c0e7045ddf61ca144029340c1482134d127dd15563e3", size = 99934, upload-time = "2026-01-03T05:44:33.712Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/dd/e3/ee386d7de03efe8708a561e52b9a417bfdef61fc87b79fae8b72d6e1e2e6/uipath_runtime-0.5.0.tar.gz", hash = "sha256:e2340a74195b9f665e64e2cb8ca8fd3bfff5e6d062d92000270604758c12145a", size = 103202, upload-time = "2026-01-15T05:01:26.04Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/45/46/402708653a197c7f0b1d9de66b235f8a5798f814c775bab575cd2d7e2539/uipath_runtime-0.4.0-py3-none-any.whl", hash = "sha256:f49a23ed24f7cfaa736f99a5763bcf314234c67b727c40ec891a0a3d10140027", size = 38359, upload-time = "2026-01-03T05:44:31.817Z" },
+    { url = "https://files.pythonhosted.org/packages/21/3e/57464bb5ef65145cd898592fab4b5219256e6a2f96c5056b221bf6fe9cbc/uipath_runtime-0.5.0-py3-none-any.whl", hash = "sha256:3de704e691efab9338658c897e9a50eafa498fab15d622ef4de28df586989fdb", size = 40185, upload-time = "2026-01-15T05:01:24.661Z" },
 ]
 
 [[package]]
@@ -3455,16 +3469,16 @@ wheels = [
 
 [[package]]
 name = "virtualenv"
-version = "20.35.4"
+version = "20.36.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "distlib" },
     { name = "filelock" },
     { name = "platformdirs" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/20/28/e6f1a6f655d620846bd9df527390ecc26b3805a0c5989048c210e22c5ca9/virtualenv-20.35.4.tar.gz", hash = "sha256:643d3914d73d3eeb0c552cbb12d7e82adf0e504dbf86a3182f8771a153a1971c", size = 6028799, upload-time = "2025-10-29T06:57:40.511Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/aa/a3/4d310fa5f00863544e1d0f4de93bddec248499ccf97d4791bc3122c9d4f3/virtualenv-20.36.1.tar.gz", hash = "sha256:8befb5c81842c641f8ee658481e42641c68b5eab3521d8e092d18320902466ba", size = 6032239, upload-time = "2026-01-09T18:21:01.296Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/79/0c/c05523fa3181fdf0c9c52a6ba91a23fbf3246cc095f26f6516f9c60e6771/virtualenv-20.35.4-py3-none-any.whl", hash = "sha256:c21c9cede36c9753eeade68ba7d523529f228a403463376cf821eaae2b650f1b", size = 6005095, upload-time = "2025-10-29T06:57:37.598Z" },
+    { url = "https://files.pythonhosted.org/packages/6a/2a/dc2228b2888f51192c7dc766106cd475f1b768c10caaf9727659726f7391/virtualenv-20.36.1-py3-none-any.whl", hash = "sha256:575a8d6b124ef88f6f51d56d656132389f961062a9177016a50e4f507bbcc19f", size = 6008258, upload-time = "2026-01-09T18:20:59.425Z" },
 ]
 
 [[package]]
