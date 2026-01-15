@@ -1,7 +1,7 @@
 # LLMs and Embeddings
 
 UiPath provides pre-configured LLM and embedding classes that handle authentication, routing, and configuration automatically, allowing you to focus on building your agents.
-You do not need to add tokens from OpenAI, usage of these models will consume `Agent Units` on your account.
+You do not need to add API keys from OpenAI, AWS, or Google, usage of these models will consume `Agent Units` on your account.
 
 ## UiPathOpenAI
 
@@ -97,10 +97,100 @@ embeddings = embed_model.get_text_embedding_batch(texts)
 print(f"Number of embeddings: {len(embeddings)}")
 ```
 
+## UiPathChatBedrock and UiPathChatBedrockConverse
+
+`UiPathChatBedrock` and `UiPathChatBedrockConverse` provide access to AWS Bedrock models through UiPath using the Invoke API and Converse API respectively.
+
+### Installation
+
+These classes require additional dependencies. Install them with:
+
+```bash
+pip install uipath-llamaindex[bedrock]
+# or using uv:
+uv add 'uipath-llamaindex[bedrock]'
+```
+
+### Example Usage
+
+```python
+from uipath_llamaindex.llms.bedrock import UiPathChatBedrockConverse
+from uipath_llamaindex.llms import BedrockModel
+from llama_index.core.llms import ChatMessage
+
+# Create an LLM instance with default settings
+llm = UiPathChatBedrockConverse()
+
+# Or use a specific model
+llm = UiPathChatBedrockConverse(model=BedrockModel.anthropic_claude_sonnet_4_5)
+
+# Create chat messages
+messages = [
+    ChatMessage(role="user", content="Hello"),
+]
+
+# Generate a response
+response = llm.chat(messages)
+print(response)
+```
+
+Similarly, `UiPathChatBedrock` can be used with the Invoke API:
+
+```python
+from uipath_llamaindex.llms.bedrock import UiPathChatBedrock
+from uipath_llamaindex.llms import BedrockModel
+
+llm = UiPathChatBedrock(model=BedrockModel.anthropic_claude_sonnet_4)
+```
+
+Currently, the following models can be used (this list can be updated in the future):
+
+- `anthropic.claude-3-7-sonnet-20250219-v1:0`, `anthropic.claude-sonnet-4-20250514-v1:0`, `anthropic.claude-sonnet-4-5-20250929-v1:0`, `anthropic.claude-haiku-4-5-20251001-v1:0`
+
+## UiPathVertex
+
+`UiPathVertex` provides access to Google Vertex AI (Gemini) models through UiPath.
+
+### Installation
+
+This class requires additional dependencies. Install them with:
+
+```bash
+pip install uipath-llamaindex[vertex]
+# or using uv:
+uv add 'uipath-llamaindex[vertex]'
+```
+
+### Example Usage
+
+```python
+from uipath_llamaindex.llms.vertex import UiPathVertex
+from uipath_llamaindex.llms import GeminiModel
+from llama_index.core.llms import ChatMessage
+
+# Create an LLM instance with default settings
+llm = UiPathVertex()
+
+# Or use a specific model
+llm = UiPathVertex(model=GeminiModel.gemini_2_5_pro)
+
+# Create chat messages
+messages = [
+    ChatMessage(role="user", content="Hello"),
+]
+
+# Generate a response
+response = llm.chat(messages)
+print(response)
+```
+
+Currently, the following models can be used (this list can be updated in the future):
+
+- `gemini-2.0-flash-001`, `gemini-2.5-flash`, `gemini-2.5-pro`
 
 ## Integration with LlamaIndex
 
-Both classes integrate seamlessly with LlamaIndex components:
+These classes integrate seamlessly with LlamaIndex components:
 
 ### Using with Agents
 
