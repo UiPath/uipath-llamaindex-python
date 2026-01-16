@@ -13,10 +13,12 @@ from uipath.runtime.errors import UiPathErrorCategory
 
 from uipath_openai_agents.runtime.agent import OpenAiAgentLoader
 from uipath_openai_agents.runtime.config import OpenAiAgentsConfig
-from uipath_openai_agents.runtime.runtime import (
-    UiPathOpenAIAgentRuntime,
-    UiPathOpenAIAgentRuntimeError,
+from uipath_openai_agents.runtime.errors import (
+    UiPathOpenAIAgentsErrorCode,
+    UiPathOpenAIAgentsRuntimeError,
 )
+from uipath_openai_agents.runtime.runtime import UiPathOpenAIAgentRuntime
+from uipath_openai_agents.runtime.storage import SqliteAgentStorage
 
 
 class UiPathOpenAIAgentRuntimeFactory:
@@ -89,8 +91,8 @@ class UiPathOpenAIAgentRuntimeFactory:
         """
         config = self._load_config()
         if not config.exists:
-            raise UiPathOpenAIAgentRuntimeError(
-                "CONFIG_MISSING",
+            raise UiPathOpenAIAgentsRuntimeError(
+                UiPathOpenAIAgentsErrorCode.CONFIG_MISSING,
                 "Invalid configuration",
                 "Failed to load openai_agents.json configuration",
                 UiPathErrorCategory.DEPLOYMENT,
@@ -98,8 +100,8 @@ class UiPathOpenAIAgentRuntimeFactory:
 
         if entrypoint not in config.agents:
             available = ", ".join(config.entrypoint)
-            raise UiPathOpenAIAgentRuntimeError(
-                "AGENT_NOT_FOUND",
+            raise UiPathOpenAIAgentsRuntimeError(
+                UiPathOpenAIAgentsErrorCode.AGENT_NOT_FOUND,
                 "Agent not found",
                 f"Agent '{entrypoint}' not found. Available: {available}",
                 UiPathErrorCategory.DEPLOYMENT,
@@ -112,31 +114,33 @@ class UiPathOpenAIAgentRuntimeFactory:
 
         try:
             return await agent_loader.load()
-
+        except UiPathOpenAIAgentsRuntimeError:
+            # Re-raise our own errors as-is
+            raise
         except ImportError as e:
-            raise UiPathOpenAIAgentRuntimeError(
-                "AGENT_IMPORT_ERROR",
+            raise UiPathOpenAIAgentsRuntimeError(
+                UiPathOpenAIAgentsErrorCode.AGENT_IMPORT_ERROR,
                 "Agent import failed",
                 f"Failed to import agent '{entrypoint}': {str(e)}",
                 UiPathErrorCategory.USER,
             ) from e
         except TypeError as e:
-            raise UiPathOpenAIAgentRuntimeError(
-                "AGENT_TYPE_ERROR",
+            raise UiPathOpenAIAgentsRuntimeError(
+                UiPathOpenAIAgentsErrorCode.AGENT_TYPE_ERROR,
                 "Invalid agent type",
                 f"Agent '{entrypoint}' is not a valid OpenAI Agent: {str(e)}",
                 UiPathErrorCategory.USER,
             ) from e
         except ValueError as e:
-            raise UiPathOpenAIAgentRuntimeError(
-                "AGENT_VALUE_ERROR",
+            raise UiPathOpenAIAgentsRuntimeError(
+                UiPathOpenAIAgentsErrorCode.AGENT_VALUE_ERROR,
                 "Invalid agent value",
                 f"Invalid value in agent '{entrypoint}': {str(e)}",
                 UiPathErrorCategory.USER,
             ) from e
         except Exception as e:
-            raise UiPathOpenAIAgentRuntimeError(
-                "AGENT_LOAD_ERROR",
+            raise UiPathOpenAIAgentsRuntimeError(
+                UiPathOpenAIAgentsErrorCode.AGENT_LOAD_ERROR,
                 "Failed to load agent",
                 f"Unexpected error loading agent '{entrypoint}': {str(e)}",
                 UiPathErrorCategory.USER,
@@ -219,12 +223,25 @@ class UiPathOpenAIAgentRuntimeFactory:
         """
         storage_path = self._get_storage_path(runtime_id)
 
+        # Create storage instance if storage path is available
+        storage: SqliteAgentStorage | None = None
+        if storage_path:
+            storage = SqliteAgentStorage(storage_path)
+            await storage.setup()
+
+        # Get the loaded object from the agent loader for schema inference
+        loaded_object = None
+        if entrypoint in self._agent_loaders:
+            loaded_object = self._agent_loaders[entrypoint].get_loaded_object()
+
         return UiPathOpenAIAgentRuntime(
             agent=agent,
             runtime_id=runtime_id,
             entrypoint=entrypoint,
             storage_path=storage_path,
             debug_mode=self.context.command == "debug",
+            loaded_object=loaded_object,
+            storage=storage,
         )
 
     async def new_runtime(

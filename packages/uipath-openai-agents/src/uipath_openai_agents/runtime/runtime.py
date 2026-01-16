@@ -22,24 +22,10 @@ from uipath.runtime.events import (
 )
 from uipath.runtime.schema import UiPathRuntimeSchema
 
+from ._serialize import serialize_output
+from .errors import UiPathOpenAIAgentsErrorCode, UiPathOpenAIAgentsRuntimeError
 from .schema import get_agent_schema, get_entrypoints_schema
-
-
-class UiPathOpenAIAgentRuntimeError(Exception):
-    """Custom exception for OpenAI Agent runtime errors."""
-
-    def __init__(
-        self,
-        code: str,
-        message: str,
-        detail: str | None = None,
-        category: UiPathErrorCategory = UiPathErrorCategory.USER,
-    ):
-        self.code = code
-        self.message = message
-        self.detail = detail
-        self.category = category
-        super().__init__(f"{code}: {message}")
+from .storage import SqliteAgentStorage
 
 
 class UiPathOpenAIAgentRuntime:
@@ -54,6 +40,8 @@ class UiPathOpenAIAgentRuntime:
         entrypoint: str | None = None,
         storage_path: str | None = None,
         debug_mode: bool = False,
+        loaded_object: Any | None = None,
+        storage: SqliteAgentStorage | None = None,
     ):
         """
         Initialize the runtime.
@@ -64,12 +52,16 @@ class UiPathOpenAIAgentRuntime:
             entrypoint: Optional entrypoint name (for schema generation)
             storage_path: Path to SQLite database for session persistence
             debug_mode: Enable debug mode (not yet implemented)
+            loaded_object: Original loaded object (for schema inference)
+            storage: Optional storage instance for state persistence
         """
         self.agent: Agent = agent
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
         self.storage_path: str | None = storage_path
         self.debug_mode: bool = debug_mode
+        self.loaded_object: Any | None = loaded_object
+        self.storage: SqliteAgentStorage | None = storage
         self._session: SQLiteSession | None = None
 
     async def execute(
@@ -229,19 +221,14 @@ class UiPathOpenAIAgentRuntime:
         Returns:
             Dictionary representation of the message
         """
-        if isinstance(message, dict):
-            return message
+        serialized = serialize_output(message)
 
-        # Try to convert message to dict
-        if hasattr(message, "model_dump"):
-            return message.model_dump()
-        if hasattr(message, "dict"):
-            return message.dict()
-        if hasattr(message, "__dict__"):
-            return message.__dict__
+        # Ensure the result is a dictionary
+        if isinstance(serialized, dict):
+            return serialized
 
-        # Fallback to string representation
-        return {"content": str(message)}
+        # Fallback to wrapping in a content field
+        return {"content": serialized}
 
     def _create_success_result(self, output: Any) -> UiPathRuntimeResult:
         """
@@ -275,36 +262,9 @@ class UiPathOpenAIAgentRuntime:
         Returns:
             JSON-compatible representation
         """
-        if output is None:
-            return None
+        return serialize_output(output)
 
-        # Handle Pydantic models
-        if hasattr(output, "model_dump"):
-            return output.model_dump()
-        if hasattr(output, "dict"):
-            return output.dict()
-
-        # Handle common types
-        if isinstance(output, (str, int, float, bool, list, dict)):
-            return output
-
-        # Handle dataclasses
-        if hasattr(output, "__dataclass_fields__"):
-            from dataclasses import asdict
-
-            return asdict(output)
-
-        # Try JSON serialization
-        try:
-            json.dumps(output)
-            return output
-        except (TypeError, ValueError):
-            pass
-
-        # Fallback to string representation
-        return str(output)
-
-    def _create_runtime_error(self, e: Exception) -> UiPathOpenAIAgentRuntimeError:
+    def _create_runtime_error(self, e: Exception) -> UiPathOpenAIAgentsRuntimeError:
         """
         Handle execution errors and create appropriate runtime error.
 
@@ -312,15 +272,15 @@ class UiPathOpenAIAgentRuntime:
             e: The exception that occurred
 
         Returns:
-            UiPathOpenAIAgentRuntimeError with appropriate error code
+            UiPathOpenAIAgentsRuntimeError with appropriate error code
         """
-        if isinstance(e, UiPathOpenAIAgentRuntimeError):
+        if isinstance(e, UiPathOpenAIAgentsRuntimeError):
             return e
 
         detail = f"Error: {str(e)}"
 
         if isinstance(e, json.JSONDecodeError):
-            return UiPathOpenAIAgentRuntimeError(
+            return UiPathOpenAIAgentsRuntimeError(
                 UiPathErrorCode.INPUT_INVALID_JSON,
                 "Invalid JSON input",
                 detail,
@@ -328,15 +288,15 @@ class UiPathOpenAIAgentRuntime:
             )
 
         if isinstance(e, TimeoutError):
-            return UiPathOpenAIAgentRuntimeError(
-                UiPathErrorCode.EXECUTION_ERROR,
+            return UiPathOpenAIAgentsRuntimeError(
+                UiPathOpenAIAgentsErrorCode.TIMEOUT_ERROR,
                 "Agent execution timed out",
                 detail,
                 UiPathErrorCategory.USER,
             )
 
-        return UiPathOpenAIAgentRuntimeError(
-            UiPathErrorCode.EXECUTION_ERROR,
+        return UiPathOpenAIAgentsRuntimeError(
+            UiPathOpenAIAgentsErrorCode.AGENT_EXECUTION_FAILURE,
             "Agent execution failed",
             detail,
             UiPathErrorCategory.USER,
@@ -349,7 +309,7 @@ class UiPathOpenAIAgentRuntime:
         Returns:
             UiPathRuntimeSchema with input/output schemas and graph structure
         """
-        entrypoints_schema = get_entrypoints_schema(self.agent)
+        entrypoints_schema = get_entrypoints_schema(self.agent, self.loaded_object)
 
         return UiPathRuntimeSchema(
             filePath=self.entrypoint,
@@ -362,4 +322,12 @@ class UiPathOpenAIAgentRuntime:
 
     async def dispose(self) -> None:
         """Cleanup runtime resources."""
+        # Clean up storage first (before event loop closes)
+        if self.storage:
+            try:
+                await self.storage.dispose()
+            except Exception:
+                pass  # Best effort cleanup
+
         self._session = None
+        self.storage = None

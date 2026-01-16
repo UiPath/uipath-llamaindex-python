@@ -6,6 +6,12 @@ from pathlib import Path
 from typing import Any, Self
 
 from agents import Agent
+from uipath.runtime.errors import UiPathErrorCategory
+
+from .errors import (
+    UiPathOpenAIAgentsErrorCode,
+    UiPathOpenAIAgentsRuntimeError,
+)
 
 
 class OpenAiAgentLoader:
@@ -22,6 +28,9 @@ class OpenAiAgentLoader:
         self.file_path = file_path
         self.variable_name = variable_name
         self._context_manager: Any = None
+        self._loaded_object: Any = (
+            None  # Store original loaded object for type inference
+        )
 
     @classmethod
     def from_path_string(cls, name: str, file_path: str) -> Self:
@@ -36,8 +45,11 @@ class OpenAiAgentLoader:
             An instance of OpenAiAgentLoader.
         """
         if ":" not in file_path:
-            raise ValueError(
-                f"Invalid path format '{file_path}'. Expected format 'file_path:variable_name'."
+            raise UiPathOpenAIAgentsRuntimeError(
+                code=UiPathOpenAIAgentsErrorCode.CONFIG_INVALID,
+                title="Invalid agent path format",
+                detail=f"Invalid path format '{file_path}'. Expected format 'file_path:variable_name'.",
+                category=UiPathErrorCategory.USER,
             )
         file, variable = file_path.split(":", 1)
         return cls(name=name, file_path=file, variable_name=variable)
@@ -60,12 +72,20 @@ class OpenAiAgentLoader:
         abs_file_path = os.path.abspath(os.path.normpath(self.file_path))
 
         if not abs_file_path.startswith(cwd):
-            raise ValueError(
-                f"Agent file path '{self.file_path}' must be within the current working directory."
+            raise UiPathOpenAIAgentsRuntimeError(
+                code=UiPathOpenAIAgentsErrorCode.AGENT_VALUE_ERROR,
+                title="Invalid agent file path",
+                detail=f"Agent file path '{self.file_path}' must be within the current working directory.",
+                category=UiPathErrorCategory.USER,
             )
 
         if not os.path.exists(abs_file_path):
-            raise FileNotFoundError(f"Agent file '{self.file_path}' does not exist.")
+            raise UiPathOpenAIAgentsRuntimeError(
+                code=UiPathOpenAIAgentsErrorCode.AGENT_NOT_FOUND,
+                title="Agent file not found",
+                detail=f"Agent file '{self.file_path}' does not exist.",
+                category=UiPathErrorCategory.USER,
+            )
         # Ensure the current directory and src/ is in sys.path
         self._setup_python_path(cwd)
 
@@ -75,13 +95,24 @@ class OpenAiAgentLoader:
         # Get the agent instance from the module
         agent_object = getattr(module, self.variable_name, None)
         if agent_object is None:
-            raise AttributeError(
-                f"'{self.variable_name}' not found in module '{self.file_path}'."
+            raise UiPathOpenAIAgentsRuntimeError(
+                code=UiPathOpenAIAgentsErrorCode.AGENT_NOT_FOUND,
+                title="Agent variable not found",
+                detail=f"'{self.variable_name}' not found in module '{self.file_path}'.",
+                category=UiPathErrorCategory.USER,
             )
+
+        # Store the original loaded object for type inference
+        self._loaded_object = agent_object
 
         agent = await self._resolve_agent(agent_object)
         if not isinstance(agent, Agent):
-            raise TypeError(f"Expected Agent, got '{type(agent).__name__}'.")
+            raise UiPathOpenAIAgentsRuntimeError(
+                code=UiPathOpenAIAgentsErrorCode.AGENT_TYPE_ERROR,
+                title="Invalid agent type",
+                detail=f"Expected Agent, got '{type(agent).__name__}'.",
+                category=UiPathErrorCategory.USER,
+            )
 
         return agent
 
@@ -101,13 +132,25 @@ class OpenAiAgentLoader:
         spec = importlib.util.spec_from_file_location(module_name, abs_file_path)
 
         if not spec or not spec.loader:
-            raise ImportError(f"Could not load module from: {abs_file_path}")
+            raise UiPathOpenAIAgentsRuntimeError(
+                code=UiPathOpenAIAgentsErrorCode.AGENT_IMPORT_ERROR,
+                title="Failed to load agent module",
+                detail=f"Could not load module from: {abs_file_path}",
+                category=UiPathErrorCategory.USER,
+            )
 
-        module = importlib.util.module_from_spec(spec)
-        sys.modules[module_name] = module
-        spec.loader.exec_module(module)
-
-        return module
+        try:
+            module = importlib.util.module_from_spec(spec)
+            sys.modules[module_name] = module
+            spec.loader.exec_module(module)
+            return module
+        except Exception as e:
+            raise UiPathOpenAIAgentsRuntimeError(
+                code=UiPathOpenAIAgentsErrorCode.AGENT_LOAD_ERROR,
+                title="Failed to execute agent module",
+                detail=f"Error loading module from {abs_file_path}: {str(e)}",
+                category=UiPathErrorCategory.USER,
+            ) from e
 
     async def _resolve_agent(self, agent_object: Any) -> Agent:
         """
@@ -135,6 +178,17 @@ class OpenAiAgentLoader:
             return await agent_instance.__aenter__()
 
         return agent_instance
+
+    def get_loaded_object(self) -> Any:
+        """
+        Get the original loaded object before agent resolution.
+
+        This is useful for extracting type annotations from wrapper functions.
+
+        Returns:
+            The original loaded object (could be an Agent, function, or callable)
+        """
+        return self._loaded_object
 
     async def cleanup(self) -> None:
         """Clean up resources (e.g., exit async context managers)."""
