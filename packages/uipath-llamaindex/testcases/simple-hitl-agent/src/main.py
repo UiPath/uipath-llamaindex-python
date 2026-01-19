@@ -7,7 +7,7 @@ from llama_index.core.workflow import (
 
 from uipath_llamaindex.llms import UiPathOpenAI
 
-llm = UiPathOpenAI(model="gpt-4o-mini-2024-07-18")
+llm = UiPathOpenAI()
 
 
 async def may_research_company(ctx: Context, company_name: str) -> bool:
