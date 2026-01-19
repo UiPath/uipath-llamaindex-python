@@ -23,7 +23,7 @@ class CritiqueEvent(StopEvent):
 
 
 class JokeFlow(Workflow):
-    llm = UiPathOpenAI(model="gpt-4o-mini-2024-07-18")
+    llm = UiPathOpenAI()
 
     @step
     async def generate_joke(self, ev: TopicEvent) -> JokeEvent:

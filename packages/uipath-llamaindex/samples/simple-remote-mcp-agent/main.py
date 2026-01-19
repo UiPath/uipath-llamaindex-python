@@ -64,7 +64,7 @@ class MCPAgentWorkflow(Workflow):
                 self.agent = FunctionAgent(
                     name="UiPath MCP Agent",
                     description="An agent that can interact with MCP tools",
-                    llm=OpenAI(model="gpt-4o"),
+                    llm=OpenAI(),
                     tools=tools,
                     system_prompt="""You are a helpful assistant.
                     You have access to various tools through MCP (Model Context Protocol).

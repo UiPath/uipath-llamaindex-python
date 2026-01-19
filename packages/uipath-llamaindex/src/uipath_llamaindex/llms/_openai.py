@@ -44,7 +44,7 @@ class _UiPathAsyncURLRewriteTransport(httpx.AsyncHTTPTransport):
 class UiPathOpenAI(AzureOpenAI):
     def __init__(
         self,
-        model: str | OpenAIModel = OpenAIModel.GPT_4O_MINI_2024_07_18,
+        model: str | OpenAIModel = OpenAIModel.GPT_4_1_2025_04_14,
         api_version: str = "2024-10-21",
         **kwargs: Any,
     ):

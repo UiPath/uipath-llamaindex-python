@@ -9,7 +9,7 @@ from llama_index.llms.openai import OpenAI
 
 from uipath_llamaindex.models import InvokeProcessEvent
 
-llm = OpenAI(model="gpt-4o-mini")
+llm = OpenAI()
 
 
 async def may_research_company(ctx: Context, company_name: str) -> str:

@@ -49,10 +49,10 @@ print(response)
 from uipath_llamaindex.llms import UiPathOpenAI, OpenAIModel
 
 # Use a specific model
-llm = UiPathOpenAI(model=OpenAIModel.GPT_4O_2024_11_20)
+llm = UiPathOpenAI(model=OpenAIModel.GPT_4_1_2025_04_14)
 
 # Or use a model string directly
-llm = UiPathOpenAI(model="gpt-4o-2024-11-20")
+llm = UiPathOpenAI(model="gpt-4.1-2025-04-14")
 ```
 
 ## UiPathOpenAIEmbedding
@@ -211,7 +211,7 @@ def add(a: int, b: int) -> int:
 # Create agent with UiPath LLM
 agent = ReActAgent(
     tools=[multiply, add],
-    llm=UiPathOpenAI(model=OpenAIModel.GPT_4O_2024_11_20))
+    llm=UiPathOpenAI(model=OpenAIModel.GPT_4_1_2025_04_14))
 
 async def main():
     handler = agent.run("What is 2+(2*4)?")
@@ -241,7 +241,7 @@ index = VectorStoreIndex.from_documents(
 
 # Create query engine with UiPath LLM
 query_engine = index.as_query_engine(
-    llm=UiPathOpenAI(model=OpenAIModel.GPT_4O_2024_11_20)
+    llm=UiPathOpenAI(model=OpenAIModel.GPT_4_1_2025_04_14)
 )
 
 response = query_engine.query("What is machine learning?")

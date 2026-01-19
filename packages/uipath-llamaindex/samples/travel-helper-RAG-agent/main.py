@@ -24,7 +24,7 @@ personal_preferences_index_name = "personal_preferences"
 company_policy_files_directory = "sample_data/company_policies"
 personal_preferences_files_directory = "sample_data/personal_preferences"
 
-llm = UiPathOpenAI(model="gpt-4o-2024-11-20")
+llm = UiPathOpenAI()
 
 
 class CustomStartEvent(StartEvent):
