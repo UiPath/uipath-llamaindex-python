@@ -10,7 +10,6 @@ sys.path.insert(0, str(samples_dir))
 from main import (  # type: ignore  # noqa: E402
     TranslationInput,
     TranslationOutput,
-    main,
     orchestrator_agent,
 )
 
@@ -19,7 +18,7 @@ from uipath_openai_agents.runtime.schema import get_entrypoints_schema  # noqa: 
 
 def test_agent_as_tools_input_schema():
     """Test that input schema uses default messages format (OpenAI Agents pattern)."""
-    schema = get_entrypoints_schema(orchestrator_agent, main)
+    schema = get_entrypoints_schema(orchestrator_agent)
 
     # Verify input schema structure - should use default messages
     assert "input" in schema
@@ -42,7 +41,7 @@ def test_agent_as_tools_input_schema():
 
 def test_agent_as_tools_output_schema():
     """Test that output schema is extracted from agent's output_type."""
-    schema = get_entrypoints_schema(orchestrator_agent, main)
+    schema = get_entrypoints_schema(orchestrator_agent)
 
     # Verify output schema structure
     assert "output" in schema
@@ -73,7 +72,7 @@ def test_agent_as_tools_output_schema():
 
 def test_agent_as_tools_schema_metadata():
     """Test that schema includes model metadata from agent's output_type."""
-    schema = get_entrypoints_schema(orchestrator_agent, main)
+    schema = get_entrypoints_schema(orchestrator_agent)
 
     # Input uses default messages format (no custom title/description)
     assert "input" in schema

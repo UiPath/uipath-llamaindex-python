@@ -41,7 +41,6 @@ class UiPathOpenAIAgentRuntime:
         runtime_id: str | None = None,
         entrypoint: str | None = None,
         storage_path: str | None = None,
-        loaded_object: Any | None = None,
         storage: SqliteAgentStorage | None = None,
     ):
         """
@@ -52,14 +51,12 @@ class UiPathOpenAIAgentRuntime:
             runtime_id: Unique identifier for this runtime instance
             entrypoint: Optional entrypoint name (for schema generation)
             storage_path: Path to SQLite database for session persistence
-            loaded_object: Original loaded object (for schema inference)
             storage: Optional storage instance for state persistence
         """
         self.agent: Agent = agent
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
         self.storage_path: str | None = storage_path
-        self.loaded_object: Any | None = loaded_object
         self.storage: SqliteAgentStorage | None = storage
 
         # Configure OpenAI Agents SDK to use Responses API
@@ -477,7 +474,7 @@ class UiPathOpenAIAgentRuntime:
         Returns:
             UiPathRuntimeSchema with input/output schemas and graph structure
         """
-        entrypoints_schema = get_entrypoints_schema(self.agent, self.loaded_object)
+        entrypoints_schema = get_entrypoints_schema(self.agent)
 
         return UiPathRuntimeSchema(
             filePath=self.entrypoint,

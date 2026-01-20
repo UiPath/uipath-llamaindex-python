@@ -303,17 +303,11 @@ class UiPathOpenAIAgentRuntimeFactory:
         storage = await self._get_or_create_storage()
         storage_path = storage.storage_path if storage else None
 
-        # Get the loaded object from the agent loader for schema inference
-        loaded_object = None
-        if entrypoint in self._agent_loaders:
-            loaded_object = self._agent_loaders[entrypoint].get_loaded_object()
-
         return UiPathOpenAIAgentRuntime(
             agent=agent,
             runtime_id=runtime_id,
             entrypoint=entrypoint,
             storage_path=storage_path,
-            loaded_object=loaded_object,
             storage=storage,
         )
 

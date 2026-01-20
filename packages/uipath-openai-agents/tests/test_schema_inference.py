@@ -29,8 +29,8 @@ test_agent = Agent(
 
 
 def test_schema_inference_from_agent_output_type():
-    """Test that output schema is correctly inferred from agent's output_type (PRIMARY)."""
-    schema = get_entrypoints_schema(agent_with_output_type, None)
+    """Test that output schema is correctly inferred from agent's output_type."""
+    schema = get_entrypoints_schema(agent_with_output_type)
 
     # Check input schema - should be default messages format
     assert "input" in schema
@@ -58,7 +58,7 @@ def test_schema_inference_from_agent_output_type():
 
 def test_schema_fallback_without_types():
     """Test that schemas fall back to defaults when no types are provided."""
-    schema = get_entrypoints_schema(test_agent, None)
+    schema = get_entrypoints_schema(test_agent)
 
     # Should use default message-based input schema
     assert "input" in schema
@@ -70,8 +70,8 @@ def test_schema_fallback_without_types():
 
 
 def test_schema_with_plain_agent():
-    """Test schema extraction with a plain agent (no wrapper function)."""
-    schema = get_entrypoints_schema(test_agent, test_agent)
+    """Test schema extraction with a plain agent."""
+    schema = get_entrypoints_schema(test_agent)
 
     # Should use default message input
     assert "input" in schema
@@ -80,33 +80,3 @@ def test_schema_with_plain_agent():
     # Should use default result output
     assert "output" in schema
     assert "result" in schema["output"]["properties"]
-
-
-class WrapperOutputModel(BaseModel):
-    """Output model for wrapper function test."""
-
-    status: str
-    data: dict[str, str]
-
-
-async def typed_wrapper_function(message: str) -> WrapperOutputModel:
-    """Wrapper function with type annotations (UiPath pattern - SECONDARY)."""
-    return WrapperOutputModel(status="success", data={})
-
-
-def test_schema_with_wrapper_function():
-    """Test that wrapper function output schema is used as fallback (SECONDARY)."""
-    # Agent without output_type should fallback to wrapper function
-    schema = get_entrypoints_schema(test_agent, typed_wrapper_function)
-
-    # Input should still be default messages (not extracted from wrapper)
-    assert "input" in schema
-    assert "message" in schema["input"]["properties"]
-    assert "required" in schema["input"]
-    assert "message" in schema["input"]["required"]
-
-    # Output should come from wrapper function (secondary pattern)
-    assert "output" in schema
-    assert "properties" in schema["output"]
-    assert "status" in schema["output"]["properties"]
-    assert "data" in schema["output"]["properties"]

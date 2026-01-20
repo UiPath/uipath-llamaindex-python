@@ -28,9 +28,6 @@ class OpenAiAgentLoader:
         self.file_path = file_path
         self.variable_name = variable_name
         self._context_manager: Any = None
-        self._loaded_object: Any = (
-            None  # Store original loaded object for type inference
-        )
 
     @classmethod
     def from_path_string(cls, name: str, file_path: str) -> Self:
@@ -101,9 +98,6 @@ class OpenAiAgentLoader:
                 detail=f"'{self.variable_name}' not found in module '{self.file_path}'.",
                 category=UiPathErrorCategory.USER,
             )
-
-        # Store the original loaded object for type inference
-        self._loaded_object = agent_object
 
         agent = await self._resolve_agent(agent_object)
         if not isinstance(agent, Agent):
@@ -178,17 +172,6 @@ class OpenAiAgentLoader:
             return await agent_instance.__aenter__()
 
         return agent_instance
-
-    def get_loaded_object(self) -> Any:
-        """
-        Get the original loaded object before agent resolution.
-
-        This is useful for extracting type annotations from wrapper functions.
-
-        Returns:
-            The original loaded object (could be an Agent, function, or callable)
-        """
-        return self._loaded_object
 
     async def cleanup(self) -> None:
         """Clean up resources (e.g., exit async context managers)."""

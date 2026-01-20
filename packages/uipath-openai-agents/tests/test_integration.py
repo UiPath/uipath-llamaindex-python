@@ -12,7 +12,6 @@ sys.path.insert(0, str(samples_dir))
 from main import (  # type: ignore  # noqa: E402
     TranslationInput,
     TranslationOutput,
-    main,
     orchestrator_agent,
 )
 
@@ -52,7 +51,7 @@ def test_error_handling():
 
 def test_schema_extraction_with_new_serialization():
     """Test that schema extraction works with the serialization improvements."""
-    schema = get_entrypoints_schema(orchestrator_agent, main)
+    schema = get_entrypoints_schema(orchestrator_agent)
 
     # Verify input schema (messages format)
     assert "input" in schema
@@ -86,13 +85,11 @@ async def test_runtime_initialization_with_storage():
             entrypoint="test",
             storage_path=storage_path,
             storage=storage,
-            loaded_object=main,
         )
 
         # Verify runtime initialized correctly
         assert runtime.storage is not None
         assert runtime.runtime_id == "test_runtime"
-        assert runtime.loaded_object == main
 
         # Test schema generation
         schema = await runtime.get_schema()
