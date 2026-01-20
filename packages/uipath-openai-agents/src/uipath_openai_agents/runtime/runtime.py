@@ -61,7 +61,6 @@ class UiPathOpenAIAgentRuntime:
         self.storage_path: str | None = storage_path
         self.loaded_object: Any | None = loaded_object
         self.storage: SqliteAgentStorage | None = storage
-        self._session: SQLiteSession | None = None
 
         # Configure OpenAI Agents SDK to use Responses API
         # UiPath supports both APIs via X-UiPath-LlmGateway-ApiFlavor header
@@ -107,6 +106,9 @@ class UiPathOpenAIAgentRuntime:
 
                 # Normalize generic model names to UiPath-specific versions
                 model_name = OpenAIModels.normalize_model_name(model_name)
+
+                # Update agent's model to normalized version so SDK sends correct model in body
+                self.agent.model = model_name
 
                 # Create UiPath OpenAI client
                 uipath_client = UiPathChatOpenAI(
@@ -207,19 +209,18 @@ class UiPathOpenAIAgentRuntime:
         agent_input = self._prepare_agent_input(input)
         is_resuming = bool(options and options.resume)
 
-        # Get or create session for state persistence
+        # Create session for state persistence (local to this run)
         # SQLiteSession automatically loads existing data from the database when created
+        session: SQLiteSession | None = None
         if self.storage_path:
-            self._session = SQLiteSession(self.runtime_id, self.storage_path)
-        else:
-            self._session = None
+            session = SQLiteSession(self.runtime_id, self.storage_path)
 
         # Run the agent with streaming if events requested
         try:
             if stream_events:
                 # Use streaming for events
                 async for event_or_result in self._run_agent_streamed(
-                    agent_input, options, stream_events
+                    agent_input, options, stream_events, session
                 ):
                     yield event_or_result
             else:
@@ -227,13 +228,13 @@ class UiPathOpenAIAgentRuntime:
                 result = await Runner.run(
                     starting_agent=self.agent,
                     input=agent_input,
-                    session=self._session,
+                    session=session,
                 )
                 yield self._create_success_result(result.final_output)
 
         except Exception:
             # Clean up session on error
-            if self._session and self.storage_path and not is_resuming:
+            if session and self.storage_path and not is_resuming:
                 # Delete incomplete session
                 try:
                     import os
@@ -243,12 +244,17 @@ class UiPathOpenAIAgentRuntime:
                 except Exception:
                     pass  # Best effort cleanup
             raise
+        finally:
+            # Always close session after run completes with proper WAL checkpoint
+            if session:
+                self._close_session_with_checkpoint(session)
 
     async def _run_agent_streamed(
         self,
         agent_input: str | list[Any],
         options: UiPathExecuteOptions | UiPathStreamOptions | None,
         stream_events: bool,
+        session: SQLiteSession | None,
     ) -> AsyncGenerator[UiPathRuntimeEvent | UiPathRuntimeResult, None]:
         """
         Run agent using streaming API to enable event streaming.
@@ -266,7 +272,7 @@ class UiPathOpenAIAgentRuntime:
         result = Runner.run_streamed(
             starting_agent=self.agent,
             input=agent_input,
-            session=self._session,
+            session=session,
         )
 
         # Stream events from the agent
@@ -482,8 +488,45 @@ class UiPathOpenAIAgentRuntime:
             graph=get_agent_schema(self.agent),
         )
 
+    def _close_session_with_checkpoint(self, session: SQLiteSession) -> None:
+        """Close SQLite session with WAL checkpoint to release file locks.
+
+        OpenAI SDK uses sync sqlite3 which doesn't release file locks on Windows
+        without explicit WAL checkpoint. This is especially important for cleanup.
+
+        Args:
+            session: The SQLiteSession to close
+        """
+        try:
+            # Get the underlying connection
+            conn = session._get_connection()
+
+            # Commit any pending transactions
+            try:
+                conn.commit()
+            except Exception:
+                pass  # Best effort
+
+            # Force WAL checkpoint to release shared memory files
+            # This is especially important on Windows
+            try:
+                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+                conn.commit()
+            except Exception:
+                pass  # Best effort
+
+        except Exception:
+            pass  # Best effort cleanup
+
+        finally:
+            # Always call the session's close method
+            try:
+                session.close()
+            except Exception:
+                pass  # Best effort
+
     async def dispose(self) -> None:
         """Cleanup runtime resources."""
+        # Sessions are closed immediately after each run in _run_agent()
         # Storage is shared across runtimes and managed by the factory
-        # Do not dispose it here
         pass

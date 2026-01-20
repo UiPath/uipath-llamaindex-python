@@ -54,9 +54,14 @@ class OpenAIModels:
 
     # Model aliases - maps generic names to specific versions
     MODEL_ALIASES = {
-        "gpt-4.1": gpt_4_1_2025_04_14,
-        "gpt-4.1-mini": gpt_4_1_mini_2025_04_14,
-        "gpt-4.1-nano": gpt_4_1_nano_2025_04_14,
+        # Map gpt-4.1 variants to gpt-4o (most capable available model)
+        "gpt-4.1": gpt_4o_2024_11_20,
+        "gpt-4.1-mini": gpt_4o_mini_2024_07_18,
+        "gpt-4.1-nano": gpt_4o_mini_2024_07_18,
+        "gpt-4.1-2025-04-14": gpt_4o_2024_11_20,  # Map invalid model to valid one
+        "gpt-4.1-mini-2025-04-14": gpt_4o_mini_2024_07_18,
+        "gpt-4.1-nano-2025-04-14": gpt_4o_mini_2024_07_18,
+        # Generic model mappings
         "gpt-4o": gpt_4o_2024_11_20,
         "gpt-4o-mini": gpt_4o_mini_2024_07_18,
         "gpt-5": gpt_5_2025_08_07,

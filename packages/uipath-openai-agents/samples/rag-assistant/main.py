@@ -32,9 +32,9 @@ class Output(BaseModel):
 
 
 # Define the assistant agent
+# Model defaults to gpt-4.1 which automatically maps to gpt-4o-2024-11-20
 assistant_agent = Agent(
     name="assistant_agent",
-    model="gpt-4o-2024-11-20",  # Use specific version supported by UiPath LLM Gateway
     instructions="""You are a helpful AI assistant that provides clear, concise answers.
 
 Your capabilities:

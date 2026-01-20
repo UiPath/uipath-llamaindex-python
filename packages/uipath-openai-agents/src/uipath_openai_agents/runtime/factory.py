@@ -68,24 +68,57 @@ class UiPathOpenAIAgentRuntimeFactory:
                     await self._storage.setup()
             return self._storage
 
+    def _remove_file_with_retry(self, path: str, max_attempts: int = 5) -> None:
+        """Remove file with retry logic for Windows file locking.
+
+        OpenAI SDK uses sync sqlite3 which doesn't immediately release file locks
+        on Windows. This retry mechanism gives the OS time to release the lock.
+
+        Args:
+            path: Path to file to remove
+            max_attempts: Maximum number of retry attempts (default: 5)
+
+        Raises:
+            OSError: If file cannot be removed after all retries
+        """
+        import time
+
+        for attempt in range(max_attempts):
+            try:
+                os.remove(path)
+                return  # Success
+            except PermissionError:
+                if attempt == max_attempts - 1:
+                    # Last attempt failed, re-raise
+                    raise
+                # Exponential backoff: 0.1s, 0.2s, 0.4s, 0.8s
+                time.sleep(0.1 * (2**attempt))
+
     def _get_storage_path(self) -> str | None:
         """Get the storage path for agent state.
 
         Returns:
             Path to SQLite database for storage, or None if storage is disabled
         """
+        if self.context.state_file_path is not None:
+            return self.context.state_file_path
+
         if self.context.runtime_dir and self.context.state_file:
             path = os.path.join(self.context.runtime_dir, self.context.state_file)
-
-            if not self.context.resume and self.context.job_id is None:
+            if (
+                not self.context.resume
+                and self.context.job_id is None
+                and not self.context.keep_state_file
+            ):
                 # If not resuming and no job id, delete the previous state file
                 if os.path.exists(path):
-                    os.remove(path)
-
+                    self._remove_file_with_retry(path)
             os.makedirs(self.context.runtime_dir, exist_ok=True)
             return path
 
-        return None
+        default_path = os.path.join("__uipath", "state.db")
+        os.makedirs(os.path.dirname(default_path), exist_ok=True)
+        return default_path
 
     def _get_storage_path_legacy(self, runtime_id: str) -> str | None:
         """
@@ -106,7 +139,7 @@ class UiPathOpenAIAgentRuntimeFactory:
             if not self.context.resume and self.context.job_id is None:
                 # If not resuming and no job id, delete the previous state file
                 if os.path.exists(path):
-                    os.remove(path)
+                    self._remove_file_with_retry(path)
 
             os.makedirs(self.context.runtime_dir, exist_ok=True)
             return path

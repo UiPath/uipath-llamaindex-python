@@ -46,28 +46,24 @@ def _rewrite_openai_url(
 class UiPathURLRewriteTransport(httpx.AsyncHTTPTransport):
     """Custom async transport that rewrites URLs to UiPath endpoints."""
 
-    def __init__(self, verify: bool = True, **kwargs):
-        super().__init__(verify=verify, **kwargs)
-
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handle async request with URL rewriting."""
         new_url = _rewrite_openai_url(str(request.url), request.url.params)
         if new_url:
             request.url = new_url
+
         return await super().handle_async_request(request)
 
 
 class UiPathSyncURLRewriteTransport(httpx.HTTPTransport):
     """Custom sync transport that rewrites URLs to UiPath endpoints."""
 
-    def __init__(self, verify: bool = True, **kwargs):
-        super().__init__(verify=verify, **kwargs)
-
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         """Handle sync request with URL rewriting."""
         new_url = _rewrite_openai_url(str(request.url), request.url.params)
         if new_url:
             request.url = new_url
+
         return super().handle_request(request)
 
 

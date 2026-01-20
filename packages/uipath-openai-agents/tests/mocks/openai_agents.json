@@ -1,0 +1,6 @@
+{
+  "agents": {
+    "basic": "main.py:agent",
+    "translation": "translation.py:agent"
+  }
+}

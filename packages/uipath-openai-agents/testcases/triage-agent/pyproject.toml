@@ -1,0 +1,12 @@
+[project]
+name = "triage-agent-testcase"
+version = "0.1.0"
+description = "Integration test for OpenAI Agents triage agent"
+authors = [{ name = "UiPath", email = "test@uipath.com" }]
+requires-python = ">=3.11"
+dependencies = [
+    "uipath-openai-agents",
+]
+
+[tool.uv.sources]
+uipath-openai-agents = { path = "../..", editable = true }

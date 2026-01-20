@@ -57,17 +57,7 @@ class AsyncSqlite:
     async def close(self) -> None:
         """Close database connection."""
         if self.conn:
-            try:
-                # Commit any pending transactions before closing
-                await self.conn.commit()
-            except Exception:
-                pass  # Best effort
-
-            try:
-                await self.conn.close()
-            except Exception:
-                pass  # Best effort cleanup
-
+            await self.conn.close()
             self.conn = None
             self.is_setup = False
 
