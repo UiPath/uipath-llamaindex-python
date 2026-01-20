@@ -8,6 +8,7 @@ dependencies = [
     "aiosqlite>=0.20.0",
     "openai>=1.0.0",
     "openai-agents>=0.6.5",
+    "openinference-instrumentation-openai-agents>=1.4.0",
     "uipath>=2.4.0, <2.5.0",
     "uipath-runtime>=0.4.0, <0.5.0",
 ]

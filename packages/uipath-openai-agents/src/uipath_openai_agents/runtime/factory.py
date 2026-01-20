@@ -5,13 +5,15 @@ import os
 from typing import Any
 
 from agents import Agent
+from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
+from uipath.core.tracing import UiPathSpanUtils
 from uipath.runtime import (
     UiPathRuntimeContext,
     UiPathRuntimeProtocol,
 )
 from uipath.runtime.errors import UiPathErrorCategory
 
-from uipath_openai_agents.runtime._telemetry import create_telemetry_hooks
+from uipath_openai_agents.runtime._telemetry import get_current_span_wrapper
 from uipath_openai_agents.runtime.agent import OpenAiAgentLoader
 from uipath_openai_agents.runtime.config import OpenAiAgentsConfig
 from uipath_openai_agents.runtime.errors import (
@@ -42,7 +44,50 @@ class UiPathOpenAIAgentRuntimeFactory:
         self._agent_loaders: dict[str, OpenAiAgentLoader] = {}
         self._agent_lock = asyncio.Lock()
 
-    def _get_storage_path(self, runtime_id: str) -> str | None:
+        self._storage: SqliteAgentStorage | None = None
+        self._storage_lock = asyncio.Lock()
+
+        self._setup_instrumentation()
+
+    def _setup_instrumentation(self) -> None:
+        """Setup tracing and instrumentation."""
+        OpenAIAgentsInstrumentor().instrument()
+        UiPathSpanUtils.register_current_span_provider(get_current_span_wrapper)
+
+    async def _get_or_create_storage(self) -> SqliteAgentStorage | None:
+        """Get or create the shared storage instance.
+
+        Returns:
+            Shared storage instance, or None if storage is disabled
+        """
+        async with self._storage_lock:
+            if self._storage is None:
+                storage_path = self._get_storage_path()
+                if storage_path:
+                    self._storage = SqliteAgentStorage(storage_path)
+                    await self._storage.setup()
+            return self._storage
+
+    def _get_storage_path(self) -> str | None:
+        """Get the storage path for agent state.
+
+        Returns:
+            Path to SQLite database for storage, or None if storage is disabled
+        """
+        if self.context.runtime_dir and self.context.state_file:
+            path = os.path.join(self.context.runtime_dir, self.context.state_file)
+
+            if not self.context.resume and self.context.job_id is None:
+                # If not resuming and no job id, delete the previous state file
+                if os.path.exists(path):
+                    os.remove(path)
+
+            os.makedirs(self.context.runtime_dir, exist_ok=True)
+            return path
+
+        return None
+
+    def _get_storage_path_legacy(self, runtime_id: str) -> str | None:
         """
         Get the storage path for agent session state.
 
@@ -166,13 +211,6 @@ class UiPathOpenAIAgentRuntimeFactory:
                 return self._agent_cache[entrypoint]
 
             loaded_agent = await self._load_agent(entrypoint)
-
-            # Attach telemetry hooks if not already present
-            if loaded_agent.hooks is None:
-                telemetry_hooks = create_telemetry_hooks(enabled=True)
-                if telemetry_hooks:
-                    loaded_agent = loaded_agent.clone(hooks=telemetry_hooks)
-
             self._agent_cache[entrypoint] = loaded_agent
 
             return loaded_agent
@@ -228,13 +266,9 @@ class UiPathOpenAIAgentRuntimeFactory:
         Returns:
             Configured runtime instance
         """
-        storage_path = self._get_storage_path(runtime_id)
-
-        # Create storage instance if storage path is available
-        storage: SqliteAgentStorage | None = None
-        if storage_path:
-            storage = SqliteAgentStorage(storage_path)
-            await storage.setup()
+        # Get shared storage instance
+        storage = await self._get_or_create_storage()
+        storage_path = storage.storage_path if storage else None
 
         # Get the loaded object from the agent loader for schema inference
         loaded_object = None
@@ -280,3 +314,8 @@ class UiPathOpenAIAgentRuntimeFactory:
 
         self._agent_loaders.clear()
         self._agent_cache.clear()
+
+        # Dispose shared storage
+        if self._storage:
+            await self._storage.dispose()
+            self._storage = None

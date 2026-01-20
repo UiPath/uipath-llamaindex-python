@@ -120,7 +120,7 @@ resume_event = asyncio.Event()
 
 # Configure options
 options = UiPathExecuteOptions(
-    breakpoints=["tool"],
+    breakpoints=["calculate_sum"],  # Specific tool name
     resume_event=resume_event,
 )
 
@@ -194,7 +194,7 @@ async def debug_session():
 
     # Configure breakpoints
     options = UiPathExecuteOptions(
-        breakpoints=["tool", "handoff"],
+        breakpoints=["calculate_sum", "get_weather"],  # Specific tool names
         resume_event=resume_event,
     )
 

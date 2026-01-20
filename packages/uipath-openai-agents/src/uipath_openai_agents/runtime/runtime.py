@@ -255,7 +255,7 @@ class UiPathOpenAIAgentRuntime:
 
     async def _run_agent_streamed(
         self,
-        agent_input: str | list,
+        agent_input: str | list[Any],
         options: UiPathExecuteOptions | UiPathStreamOptions | None,
         stream_events: bool,
     ) -> AsyncGenerator[UiPathRuntimeEvent | UiPathRuntimeResult, None]:
@@ -460,7 +460,7 @@ class UiPathOpenAIAgentRuntime:
         # Filter out raw response events (too granular)
         return None
 
-    def _prepare_agent_input(self, input: dict[str, Any] | None) -> str | list:
+    def _prepare_agent_input(self, input: dict[str, Any] | None) -> str | list[Any]:
         """
         Prepare agent input from UiPath input dictionary.
 
@@ -619,12 +619,6 @@ class UiPathOpenAIAgentRuntime:
 
     async def dispose(self) -> None:
         """Cleanup runtime resources."""
-        # Clean up storage first (before event loop closes)
-        if self.storage:
-            try:
-                await self.storage.dispose()
-            except Exception:
-                pass  # Best effort cleanup
-
-        self._session = None
-        self.storage = None
+        # Storage is shared across runtimes and managed by the factory
+        # Do not dispose it here
+        pass

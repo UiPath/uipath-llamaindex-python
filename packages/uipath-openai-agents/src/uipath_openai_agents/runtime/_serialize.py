@@ -24,8 +24,8 @@ def serialize_output(output: Any) -> Any:
     elif hasattr(output, "to_dict"):
         return serialize_output(output.to_dict())
 
-    # Handle dataclasses
-    elif dataclasses.is_dataclass(output):
+    # Handle dataclasses (but not dataclass types)
+    elif dataclasses.is_dataclass(output) and not isinstance(output, type):
         return serialize_output(dataclasses.asdict(output))
 
     # Handle dictionaries
