@@ -6,31 +6,46 @@ on:
     branches:
       - main
     paths:
-      - pyproject.toml
+      - 'packages/*/pyproject.toml'
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
-  lint:
-    uses: ./.github/workflows/lint.yml
+  detect-changed-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.detect.outputs.packages }}
+      count: ${{ steps.detect.outputs.count }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-  test:
-    uses: ./.github/workflows/test.yml
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Detect changed packages
+        id: detect
+        run: |
+          python .github/scripts/detect_changed_packages.py
 
   build:
     name: Build ${{ matrix.package }}
+    needs: detect-changed-packages
+    if: needs.detect-changed-packages.outputs.count > 0 && github.repository == 'UiPath/uipath-integrations-python'
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}
     strategy:
+      fail-fast: false
       matrix:
-        package:
-          - uipath-llamaindex
-
-    needs:
-      - lint
-      - test
-
-    if: ${{ github.repository == 'UiPath/uipath-integrations-python' }}
+        package: ${{ fromJson(needs.detect-changed-packages.outputs.packages) }}
     permissions:
       contents: read
       actions: write
@@ -53,7 +68,7 @@ jobs:
         run: uv sync --all-extras
 
       - name: Build
-        run: uv build
+        run: uv build --package ${{ matrix.package }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -63,15 +78,13 @@ jobs:
 
   pypi-publish:
     name: Upload ${{ matrix.package }} to PyPI
+    needs: [detect-changed-packages, build]
     runs-on: ubuntu-latest
     environment: pypi
     strategy:
+      fail-fast: false
       matrix:
-        package:
-          - uipath-llamaindex
-
-    needs:
-      - build
+        package: ${{ fromJson(needs.detect-changed-packages.outputs.packages) }}
     permissions:
       contents: read
       id-token: write

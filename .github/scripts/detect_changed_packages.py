@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""Detect which packages have changed in a PR or push to main."""
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+
+def get_all_packages() -> list[str]:
+    """Get all packages in the monorepo."""
+    packages_dir = Path("packages")
+    packages = []
+
+    for item in packages_dir.iterdir():
+        if item.is_dir() and (item / "pyproject.toml").exists():
+            packages.append(item.name)
+
+    return sorted(packages)
+
+
+def get_changed_packages(base_sha: str, head_sha: str) -> list[str]:
+    """Get packages that have changed between two commits."""
+    try:
+        # Get changed files
+        result = subprocess.run(
+            ["git", "diff", "--name-only", f"{base_sha}...{head_sha}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        changed_files = result.stdout.strip().split("\n")
+
+        # Extract package names from paths like "packages/uipath-llamaindex/..."
+        changed_packages = set()
+        for file_path in changed_files:
+            if file_path.startswith("packages/"):
+                parts = file_path.split("/")
+                if len(parts) >= 2:
+                    package_name = parts[1]
+                    # Verify it's a real package
+                    if (Path("packages") / package_name / "pyproject.toml").exists():
+                        changed_packages.add(package_name)
+
+        return sorted(changed_packages)
+
+    except subprocess.CalledProcessError as e:
+        print(f"Error running git diff: {e}", file=sys.stderr)
+        return []
+
+
+def get_changed_packages_auto() -> list[str]:
+    """Auto-detect changed packages using git."""
+    try:
+        # Try to detect changes against origin/main
+        result = subprocess.run(
+            ["git", "diff", "--name-only", "origin/main...HEAD"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+
+        changed_files = result.stdout.strip().split("\n")
+
+        # Extract package names
+        changed_packages = set()
+        for file_path in changed_files:
+            if file_path.startswith("packages/"):
+                parts = file_path.split("/")
+                if len(parts) >= 2:
+                    package_name = parts[1]
+                    if (Path("packages") / package_name / "pyproject.toml").exists():
+                        changed_packages.add(package_name)
+
+        return sorted(changed_packages)
+
+    except (subprocess.CalledProcessError, Exception) as e:
+        print(f"Warning: Could not auto-detect changes: {e}", file=sys.stderr)
+        return []
+
+
+def main():
+    """Main entry point."""
+    event_name = os.getenv("GITHUB_EVENT_NAME", "")
+    base_sha = os.getenv("BASE_SHA", "")
+    head_sha = os.getenv("HEAD_SHA", "")
+
+    # On push to main, test all packages
+    if event_name == "push":
+        packages = get_all_packages()
+        print(f"Push to main - testing all {len(packages)} packages:")
+        for pkg in packages:
+            print(f"  - {pkg}")
+
+    # On PR with explicit SHAs, detect changed packages
+    elif event_name == "pull_request" and base_sha and head_sha:
+        packages = get_changed_packages(base_sha, head_sha)
+        print(f"Pull request - detected {len(packages)} changed package(s):")
+        for pkg in packages:
+            print(f"  - {pkg}")
+
+    # workflow_call or missing context - try auto-detection
+    else:
+        print(f"Event: {event_name or 'workflow_call'} - attempting auto-detection")
+        packages = get_changed_packages_auto()
+
+        if packages:
+            print(f"Auto-detected {len(packages)} changed package(s):")
+            for pkg in packages:
+                print(f"  - {pkg}")
+        else:
+            # Fallback: test all packages
+            print("Could not detect changes - testing all packages")
+            packages = get_all_packages()
+            for pkg in packages:
+                print(f"  - {pkg}")
+
+    # Output as JSON for GitHub Actions
+    packages_json = json.dumps(packages)
+    print(f"\nPackages JSON: {packages_json}")
+
+    # Write to GitHub output
+    github_output = os.getenv("GITHUB_OUTPUT")
+    if github_output:
+        with open(github_output, "a") as f:
+            f.write(f"packages={packages_json}\n")
+            f.write(f"count={len(packages)}\n")
+
+
+if __name__ == "__main__":
+    main()
