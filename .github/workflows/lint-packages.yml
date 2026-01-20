@@ -1,12 +1,7 @@
-name: CD
+name: Lint Packages
 
 on:
-  workflow_dispatch:
-  push:
-    branches:
-      - main
-    paths:
-      - 'packages/*/pyproject.toml'
+  workflow_call:
 
 permissions:
   contents: read
@@ -31,13 +26,16 @@ jobs:
 
       - name: Detect changed packages
         id: detect
-        run: |
-          python .github/scripts/detect_changed_packages.py
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python .github/scripts/detect_changed_packages.py
 
-  build:
-    name: Build ${{ matrix.package }}
+  lint:
+    name: Lint ${{ matrix.package }}
     needs: detect-changed-packages
-    if: needs.detect-changed-packages.outputs.count > 0 && github.repository == 'UiPath/uipath-integrations-python'
+    if: needs.detect-changed-packages.outputs.count > 0 && !contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -46,9 +44,6 @@ jobs:
       fail-fast: false
       matrix:
         package: ${{ fromJson(needs.detect-changed-packages.outputs.packages) }}
-    permissions:
-      contents: read
-      actions: write
 
     steps:
       - name: Checkout
@@ -67,34 +62,23 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras
 
-      - name: Build
-        run: uv build --package ${{ matrix.package }}
+      - name: Check static types
+        run: uv run mypy --config-file pyproject.toml .
 
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-dists-${{ matrix.package }}
-          path: packages/${{ matrix.package }}/dist/
+      - name: Check linting
+        run: uv run ruff check .
 
-  pypi-publish:
-    name: Upload ${{ matrix.package }} to PyPI
-    needs: [detect-changed-packages, build]
+      - name: Check formatting
+        run: uv run ruff format --check .
+
+  skip-lint:
+    name: Skip Lint (Custom Version Testing)
     runs-on: ubuntu-latest
-    environment: pypi
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.detect-changed-packages.outputs.packages) }}
+    if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
     permissions:
       contents: read
-      id-token: write
-
     steps:
-      - name: Retrieve release distributions
-        uses: actions/download-artifact@v4
-        with:
-          name: release-dists-${{ matrix.package }}
-          path: dist/
-
-      - name: Publish package distributions to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - name: Skip lint for custom version testing
+        run: |
+          echo "Custom version testing enabled - skipping normal lint process"
+          echo "This job completes successfully to allow PR merging"

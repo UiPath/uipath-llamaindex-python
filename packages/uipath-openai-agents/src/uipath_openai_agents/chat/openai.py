@@ -11,10 +11,13 @@ from uipath.utils import EndpointManager
 from .supported_models import OpenAIModels
 
 
-def _rewrite_openai_url(original_url: str, params: httpx.QueryParams) -> httpx.URL:
+def _rewrite_openai_url(
+    original_url: str, params: httpx.QueryParams
+) -> httpx.URL | None:
     """Rewrite OpenAI URLs to UiPath gateway completions endpoint.
 
-    Handles URL patterns from OpenAI SDK and rewrites them to .../completions
+    Handles URL patterns from OpenAI SDK and rewrites to /completions.
+    The X-UiPath-LlmGateway-ApiFlavor header determines API behavior.
 
     Args:
         original_url: Original URL from OpenAI SDK
@@ -23,12 +26,15 @@ def _rewrite_openai_url(original_url: str, params: httpx.QueryParams) -> httpx.U
     Returns:
         Rewritten URL pointing to UiPath completions endpoint
     """
-    if "/chat/completions" in original_url:
+    # Extract base URL before endpoint path
+    if "/responses" in original_url:
+        base_url = original_url.split("/responses")[0]
+    elif "/chat/completions" in original_url:
         base_url = original_url.split("/chat/completions")[0]
     elif "/completions" in original_url:
         base_url = original_url.split("/completions")[0]
     else:
-        # Handle base URL case
+        # Handle base URL case - strip query string
         base_url = original_url.split("?")[0]
 
     new_url_str = f"{base_url}/completions"
@@ -46,7 +52,8 @@ class UiPathURLRewriteTransport(httpx.AsyncHTTPTransport):
     async def handle_async_request(self, request: httpx.Request) -> httpx.Response:
         """Handle async request with URL rewriting."""
         new_url = _rewrite_openai_url(str(request.url), request.url.params)
-        request.url = new_url
+        if new_url:
+            request.url = new_url
         return await super().handle_async_request(request)
 
 
@@ -59,7 +66,8 @@ class UiPathSyncURLRewriteTransport(httpx.HTTPTransport):
     def handle_request(self, request: httpx.Request) -> httpx.Response:
         """Handle sync request with URL rewriting."""
         new_url = _rewrite_openai_url(str(request.url), request.url.params)
-        request.url = new_url
+        if new_url:
+            request.url = new_url
         return super().handle_request(request)
 
 
@@ -95,25 +103,28 @@ class UiPathChatOpenAI:
     def __init__(
         self,
         token: Optional[str] = None,
-        model_name: str = OpenAIModels.gpt_4o,
+        model_name: str = OpenAIModels.gpt_4o_2024_11_20,
         api_version: str = "2024-12-01-preview",
         org_id: Optional[str] = None,
         tenant_id: Optional[str] = None,
         agenthub_config: Optional[str] = None,
         extra_headers: Optional[dict[str, str]] = None,
         byo_connection_id: Optional[str] = None,
+        api_flavor: str = "responses",
     ):
         """Initialize UiPath OpenAI client.
 
         Args:
             token: UiPath access token (defaults to UIPATH_ACCESS_TOKEN env var)
-            model_name: Model to use (e.g., "gpt-4o")
+            model_name: Model to use (e.g., "gpt-4o-2024-11-20")
             api_version: OpenAI API version
             org_id: UiPath organization ID (defaults to UIPATH_ORGANIZATION_ID env var)
             tenant_id: UiPath tenant ID (defaults to UIPATH_TENANT_ID env var)
             agenthub_config: Optional AgentHub configuration
             extra_headers: Additional headers to include in requests
             byo_connection_id: Bring-your-own connection ID
+            api_flavor: API flavor to use - "responses" (default, recommended for agents),
+                       "chat-completions" (traditional chat), or "auto" (let UiPath decide)
         """
         # Get credentials from env vars if not provided
         self._org_id = org_id or os.getenv("UIPATH_ORGANIZATION_ID")
@@ -140,6 +151,7 @@ class UiPathChatOpenAI:
         self._vendor = "openai"
         self._agenthub_config = agenthub_config
         self._byo_connection_id = byo_connection_id
+        self._api_flavor = api_flavor
         self._extra_headers = extra_headers or {}
 
         # Build base URL and headers
@@ -175,7 +187,7 @@ class UiPathChatOpenAI:
     def _build_headers(self) -> dict[str, str]:
         """Build headers for UiPath LLM Gateway."""
         headers = {
-            "X-UiPath-LlmGateway-ApiFlavor": "auto",
+            "X-UiPath-LlmGateway-ApiFlavor": self._api_flavor,
             "Authorization": f"Bearer {self._token}",
         }
 
@@ -195,17 +207,22 @@ class UiPathChatOpenAI:
 
     @property
     def endpoint(self) -> str:
-        """Get the UiPath endpoint for this model."""
+        """Get the UiPath endpoint for this model (without query parameters)."""
         vendor_endpoint = EndpointManager.get_vendor_endpoint()
         formatted_endpoint = vendor_endpoint.format(
             vendor=self._vendor,
             model=self._model_name,
         )
+        # Remove /completions suffix - will be added by URL rewriting
         base_endpoint = formatted_endpoint.replace("/completions", "")
-        return f"{base_endpoint}?api-version={self._api_version}"
+        return base_endpoint
 
     def _build_base_url(self) -> str:
-        """Build the base URL for OpenAI client."""
+        """Build the base URL for OpenAI client.
+
+        Note: Query parameters like api-version are added by the URL rewriting logic,
+        not in the base URL, to allow the SDK to append paths properly.
+        """
         env_uipath_url = os.getenv("UIPATH_URL")
 
         if env_uipath_url:

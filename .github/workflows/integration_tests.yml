@@ -3,8 +3,16 @@ name: Integration testing
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'packages/**'
+      - '.github/workflows/integration_tests.yml'
+      - '.github/scripts/detect_changed_packages.py'
   pull_request:
     branches: [ main ]
+    paths:
+      - 'packages/**'
+      - '.github/workflows/integration_tests.yml'
+      - '.github/scripts/detect_changed_packages.py'
 
 permissions:
   contents: read
@@ -12,10 +20,72 @@ permissions:
   actions: read
 
 jobs:
+  detect-changed-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.detect.outputs.packages }}
+      count: ${{ steps.detect.outputs.count }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Detect changed packages
+        id: detect
+        run: |
+          python .github/scripts/detect_changed_packages.py
+
   discover-testcases:
-    uses: ./.github/workflows/discover-testcases.yml
+    needs: detect-changed-packages
+    if: needs.detect-changed-packages.outputs.count > 0
+    runs-on: ubuntu-latest
+    outputs:
+      testcases: ${{ steps.discover.outputs.testcases }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Discover testcases for changed packages
+        id: discover
+        run: |
+          # Get list of packages to check
+          PACKAGES='${{ needs.detect-changed-packages.outputs.packages }}'
+
+          # Find all testcases in changed packages only
+          testcases_array="[]"
+
+          for package_name in $(echo "$PACKAGES" | jq -r '.[]'); do
+            testcases_dir="packages/$package_name/testcases"
+
+            if [ -d "$testcases_dir" ]; then
+              echo "Discovering testcases in $package_name"
+
+              # Find all testcase folders in this package
+              for testcase_dir in "$testcases_dir"/*; do
+                if [ -d "$testcase_dir" ]; then
+                  testcase_name=$(basename "$testcase_dir")
+                  # Skip 'common' directory if it exists
+                  if [ "$testcase_name" != "common" ]; then
+                    echo "  Found: $testcase_name"
+                    testcases_array=$(echo "$testcases_array" | jq -c ". += [{\"package\": \"$package_name\", \"testcase\": \"$testcase_name\"}]")
+                  fi
+                fi
+              done
+            fi
+          done
+
+          echo "Testcases matrix: $testcases_array"
+          echo "testcases=$testcases_array" >> $GITHUB_OUTPUT
+
   integration-tests:
-    needs: [discover-testcases]
+    needs: [detect-changed-packages, discover-testcases]
+    if: needs.discover-testcases.outputs.testcases != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     container:

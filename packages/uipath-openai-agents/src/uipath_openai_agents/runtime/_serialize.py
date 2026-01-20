@@ -1,3 +1,4 @@
+import dataclasses
 from enum import Enum
 from typing import Any
 
@@ -22,6 +23,10 @@ def serialize_output(output: Any) -> Any:
         return serialize_output(output.dict())
     elif hasattr(output, "to_dict"):
         return serialize_output(output.to_dict())
+
+    # Handle dataclasses
+    elif dataclasses.is_dataclass(output):
+        return serialize_output(dataclasses.asdict(output))
 
     # Handle dictionaries
     elif isinstance(output, dict):

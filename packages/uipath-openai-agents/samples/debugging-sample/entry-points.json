@@ -3,8 +3,8 @@
     "$id": "entry-points.json",
     "entryPoints": [
         {
-            "filePath": "agent",
-            "uniqueId": "31b69d3d-4ae1-4caa-be64-b2fe368590a7",
+            "filePath": "main",
+            "uniqueId": "00fc3a8b-e76d-437f-9aec-e82775578828",
             "type": "agent",
             "input": {
                 "type": "object",
@@ -64,9 +64,27 @@
                         "subgraph": null
                     },
                     {
-                        "id": "assistant_agent",
-                        "name": "assistant_agent",
+                        "id": "MathWeatherAgent",
+                        "name": "MathWeatherAgent",
                         "type": "model",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "calculate_sum",
+                        "name": "calculate_sum",
+                        "type": "tool",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "calculate_product",
+                        "name": "calculate_product",
+                        "type": "tool",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "get_weather",
+                        "name": "get_weather",
+                        "type": "tool",
                         "subgraph": null
                     },
                     {
@@ -79,11 +97,41 @@
                 "edges": [
                     {
                         "source": "__start__",
-                        "target": "assistant_agent",
+                        "target": "MathWeatherAgent",
                         "label": "input"
                     },
                     {
-                        "source": "assistant_agent",
+                        "source": "MathWeatherAgent",
+                        "target": "calculate_sum",
+                        "label": "tool_call"
+                    },
+                    {
+                        "source": "calculate_sum",
+                        "target": "MathWeatherAgent",
+                        "label": "tool_result"
+                    },
+                    {
+                        "source": "MathWeatherAgent",
+                        "target": "calculate_product",
+                        "label": "tool_call"
+                    },
+                    {
+                        "source": "calculate_product",
+                        "target": "MathWeatherAgent",
+                        "label": "tool_result"
+                    },
+                    {
+                        "source": "MathWeatherAgent",
+                        "target": "get_weather",
+                        "label": "tool_call"
+                    },
+                    {
+                        "source": "get_weather",
+                        "target": "MathWeatherAgent",
+                        "label": "tool_result"
+                    },
+                    {
+                        "source": "MathWeatherAgent",
                         "target": "__end__",
                         "label": "output"
                     }

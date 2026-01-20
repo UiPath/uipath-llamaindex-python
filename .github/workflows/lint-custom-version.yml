@@ -4,26 +4,50 @@ on:
   workflow_call:
   pull_request:
     types: [opened, synchronize, labeled, unlabeled]
+    paths:
+      - 'packages/**'
+      - '.github/workflows/lint-custom-version.yml'
+      - '.github/scripts/detect_changed_packages.py'
+
+permissions:
+  contents: read
+  pull-requests: read
 
 jobs:
-  discover-packages:
+  detect-changed-packages:
     if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
-    uses: ./.github/workflows/discover-packages.yml
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.detect.outputs.packages }}
+      count: ${{ steps.detect.outputs.count }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Detect changed packages
+        id: detect
+        run: |
+          python .github/scripts/detect_changed_packages.py
 
   lint-with-custom-version:
     name: Lint ${{ matrix.package }} - Custom Version
-    needs: [discover-packages]
+    needs: detect-changed-packages
+    if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version') && needs.detect-changed-packages.outputs.count > 0
     runs-on: ubuntu-latest
-    if: contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
     defaults:
       run:
         working-directory: packages/${{ matrix.package }}
     strategy:
+      fail-fast: false
       matrix:
-        package: ${{ fromJson(needs.discover-packages.outputs.packages) }}
-    permissions:
-      contents: read
-      pull-requests: read
+        package: ${{ fromJson(needs.detect-changed-packages.outputs.packages) }}
 
     steps:
       - name: Checkout

@@ -1,0 +1,67 @@
+name: Test Packages
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  detect-changed-packages:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.detect.outputs.packages }}
+      count: ${{ steps.detect.outputs.count }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for git diff
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Detect changed packages
+        id: detect
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: python .github/scripts/detect_changed_packages.py
+
+  test:
+    name: Test ${{ matrix.package }} (py${{ matrix.python-version }}, ${{ matrix.os }})
+    needs: detect-changed-packages
+    if: needs.detect-changed-packages.outputs.count > 0
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: packages/${{ matrix.package }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.detect-changed-packages.outputs.packages) }}
+        python-version: ["3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        run: uv sync --all-extras --python ${{ matrix.python-version }}
+
+      - name: Run tests
+        run: uv run pytest

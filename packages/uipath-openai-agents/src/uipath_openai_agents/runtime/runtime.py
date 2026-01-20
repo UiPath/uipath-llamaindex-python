@@ -16,10 +16,12 @@ from uipath.runtime import (
     UiPathRuntimeStatus,
     UiPathStreamOptions,
 )
+from uipath.runtime.debug import UiPathBreakpointResult
 from uipath.runtime.errors import UiPathErrorCategory, UiPathErrorCode
 from uipath.runtime.events import (
     UiPathRuntimeEvent,
     UiPathRuntimeMessageEvent,
+    UiPathRuntimeStateEvent,
 )
 from uipath.runtime.schema import UiPathRuntimeSchema
 
@@ -65,6 +67,13 @@ class UiPathOpenAIAgentRuntime:
         self.storage: SqliteAgentStorage | None = storage
         self._session: SQLiteSession | None = None
 
+        # Configure OpenAI Agents SDK to use Responses API
+        # UiPath supports both APIs via X-UiPath-LlmGateway-ApiFlavor header
+        # Using responses API for enhanced agent capabilities (conversation state, reasoning)
+        from agents import set_default_openai_api
+
+        set_default_openai_api("responses")
+
         # Inject UiPath OpenAI client if UiPath credentials are available
         self._setup_uipath_client()
 
@@ -73,6 +82,9 @@ class UiPathOpenAIAgentRuntime:
 
         This injects the UiPath OpenAI client into the OpenAI Agents SDK
         so all agents use the UiPath LLM Gateway instead of direct OpenAI.
+
+        The model is automatically extracted from the agent's `model` parameter.
+        If not specified in Agent(), the SDK uses agents.models.get_default_model().
 
         If UiPath credentials are not available, falls back to default OpenAI client.
         """
@@ -87,13 +99,25 @@ class UiPathOpenAIAgentRuntime:
             uipath_url = os.getenv("UIPATH_URL")
 
             if org_id and tenant_id and token and uipath_url:
+                # Extract model from agent definition
+                from agents.models import get_default_model
+
+                from uipath_openai_agents.chat.supported_models import OpenAIModels
+
+                if hasattr(self.agent, "model") and self.agent.model:
+                    model_name = str(self.agent.model)
+                else:
+                    model_name = get_default_model()
+
+                # Normalize generic model names to UiPath-specific versions
+                model_name = OpenAIModels.normalize_model_name(model_name)
+
                 # Create UiPath OpenAI client
                 uipath_client = UiPathChatOpenAI(
                     token=token,
                     org_id=org_id,
                     tenant_id=tenant_id,
-                    # Use gpt-4o by default, agents can override via model parameter
-                    model_name="gpt-4o",
+                    model_name=model_name,
                 )
 
                 # Inject into OpenAI Agents SDK
@@ -194,32 +218,27 @@ class UiPathOpenAIAgentRuntime:
         else:
             self._session = None
 
-        # Run the agent
+        # Determine if breakpoints are enabled
+        has_breakpoints = (
+            options and hasattr(options, "breakpoints") and options.breakpoints
+        )
+
+        # Run the agent with streaming if events or breakpoints requested
         try:
-            # OpenAI Agents Runner.run() is async and returns a RunResult
-            # Note: starting_agent is the first positional parameter
-            result = await Runner.run(
-                starting_agent=self.agent,
-                input=agent_input,
-                session=self._session,
-            )
-
-            # Stream events if requested
-            if stream_events and hasattr(result, "messages"):
-                # Emit message events for each message in the conversation
-                for message in result.messages:
-                    message_event = UiPathRuntimeMessageEvent(
-                        payload=self._serialize_message(message),
-                        node_name=getattr(self.agent, "name", "agent"),
-                        execution_id=self.runtime_id,
-                    )
-                    yield message_event
-
-            # SQLiteSession automatically persists data when items are added
-            # No explicit save() needed
-
-            # Yield final result
-            yield self._create_success_result(result.final_output)
+            if stream_events or has_breakpoints:
+                # Use streaming for events and breakpoint support
+                async for event_or_result in self._run_agent_streamed(
+                    agent_input, options, stream_events
+                ):
+                    yield event_or_result
+            else:
+                # Use non-streaming for simple execution
+                result = await Runner.run(
+                    starting_agent=self.agent,
+                    input=agent_input,
+                    session=self._session,
+                )
+                yield self._create_success_result(result.final_output)
 
         except Exception:
             # Clean up session on error
@@ -233,6 +252,213 @@ class UiPathOpenAIAgentRuntime:
                 except Exception:
                     pass  # Best effort cleanup
             raise
+
+    async def _run_agent_streamed(
+        self,
+        agent_input: str | list,
+        options: UiPathExecuteOptions | UiPathStreamOptions | None,
+        stream_events: bool,
+    ) -> AsyncGenerator[UiPathRuntimeEvent | UiPathRuntimeResult, None]:
+        """
+        Run agent using streaming API to enable breakpoints and event streaming.
+
+        Args:
+            agent_input: Prepared agent input (string or list of messages)
+            options: Execution/stream options. Can include:
+                - breakpoints: List of breakpoint names or "*" for all
+                - resume_event: asyncio.Event to signal resume from breakpoints
+            stream_events: Whether to yield streaming events to caller
+
+        Yields:
+            Runtime events if stream_events=True, breakpoint results, then final result
+        """
+
+        # Get breakpoints configuration
+        breakpoints = None
+        resume_event = None
+        if options:
+            if hasattr(options, "breakpoints"):
+                breakpoints = options.breakpoints
+            # Get resume event if provided (uses extra="allow" from Pydantic)
+            if hasattr(options, "resume_event"):
+                resume_event = getattr(options, "resume_event", None)
+
+        # Use Runner.run_streamed() for streaming events (returns RunResultStreaming directly)
+        result = Runner.run_streamed(
+            starting_agent=self.agent,
+            input=agent_input,
+            session=self._session,
+        )
+
+        # Stream events from the agent
+        async for event in result.stream_events():
+            # Check if this event should trigger a breakpoint
+            should_pause = self._should_pause_at_event(event, breakpoints)
+
+            if should_pause:
+                # Hit a breakpoint - pause execution
+                # Create and yield breakpoint result
+                breakpoint_result = self._create_breakpoint_result_from_event(event)
+                yield breakpoint_result
+
+                # Wait for resume signal if provided
+                if resume_event is not None:
+                    # Clear the event first to ensure we wait for new signal
+                    resume_event.clear()
+                    # Wait for external debugger to signal resume
+                    await resume_event.wait()
+                # If no resume_event provided, auto-resume immediately
+
+            # Emit the event to caller if streaming is enabled
+            if stream_events:
+                runtime_event = self._convert_stream_event_to_runtime_event(event)
+                if runtime_event:
+                    yield runtime_event
+
+        # Stream complete - yield final result
+        yield self._create_success_result(result.final_output)
+
+    def _should_pause_at_event(
+        self,
+        event: Any,
+        breakpoints: list[str] | str | None,
+    ) -> bool:
+        """
+        Determine if execution should pause at this streaming event.
+
+        Matches behavior of LangChain (interrupt_before) and LlamaIndex (step name filtering)
+        by supporting specific tool and agent names only.
+
+        Args:
+            event: Streaming event from Runner.run_streamed()
+            breakpoints: List of specific names to break on. Can be:
+                - "*": Pause on all significant events (special case)
+                - ["calculate_sum"]: Pause only when calculate_sum tool is called
+                - ["french_agent"]: Pause only when handing off to french_agent
+                - ["calculate_sum", "french_agent", "get_weather"]: Pause on any of these
+
+        Returns:
+            True if should pause, False otherwise
+        """
+        if not breakpoints:
+            return False
+
+        # Get event type/name
+        event_type = getattr(event, "type", None)
+        event_name = getattr(event, "name", None)
+
+        # Pause on all events
+        if breakpoints == "*":
+            # Only pause on significant events, not raw response deltas
+            if event_type == "run_item_stream_event":
+                return event_name in [
+                    "tool_called",
+                    "handoff_requested",
+                    "mcp_approval_requested",
+                ]
+            return False
+
+        # Check if event matches configured breakpoints (by name only, like LangChain/LlamaIndex)
+        if isinstance(breakpoints, list):
+            for bp in breakpoints:
+                # Check for specific tool name match (when event is tool_called)
+                if (
+                    event_name == "tool_called"
+                    and event_type == "run_item_stream_event"
+                ):
+                    event_item = getattr(event, "item", None)
+                    if event_item:
+                        # Extract tool name from the event
+                        tool_name = getattr(event_item, "name", None)
+                        if tool_name and tool_name == bp:
+                            return True
+
+                # Check for specific agent name match (when event is handoff_requested)
+                if (
+                    event_name == "handoff_requested"
+                    and event_type == "run_item_stream_event"
+                ):
+                    event_item = getattr(event, "item", None)
+                    if event_item:
+                        # Extract target agent name from the handoff event
+                        target_agent = getattr(event_item, "target_agent", None)
+                        if target_agent:
+                            agent_name = getattr(target_agent, "name", None)
+                            if agent_name and agent_name == bp:
+                                return True
+
+        return False
+
+    def _create_breakpoint_result_from_event(
+        self,
+        event: Any,
+    ) -> UiPathBreakpointResult:
+        """
+        Create a breakpoint result from a streaming event.
+
+        Args:
+            event: The streaming event that triggered the breakpoint
+
+        Returns:
+            UiPathBreakpointResult for this breakpoint
+        """
+        event_name = getattr(event, "name", "unknown")
+        event_item = getattr(event, "item", None)
+
+        # Serialize event state
+        current_state = serialize_output(event_item) if event_item else {}
+
+        return UiPathBreakpointResult(
+            breakpoint_node=event_name,
+            breakpoint_type="before",
+            current_state=current_state,
+            next_nodes=[],  # Not available in streaming context
+        )
+
+    def _convert_stream_event_to_runtime_event(
+        self,
+        event: Any,
+    ) -> UiPathRuntimeEvent | None:
+        """
+        Convert OpenAI streaming event to UiPath runtime event.
+
+        Args:
+            event: Streaming event from Runner.run_streamed()
+
+        Returns:
+            UiPathRuntimeEvent or None if event should be filtered
+        """
+
+        event_type = getattr(event, "type", None)
+        event_name = getattr(event, "name", None)
+
+        # Handle run item events (messages, tool calls, etc.)
+        if event_type == "run_item_stream_event":
+            event_item = getattr(event, "item", None)
+            if event_item:
+                # Determine if this is a message or state event
+                if event_name in ["message_output_created", "reasoning_item_created"]:
+                    return UiPathRuntimeMessageEvent(
+                        payload=serialize_output(event_item),
+                        metadata={"event_name": event_name},
+                    )
+                else:
+                    return UiPathRuntimeStateEvent(
+                        payload=serialize_output(event_item),
+                        metadata={"event_name": event_name},
+                    )
+
+        # Handle agent updated events
+        if event_type == "agent_updated_stream_event":
+            new_agent = getattr(event, "new_agent", None)
+            if new_agent:
+                return UiPathRuntimeStateEvent(
+                    payload={"agent_name": getattr(new_agent, "name", "unknown")},
+                    metadata={"event_type": "agent_updated"},
+                )
+
+        # Filter out raw response events (too granular)
+        return None
 
     def _prepare_agent_input(self, input: dict[str, Any] | None) -> str | list:
         """

@@ -11,6 +11,7 @@ from uipath.runtime import (
 )
 from uipath.runtime.errors import UiPathErrorCategory
 
+from uipath_openai_agents.runtime._telemetry import create_telemetry_hooks
 from uipath_openai_agents.runtime.agent import OpenAiAgentLoader
 from uipath_openai_agents.runtime.config import OpenAiAgentsConfig
 from uipath_openai_agents.runtime.errors import (
@@ -165,6 +166,12 @@ class UiPathOpenAIAgentRuntimeFactory:
                 return self._agent_cache[entrypoint]
 
             loaded_agent = await self._load_agent(entrypoint)
+
+            # Attach telemetry hooks if not already present
+            if loaded_agent.hooks is None:
+                telemetry_hooks = create_telemetry_hooks(enabled=True)
+                if telemetry_hooks:
+                    loaded_agent = loaded_agent.clone(hooks=telemetry_hooks)
 
             self._agent_cache[entrypoint] = loaded_agent
 
