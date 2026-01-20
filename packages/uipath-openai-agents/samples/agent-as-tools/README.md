@@ -114,5 +114,4 @@ The agent appears with:
 
 ## Learn More
 
-- [Parameter Inference Documentation](../../docs/PARAMETER_INFERENCE.md)
 - [OpenAI Agents Python SDK](https://github.com/openai/openai-agents-python)

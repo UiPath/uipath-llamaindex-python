@@ -280,7 +280,6 @@ class UiPathOpenAIAgentRuntimeFactory:
             runtime_id=runtime_id,
             entrypoint=entrypoint,
             storage_path=storage_path,
-            debug_mode=self.context.command == "debug",
             loaded_object=loaded_object,
             storage=storage,
         )

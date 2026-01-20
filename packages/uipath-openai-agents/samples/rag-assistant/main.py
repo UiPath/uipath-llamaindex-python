@@ -1,12 +1,12 @@
-"""RAG Assistant sample - Iteration 1: Basic Agent with Chat.
+"""RAG Assistant sample - Basic Agent with Chat.
 
-This sample uses the OpenAI Agents SDK framework with UiPath integration.
-It will be enhanced in subsequent iterations with:
-- Iteration 2: OpenTelemetry tracing
-- Iteration 3: Breakpoints for debugging
-- Iteration 4: Embeddings for document processing
-- Iteration 5: Context Grounding retriever
-- Iteration 6: Full RAG query engine
+This sample demonstrates a basic OpenAI agent using the Agents SDK framework with UiPath integration.
+
+Features:
+- OpenAI Agents SDK integration
+- UiPath tracing with OpenTelemetry
+- Type-safe input/output with Pydantic models
+- Streaming responses support
 """
 
 import dotenv
@@ -40,9 +40,9 @@ assistant_agent = Agent(
 Your capabilities:
 - Answer questions accurately
 - Provide well-structured responses
-- Cite sources when applicable (future: will use RAG)
+- Be helpful and informative
 
-Be helpful and informative.""",
+Always aim for clarity and accuracy in your responses.""",
 )
 
 

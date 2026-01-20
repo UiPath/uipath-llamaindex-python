@@ -16,7 +16,6 @@ from uipath.runtime import (
     UiPathRuntimeStatus,
     UiPathStreamOptions,
 )
-from uipath.runtime.debug import UiPathBreakpointResult
 from uipath.runtime.errors import UiPathErrorCategory, UiPathErrorCode
 from uipath.runtime.events import (
     UiPathRuntimeEvent,
@@ -42,7 +41,6 @@ class UiPathOpenAIAgentRuntime:
         runtime_id: str | None = None,
         entrypoint: str | None = None,
         storage_path: str | None = None,
-        debug_mode: bool = False,
         loaded_object: Any | None = None,
         storage: SqliteAgentStorage | None = None,
     ):
@@ -54,7 +52,6 @@ class UiPathOpenAIAgentRuntime:
             runtime_id: Unique identifier for this runtime instance
             entrypoint: Optional entrypoint name (for schema generation)
             storage_path: Path to SQLite database for session persistence
-            debug_mode: Enable debug mode (not yet implemented)
             loaded_object: Original loaded object (for schema inference)
             storage: Optional storage instance for state persistence
         """
@@ -62,7 +59,6 @@ class UiPathOpenAIAgentRuntime:
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
         self.storage_path: str | None = storage_path
-        self.debug_mode: bool = debug_mode
         self.loaded_object: Any | None = loaded_object
         self.storage: SqliteAgentStorage | None = storage
         self._session: SQLiteSession | None = None
@@ -144,7 +140,7 @@ class UiPathOpenAIAgentRuntime:
 
         Args:
             input: Input dictionary containing the message for the agent
-            options: Execution options (resume, breakpoints, etc.)
+            options: Execution options
 
         Returns:
             UiPathRuntimeResult with the agent's output
@@ -218,15 +214,10 @@ class UiPathOpenAIAgentRuntime:
         else:
             self._session = None
 
-        # Determine if breakpoints are enabled
-        has_breakpoints = (
-            options and hasattr(options, "breakpoints") and options.breakpoints
-        )
-
-        # Run the agent with streaming if events or breakpoints requested
+        # Run the agent with streaming if events requested
         try:
-            if stream_events or has_breakpoints:
-                # Use streaming for events and breakpoint support
+            if stream_events:
+                # Use streaming for events
                 async for event_or_result in self._run_agent_streamed(
                     agent_input, options, stream_events
                 ):
@@ -260,28 +251,16 @@ class UiPathOpenAIAgentRuntime:
         stream_events: bool,
     ) -> AsyncGenerator[UiPathRuntimeEvent | UiPathRuntimeResult, None]:
         """
-        Run agent using streaming API to enable breakpoints and event streaming.
+        Run agent using streaming API to enable event streaming.
 
         Args:
             agent_input: Prepared agent input (string or list of messages)
-            options: Execution/stream options. Can include:
-                - breakpoints: List of breakpoint names or "*" for all
-                - resume_event: asyncio.Event to signal resume from breakpoints
+            options: Execution/stream options
             stream_events: Whether to yield streaming events to caller
 
         Yields:
-            Runtime events if stream_events=True, breakpoint results, then final result
+            Runtime events if stream_events=True, then final result
         """
-
-        # Get breakpoints configuration
-        breakpoints = None
-        resume_event = None
-        if options:
-            if hasattr(options, "breakpoints"):
-                breakpoints = options.breakpoints
-            # Get resume event if provided (uses extra="allow" from Pydantic)
-            if hasattr(options, "resume_event"):
-                resume_event = getattr(options, "resume_event", None)
 
         # Use Runner.run_streamed() for streaming events (returns RunResultStreaming directly)
         result = Runner.run_streamed(
@@ -292,23 +271,6 @@ class UiPathOpenAIAgentRuntime:
 
         # Stream events from the agent
         async for event in result.stream_events():
-            # Check if this event should trigger a breakpoint
-            should_pause = self._should_pause_at_event(event, breakpoints)
-
-            if should_pause:
-                # Hit a breakpoint - pause execution
-                # Create and yield breakpoint result
-                breakpoint_result = self._create_breakpoint_result_from_event(event)
-                yield breakpoint_result
-
-                # Wait for resume signal if provided
-                if resume_event is not None:
-                    # Clear the event first to ensure we wait for new signal
-                    resume_event.clear()
-                    # Wait for external debugger to signal resume
-                    await resume_event.wait()
-                # If no resume_event provided, auto-resume immediately
-
             # Emit the event to caller if streaming is enabled
             if stream_events:
                 runtime_event = self._convert_stream_event_to_runtime_event(event)
@@ -317,103 +279,6 @@ class UiPathOpenAIAgentRuntime:
 
         # Stream complete - yield final result
         yield self._create_success_result(result.final_output)
-
-    def _should_pause_at_event(
-        self,
-        event: Any,
-        breakpoints: list[str] | str | None,
-    ) -> bool:
-        """
-        Determine if execution should pause at this streaming event.
-
-        Matches behavior of LangChain (interrupt_before) and LlamaIndex (step name filtering)
-        by supporting specific tool and agent names only.
-
-        Args:
-            event: Streaming event from Runner.run_streamed()
-            breakpoints: List of specific names to break on. Can be:
-                - "*": Pause on all significant events (special case)
-                - ["calculate_sum"]: Pause only when calculate_sum tool is called
-                - ["french_agent"]: Pause only when handing off to french_agent
-                - ["calculate_sum", "french_agent", "get_weather"]: Pause on any of these
-
-        Returns:
-            True if should pause, False otherwise
-        """
-        if not breakpoints:
-            return False
-
-        # Get event type/name
-        event_type = getattr(event, "type", None)
-        event_name = getattr(event, "name", None)
-
-        # Pause on all events
-        if breakpoints == "*":
-            # Only pause on significant events, not raw response deltas
-            if event_type == "run_item_stream_event":
-                return event_name in [
-                    "tool_called",
-                    "handoff_requested",
-                    "mcp_approval_requested",
-                ]
-            return False
-
-        # Check if event matches configured breakpoints (by name only, like LangChain/LlamaIndex)
-        if isinstance(breakpoints, list):
-            for bp in breakpoints:
-                # Check for specific tool name match (when event is tool_called)
-                if (
-                    event_name == "tool_called"
-                    and event_type == "run_item_stream_event"
-                ):
-                    event_item = getattr(event, "item", None)
-                    if event_item:
-                        # Extract tool name from the event
-                        tool_name = getattr(event_item, "name", None)
-                        if tool_name and tool_name == bp:
-                            return True
-
-                # Check for specific agent name match (when event is handoff_requested)
-                if (
-                    event_name == "handoff_requested"
-                    and event_type == "run_item_stream_event"
-                ):
-                    event_item = getattr(event, "item", None)
-                    if event_item:
-                        # Extract target agent name from the handoff event
-                        target_agent = getattr(event_item, "target_agent", None)
-                        if target_agent:
-                            agent_name = getattr(target_agent, "name", None)
-                            if agent_name and agent_name == bp:
-                                return True
-
-        return False
-
-    def _create_breakpoint_result_from_event(
-        self,
-        event: Any,
-    ) -> UiPathBreakpointResult:
-        """
-        Create a breakpoint result from a streaming event.
-
-        Args:
-            event: The streaming event that triggered the breakpoint
-
-        Returns:
-            UiPathBreakpointResult for this breakpoint
-        """
-        event_name = getattr(event, "name", "unknown")
-        event_item = getattr(event, "item", None)
-
-        # Serialize event state
-        current_state = serialize_output(event_item) if event_item else {}
-
-        return UiPathBreakpointResult(
-            breakpoint_node=event_name,
-            breakpoint_type="before",
-            current_state=current_state,
-            next_nodes=[],  # Not available in streaming context
-        )
 
     def _convert_stream_event_to_runtime_event(
         self,
