@@ -5,14 +5,12 @@ from typing import Any
 
 from agents import Agent
 from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
-from uipath.core.tracing import UiPathSpanUtils
 from uipath.runtime import (
     UiPathRuntimeContext,
     UiPathRuntimeProtocol,
 )
 from uipath.runtime.errors import UiPathErrorCategory
 
-from uipath_openai_agents.runtime._telemetry import get_current_span_wrapper
 from uipath_openai_agents.runtime.agent import OpenAiAgentLoader
 from uipath_openai_agents.runtime.config import OpenAiAgentsConfig
 from uipath_openai_agents.runtime.errors import (
@@ -47,7 +45,6 @@ class UiPathOpenAIAgentRuntimeFactory:
     def _setup_instrumentation(self) -> None:
         """Setup tracing and instrumentation."""
         OpenAIAgentsInstrumentor().instrument()
-        UiPathSpanUtils.register_current_span_provider(get_current_span_wrapper)
 
     def _load_config(self) -> OpenAiAgentsConfig:
         """Load openai_agents.json configuration."""
