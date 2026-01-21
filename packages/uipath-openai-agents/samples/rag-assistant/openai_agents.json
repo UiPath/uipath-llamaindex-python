@@ -1,5 +1,5 @@
 {
   "agents": {
-    "agent": "main.py:assistant_agent"
+    "agent": "main.py:main"
   }
 }

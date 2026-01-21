@@ -1,14 +1,10 @@
 """Runtime class for executing OpenAI Agents within the UiPath framework."""
 
 import json
-import os
 from typing import Any, AsyncGenerator
 from uuid import uuid4
 
-from agents import (
-    Agent,
-    Runner,
-)
+from agents import Agent, Runner
 from uipath.runtime import (
     UiPathExecuteOptions,
     UiPathRuntimeResult,
@@ -50,76 +46,6 @@ class UiPathOpenAIAgentRuntime:
         self.agent: Agent = agent
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
-
-        # Configure OpenAI Agents SDK to use Responses API
-        # UiPath supports both APIs via X-UiPath-LlmGateway-ApiFlavor header
-        # Using responses API for enhanced agent capabilities (conversation state, reasoning)
-        from agents import set_default_openai_api
-
-        set_default_openai_api("responses")
-
-        # Inject UiPath OpenAI client if UiPath credentials are available
-        self._setup_uipath_client()
-
-    def _setup_uipath_client(self) -> None:
-        """Set up UiPath OpenAI client for agents to use UiPath gateway.
-
-        This injects the UiPath OpenAI client into the OpenAI Agents SDK
-        so all agents use the UiPath LLM Gateway instead of direct OpenAI.
-
-        The model is automatically extracted from the agent's `model` parameter.
-        If not specified in Agent(), the SDK uses agents.models.get_default_model().
-
-        If UiPath credentials are not available, falls back to default OpenAI client.
-        """
-        try:
-            # Import here to avoid circular dependency
-            from uipath_openai_agents.chat import UiPathChatOpenAI
-
-            # Check if UiPath credentials are available
-            org_id = os.getenv("UIPATH_ORGANIZATION_ID")
-            tenant_id = os.getenv("UIPATH_TENANT_ID")
-            token = os.getenv("UIPATH_ACCESS_TOKEN")
-            uipath_url = os.getenv("UIPATH_URL")
-
-            if org_id and tenant_id and token and uipath_url:
-                # Extract model from agent definition
-                from agents.models import get_default_model
-
-                from uipath_openai_agents.chat.supported_models import OpenAIModels
-
-                if hasattr(self.agent, "model") and self.agent.model:
-                    model_name = str(self.agent.model)
-                else:
-                    model_name = get_default_model()
-
-                # Normalize generic model names to UiPath-specific versions
-                model_name = OpenAIModels.normalize_model_name(model_name)
-
-                # Update agent's model to normalized version so SDK sends correct model in body
-                self.agent.model = model_name
-
-                # Create UiPath OpenAI client
-                uipath_client = UiPathChatOpenAI(
-                    token=token,
-                    org_id=org_id,
-                    tenant_id=tenant_id,
-                    model_name=model_name,
-                )
-
-                # Inject into OpenAI Agents SDK
-                # This makes all agents use UiPath gateway
-                from agents.models import _openai_shared
-
-                _openai_shared.set_default_openai_client(uipath_client.async_client)
-
-        except ImportError:
-            # UiPath chat module not available, skip injection
-            pass
-        except Exception:
-            # If injection fails, fall back to default OpenAI client
-            # Agents will use OPENAI_API_KEY if set
-            pass
 
     async def execute(
         self,

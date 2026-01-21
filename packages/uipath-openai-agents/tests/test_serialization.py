@@ -260,3 +260,26 @@ class TestSerializeOutput:
         # Should use alias in serialization
         assert isinstance(result, dict)
         # Note: behavior depends on model_dump(by_alias=True)
+
+    def test_serialize_pydantic_model_class(self):
+        """Test that Pydantic model classes (not instances) are handled safely."""
+        # This should not raise TypeError about missing 'self'
+        result = serialize_output(PydanticModel)
+        # Model classes should be returned as-is (not serialized)
+        assert result == PydanticModel
+
+    def test_serialize_dict_containing_model_class(self):
+        """Test serializing dict that contains a Pydantic model class."""
+        data = {
+            "model_class": PydanticModel,
+            "instance": PydanticModel(name="test", value=42),
+            "other": "data"
+        }
+        result = serialize_output(data)
+        
+        # Model class should be returned as-is
+        assert result["model_class"] == PydanticModel
+        # Instance should be serialized
+        assert result["instance"] == {"name": "test", "value": 42, "active": True}
+        # Other data should pass through
+        assert result["other"] == "data"

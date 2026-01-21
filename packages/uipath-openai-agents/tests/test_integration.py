@@ -1,18 +1,24 @@
 """Integration test demonstrating new runtime features."""
 
+import os
 import sys
 from pathlib import Path
 
 import pytest
+
+# Set up mock environment variables for sample imports
+os.environ.setdefault("UIPATH_URL", "https://mock.uipath.com")
+os.environ.setdefault("UIPATH_ORGANIZATION_ID", "mock-org-id")
+os.environ.setdefault("UIPATH_TENANT_ID", "mock-tenant-id")
+os.environ.setdefault("UIPATH_ACCESS_TOKEN", "mock-token")
 
 # Add samples directory to path
 samples_dir = Path(__file__).parent.parent / "samples" / "agent-as-tools"
 sys.path.insert(0, str(samples_dir))
 
 from main import (  # type: ignore  # noqa: E402
-    TranslationInput,
     TranslationOutput,
-    orchestrator_agent,
+    main,
 )
 
 from uipath_openai_agents.runtime.errors import (  # noqa: E402
@@ -45,6 +51,7 @@ def test_error_handling():
 
 def test_schema_extraction_with_new_serialization():
     """Test that schema extraction works with the serialization improvements."""
+    orchestrator_agent = main()
     schema = get_entrypoints_schema(orchestrator_agent)
 
     # Verify input schema (messages format)
@@ -63,14 +70,6 @@ def test_schema_extraction_with_new_serialization():
 
 def test_pydantic_models():
     """Test that Pydantic models work correctly with serialization."""
-    # Create input model
-    input_data = TranslationInput(
-        text="Hello, world!", target_languages=["Spanish", "French"]
-    )
-
-    assert input_data.text == "Hello, world!"
-    assert len(input_data.target_languages) == 2
-
     # Create output model
     output_data = TranslationOutput(
         original_text="Hello, world!",

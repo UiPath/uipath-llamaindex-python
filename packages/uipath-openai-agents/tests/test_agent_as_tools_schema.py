@@ -1,16 +1,22 @@
 """Tests for agent-as-tools sample schema extraction."""
 
+import os
 import sys
 from pathlib import Path
+
+# Set up mock environment variables for sample imports
+os.environ.setdefault("UIPATH_URL", "https://mock.uipath.com")
+os.environ.setdefault("UIPATH_ORGANIZATION_ID", "mock-org-id")
+os.environ.setdefault("UIPATH_TENANT_ID", "mock-tenant-id")
+os.environ.setdefault("UIPATH_ACCESS_TOKEN", "mock-token")
 
 # Add samples directory to path
 samples_dir = Path(__file__).parent.parent / "samples" / "agent-as-tools"
 sys.path.insert(0, str(samples_dir))
 
 from main import (  # type: ignore  # noqa: E402
-    TranslationInput,
     TranslationOutput,
-    orchestrator_agent,
+    main,
 )
 
 from uipath_openai_agents.runtime.schema import get_entrypoints_schema  # noqa: E402
@@ -18,6 +24,7 @@ from uipath_openai_agents.runtime.schema import get_entrypoints_schema  # noqa: 
 
 def test_agent_as_tools_input_schema():
     """Test that input schema uses default messages format (OpenAI Agents pattern)."""
+    orchestrator_agent = main()
     schema = get_entrypoints_schema(orchestrator_agent)
 
     # Verify input schema structure - should use default messages
@@ -41,6 +48,7 @@ def test_agent_as_tools_input_schema():
 
 def test_agent_as_tools_output_schema():
     """Test that output schema is extracted from agent's output_type."""
+    orchestrator_agent = main()
     schema = get_entrypoints_schema(orchestrator_agent)
 
     # Verify output schema structure
@@ -72,6 +80,7 @@ def test_agent_as_tools_output_schema():
 
 def test_agent_as_tools_schema_metadata():
     """Test that schema includes model metadata from agent's output_type."""
+    orchestrator_agent = main()
     schema = get_entrypoints_schema(orchestrator_agent)
 
     # Input uses default messages format (no custom title/description)
@@ -88,11 +97,6 @@ def test_agent_as_tools_schema_metadata():
 
 def test_pydantic_models_are_valid():
     """Test that the Pydantic models themselves are valid."""
-    # Test input model creation
-    input_data = TranslationInput(text="Hello", target_languages=["Spanish", "French"])
-    assert input_data.text == "Hello"
-    assert input_data.target_languages == ["Spanish", "French"]
-
     # Test output model creation
     output_data = TranslationOutput(
         original_text="Hello",
