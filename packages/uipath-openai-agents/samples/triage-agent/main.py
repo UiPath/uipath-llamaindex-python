@@ -1,6 +1,7 @@
 from agents import Agent
 from agents.models import _openai_shared
 from pydantic import BaseModel
+
 from uipath_openai_agents.chat import UiPathChatOpenAI
 
 """

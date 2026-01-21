@@ -273,10 +273,10 @@ class TestSerializeOutput:
         data = {
             "model_class": PydanticModel,
             "instance": PydanticModel(name="test", value=42),
-            "other": "data"
+            "other": "data",
         }
         result = serialize_output(data)
-        
+
         # Model class should be returned as-is
         assert result["model_class"] == PydanticModel
         # Instance should be serialized

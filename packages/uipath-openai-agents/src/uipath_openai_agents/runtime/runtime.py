@@ -219,52 +219,10 @@ class UiPathOpenAIAgentRuntime:
         return None
 
     def _prepare_agent_input(self, input: dict[str, Any] | None) -> str | list[Any]:
-        """
-        Prepare agent input from UiPath input dictionary.
-
-        Supports two input formats:
-        - {"message": "text"} → returns string for Runner.run()
-        - {"messages": [...]} → returns list of message dicts for Runner.run()
-
-        Note: When using sessions, string input is preferred as it doesn't
-        require a session_input_callback.
-
-        Args:
-            input: Input dictionary from UiPath
-
-        Returns:
-            String or list for Runner.run() input parameter
-
-        Raises:
-            ValueError: If input doesn't contain "message" or "messages" field
-        """
-        if not input:
-            raise ValueError(
-                "Input is required. Provide either 'message' (string) or 'messages' (list of message dicts)"
-            )
-
-        # Check for "messages" field (list of message dicts)
-        if "messages" in input:
-            messages = input["messages"]
-            # Ensure it's a list
-            if isinstance(messages, list):
-                return messages
-            else:
-                raise ValueError(
-                    "'messages' field must be a list of message dictionaries"
-                )
-
-        # Check for "message" field (simple string)
-        if "message" in input:
-            message = input["message"]
-            # Return as string (OpenAI Agents SDK handles string → message conversion)
-            return str(message)
-
-        # No valid field found
-        raise ValueError(
-            "Input must contain either 'message' (string) or 'messages' (list of message dicts). "
-            f"Got keys: {list(input.keys())}"
-        )
+        """Prepare agent input from UiPath input dictionary."""
+        if input and "messages" in input and isinstance(input["messages"], list):
+            return input.get("messages", [])
+        return input.get("message", "") if input else ""
 
     def _serialize_message(self, message: Any) -> dict[str, Any]:
         """
