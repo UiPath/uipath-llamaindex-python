@@ -19,14 +19,8 @@ from uipath_openai_agents.runtime.errors import (  # noqa: E402
     UiPathOpenAIAgentsErrorCode,
     UiPathOpenAIAgentsRuntimeError,
 )
-from uipath_openai_agents.runtime.runtime import (  # noqa: E402
-    UiPathOpenAIAgentRuntime,
-)
 from uipath_openai_agents.runtime.schema import (  # noqa: E402
     get_entrypoints_schema,
-)
-from uipath_openai_agents.runtime.storage import (  # noqa: E402
-    SqliteAgentStorage,
 )
 
 
@@ -65,75 +59,6 @@ def test_schema_extraction_with_new_serialization():
 
     # Verify title from output_type
     assert schema["output"]["title"] == "TranslationOutput"
-
-
-async def test_runtime_initialization_with_storage():
-    """Test that runtime can be initialized with storage."""
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        storage_path = f"{tmpdir}/test.db"
-
-        # Create storage
-        storage = SqliteAgentStorage(storage_path)
-        await storage.setup()
-
-        # Create runtime with storage
-        runtime = UiPathOpenAIAgentRuntime(
-            agent=orchestrator_agent,
-            runtime_id="test_runtime",
-            entrypoint="test",
-            storage_path=storage_path,
-            storage=storage,
-        )
-
-        # Verify runtime initialized correctly
-        assert runtime.storage is not None
-        assert runtime.runtime_id == "test_runtime"
-
-        # Test schema generation
-        schema = await runtime.get_schema()
-        assert schema.type == "agent"
-        assert "message" in schema.input["properties"]
-        assert "original_text" in schema.output["properties"]
-
-        await storage.dispose()
-
-
-async def test_storage_operations():
-    """Test storage save/load operations."""
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        storage_path = f"{tmpdir}/test_storage.db"
-
-        storage = SqliteAgentStorage(storage_path)
-        await storage.setup()
-
-        # Test state save/load
-        runtime_id = "test_runtime_123"
-        test_state = {"step": "translation", "progress": 50}
-
-        await storage.save_state(runtime_id, test_state)
-        loaded_state = await storage.load_state(runtime_id)
-
-        assert loaded_state == test_state
-
-        # Test key-value operations
-        await storage.set_value(runtime_id, "test_namespace", "key1", "value1")
-        value = await storage.get_value(runtime_id, "test_namespace", "key1")
-
-        assert value == "value1"
-
-        # Test dict value
-        await storage.set_value(
-            runtime_id, "test_namespace", "dict_key", {"nested": "value"}
-        )
-        dict_value = await storage.get_value(runtime_id, "test_namespace", "dict_key")
-
-        assert dict_value == {"nested": "value"}
-
-        await storage.dispose()
 
 
 def test_pydantic_models():

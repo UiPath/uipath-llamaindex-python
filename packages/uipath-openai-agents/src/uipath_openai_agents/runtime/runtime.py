@@ -8,7 +8,6 @@ from uuid import uuid4
 from agents import (
     Agent,
     Runner,
-    SQLiteSession,
 )
 from uipath.runtime import (
     UiPathExecuteOptions,
@@ -27,7 +26,6 @@ from uipath.runtime.schema import UiPathRuntimeSchema
 from ._serialize import serialize_output
 from .errors import UiPathOpenAIAgentsErrorCode, UiPathOpenAIAgentsRuntimeError
 from .schema import get_agent_schema, get_entrypoints_schema
-from .storage import SqliteAgentStorage
 
 
 class UiPathOpenAIAgentRuntime:
@@ -40,8 +38,6 @@ class UiPathOpenAIAgentRuntime:
         agent: Agent,
         runtime_id: str | None = None,
         entrypoint: str | None = None,
-        storage_path: str | None = None,
-        storage: SqliteAgentStorage | None = None,
     ):
         """
         Initialize the runtime.
@@ -50,14 +46,10 @@ class UiPathOpenAIAgentRuntime:
             agent: The OpenAI Agent to execute
             runtime_id: Unique identifier for this runtime instance
             entrypoint: Optional entrypoint name (for schema generation)
-            storage_path: Path to SQLite database for session persistence
-            storage: Optional storage instance for state persistence
         """
         self.agent: Agent = agent
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
-        self.storage_path: str | None = storage_path
-        self.storage: SqliteAgentStorage | None = storage
 
         # Configure OpenAI Agents SDK to use Responses API
         # UiPath supports both APIs via X-UiPath-LlmGateway-ApiFlavor header
@@ -204,54 +196,27 @@ class UiPathOpenAIAgentRuntime:
             Runtime events if stream_events=True, then final result
         """
         agent_input = self._prepare_agent_input(input)
-        is_resuming = bool(options and options.resume)
-
-        # Create session for state persistence (local to this run)
-        # SQLiteSession automatically loads existing data from the database when created
-        session: SQLiteSession | None = None
-        if self.storage_path:
-            session = SQLiteSession(self.runtime_id, self.storage_path)
 
         # Run the agent with streaming if events requested
-        try:
-            if stream_events:
-                # Use streaming for events
-                async for event_or_result in self._run_agent_streamed(
-                    agent_input, options, stream_events, session
-                ):
-                    yield event_or_result
-            else:
-                # Use non-streaming for simple execution
-                result = await Runner.run(
-                    starting_agent=self.agent,
-                    input=agent_input,
-                    session=session,
-                )
-                yield self._create_success_result(result.final_output)
-
-        except Exception:
-            # Clean up session on error
-            if session and self.storage_path and not is_resuming:
-                # Delete incomplete session
-                try:
-                    import os
-
-                    if os.path.exists(self.storage_path):
-                        os.remove(self.storage_path)
-                except Exception:
-                    pass  # Best effort cleanup
-            raise
-        finally:
-            # Always close session after run completes with proper WAL checkpoint
-            if session:
-                self._close_session_with_checkpoint(session)
+        if stream_events:
+            # Use streaming for events
+            async for event_or_result in self._run_agent_streamed(
+                agent_input, options, stream_events
+            ):
+                yield event_or_result
+        else:
+            # Use non-streaming for simple execution
+            result = await Runner.run(
+                starting_agent=self.agent,
+                input=agent_input,
+            )
+            yield self._create_success_result(result.final_output)
 
     async def _run_agent_streamed(
         self,
         agent_input: str | list[Any],
         options: UiPathExecuteOptions | UiPathStreamOptions | None,
         stream_events: bool,
-        session: SQLiteSession | None,
     ) -> AsyncGenerator[UiPathRuntimeEvent | UiPathRuntimeResult, None]:
         """
         Run agent using streaming API to enable event streaming.
@@ -269,7 +234,6 @@ class UiPathOpenAIAgentRuntime:
         result = Runner.run_streamed(
             starting_agent=self.agent,
             input=agent_input,
-            session=session,
         )
 
         # Stream events from the agent
@@ -485,45 +449,6 @@ class UiPathOpenAIAgentRuntime:
             graph=get_agent_schema(self.agent),
         )
 
-    def _close_session_with_checkpoint(self, session: SQLiteSession) -> None:
-        """Close SQLite session with WAL checkpoint to release file locks.
-
-        OpenAI SDK uses sync sqlite3 which doesn't release file locks on Windows
-        without explicit WAL checkpoint. This is especially important for cleanup.
-
-        Args:
-            session: The SQLiteSession to close
-        """
-        try:
-            # Get the underlying connection
-            conn = session._get_connection()
-
-            # Commit any pending transactions
-            try:
-                conn.commit()
-            except Exception:
-                pass  # Best effort
-
-            # Force WAL checkpoint to release shared memory files
-            # This is especially important on Windows
-            try:
-                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-                conn.commit()
-            except Exception:
-                pass  # Best effort
-
-        except Exception:
-            pass  # Best effort cleanup
-
-        finally:
-            # Always call the session's close method
-            try:
-                session.close()
-            except Exception:
-                pass  # Best effort
-
     async def dispose(self) -> None:
         """Cleanup runtime resources."""
-        # Sessions are closed immediately after each run in _run_agent()
-        # Storage is shared across runtimes and managed by the factory
         pass
