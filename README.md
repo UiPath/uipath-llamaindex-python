@@ -1,98 +1,51 @@
-# UiPath AI Agent Runtimes for Python
+# UiPath Agents Runtime Integrations
 
-A collection of Python SDKs that enable developers to build and deploy AI agents to the UiPath Cloud Platform using different agent frameworks. These packages provide programmatic interaction with UiPath Cloud Platform services and human-in-the-loop (HITL) semantics through Action Center integration.
+A collection of Python SDKs that enable developers to build and deploy agents to the UiPath Cloud Platform using different agent frameworks. These packages provide programmatic interaction with UiPath Cloud Platform services and human-in-the-loop (HITL) semantics through Action Center integration.
 
 All packages are extensions to the [UiPath Python SDK](https://github.com/UiPath/uipath-python) and implement the [UiPath Runtime Protocol](https://github.com/UiPath/uipath-runtime-python).
 
-## Available Packages
+## Integrations
 
-### UiPath LlamaIndex
+### LlamaIndex
 
 [![PyPI - Version](https://img.shields.io/pypi/v/uipath-llamaindex)](https://pypi.org/project/uipath-llamaindex/)
 [![PyPI downloads](https://img.shields.io/pypi/dm/uipath-llamaindex.svg)](https://pypi.org/project/uipath-llamaindex/)
 
-Build agents using the [LlamaIndex](https://www.llamaindex.ai/) framework with support for RAG, multiple LLM providers, and state persistence.
+Build agents using the [LlamaIndex SDK](https://www.llamaindex.ai/):
 
-- **Installation**: `pip install uipath-llamaindex`
-- **Documentation**: [packages/uipath-llamaindex/](packages/uipath-llamaindex/)
-- **Samples**: [packages/uipath-llamaindex/samples/](packages/uipath-llamaindex/samples/)
+- [Docs](https://uipath.github.io/uipath-python/llamaindex/quick_start/)
+- [Samples](packages/uipath-llamaindex/samples/)
 
-Check out these [sample projects](https://github.com/UiPath/uipath-integrations-python/tree/main/packages/uipath-llamaindex/samples) to see the SDK in action.
+### OpenAI Agents
 
-## Requirements
+[![PyPI - Version](https://img.shields.io/pypi/v/uipath-openai-agents)](https://pypi.org/project/uipath-openai-agents/)
+[![PyPI downloads](https://img.shields.io/pypi/dm/uipath-openai-agents.svg)](https://pypi.org/project/uipath-openai-agents/)
 
--   Python 3.11 or higher
--   UiPath Automation Cloud account
+Build agents using the [OpenAI Agents SDK](https://github.com/openai/openai-agents-python):
 
-## Quick Start
+- [Docs](https://uipath.github.io/uipath-python/openai-agents/quick_start/)
+- [Samples](packages/uipath-openai-agents/samples/)
 
-Choose the agent framework that best fits your needs and follow the installation instructions for that package:
 
-- **LlamaIndex**: For RAG applications and stateful workflows → See [LlamaIndex documentation](packages/uipath-llamaindex/)
-- **OpenAI Agents**: For multi-agent systems → See [OpenAI Agents documentation](packages/uipath-openai-agents/)
+## Structure
 
-## Documentation
-
-- [Quick Start Guide](docs/quick_start.md)
-- [LlamaIndex Package Documentation](packages/uipath-llamaindex/)
-- [OpenAI Agents Package Documentation](packages/uipath-openai-agents/)
-- [Sample Projects](packages/uipath-llamaindex/samples/)
-
-## Monorepo Structure
-
-This repository is organized as a UV workspace with multiple packages:
+This repository is organized as a monorepo with multiple packages:
 
 ```
-uipath-llamaindex-python/
-├── packages/
-│   ├── uipath-llamaindex/      # LlamaIndex runtime
-│   └── uipath-openai-agents/   # OpenAI Agents runtime
-├── docs/                        # Shared documentation
-└── pyproject.toml              # Workspace configuration
+uipath-integrations-python/
+└── packages/
+    ├── uipath-llamaindex/      # LlamaIndex runtime
+    └── uipath-openai-agents/   # OpenAI Agents runtime
 ```
 
 ## Development
 
-### Setting Up a Development Environment
-
-This repository uses [UV](https://docs.astral.sh/uv/) for workspace management:
-
-```bash
-# Install UV
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone the repository
-git clone https://github.com/UiPath/uipath-llamaindex-python.git
-cd uipath-llamaindex-python
-
-# Install all dependencies
-uv sync --all-extras
-
-# Run tests for all packages
-uv run pytest
-
-# Build a specific package
-uv build --package uipath-llamaindex
-uv build --package uipath-openai-agents
-```
-
-### Developer Tools
+### Tools
 
 Check out [uipath-dev](https://github.com/uipath/uipath-dev-python) - an interactive terminal application for building, testing, and debugging UiPath Python runtimes, agents, and automation scripts.
 
-### Contributing
+### Contributions
 
-Please read our [contribution guidelines](https://github.com/UiPath/uipath-integrations-python/packages/uipath-llamaindex/blob/main/CONTRIBUTING.md) before submitting a pull request.
+Please read our [contribution guidelines](https://github.com/UiPath/uipath-integrations-python/blob/main/CONTRIBUTING.md) before submitting a pull request.
 
-## Special Thanks
 
-A huge thank-you to the open-source community and the maintainers of the libraries that make this project possible:
-
-- [LlamaIndex](https://github.com/run-llama/llama_index) for providing a powerful framework for building stateful LLM applications
-- [OpenAI](https://github.com/openai) for the Agents framework and APIs
-- [OpenInference](https://github.com/Arize-ai/openinference) for observability and instrumentation support
-- [Pydantic](https://github.com/pydantic/pydantic) for reliable, typed configuration and validation
-
-## License
-
-See [LICENSE](LICENSE) for details.
