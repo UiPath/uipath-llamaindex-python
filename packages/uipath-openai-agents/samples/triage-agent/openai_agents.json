@@ -1,5 +1,5 @@
 {
   "agents": {
-    "agent": "main.py:triage_agent"
+    "agent": "main.py:main"
   }
 }

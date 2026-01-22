@@ -1,33 +1,32 @@
 """Integration test demonstrating new runtime features."""
 
+import os
 import sys
 from pathlib import Path
 
 import pytest
+
+# Set up mock environment variables for sample imports
+os.environ.setdefault("UIPATH_URL", "https://mock.uipath.com")
+os.environ.setdefault("UIPATH_ORGANIZATION_ID", "mock-org-id")
+os.environ.setdefault("UIPATH_TENANT_ID", "mock-tenant-id")
+os.environ.setdefault("UIPATH_ACCESS_TOKEN", "mock-token")
 
 # Add samples directory to path
 samples_dir = Path(__file__).parent.parent / "samples" / "agent-as-tools"
 sys.path.insert(0, str(samples_dir))
 
 from main import (  # type: ignore  # noqa: E402
-    TranslationInput,
     TranslationOutput,
     main,
-    orchestrator_agent,
 )
 
 from uipath_openai_agents.runtime.errors import (  # noqa: E402
     UiPathOpenAIAgentsErrorCode,
     UiPathOpenAIAgentsRuntimeError,
 )
-from uipath_openai_agents.runtime.runtime import (  # noqa: E402
-    UiPathOpenAIAgentRuntime,
-)
 from uipath_openai_agents.runtime.schema import (  # noqa: E402
     get_entrypoints_schema,
-)
-from uipath_openai_agents.runtime.storage import (  # noqa: E402
-    SqliteAgentStorage,
 )
 
 
@@ -52,7 +51,8 @@ def test_error_handling():
 
 def test_schema_extraction_with_new_serialization():
     """Test that schema extraction works with the serialization improvements."""
-    schema = get_entrypoints_schema(orchestrator_agent, main)
+    orchestrator_agent = main()
+    schema = get_entrypoints_schema(orchestrator_agent)
 
     # Verify input schema (messages format)
     assert "input" in schema
@@ -68,87 +68,8 @@ def test_schema_extraction_with_new_serialization():
     assert schema["output"]["title"] == "TranslationOutput"
 
 
-async def test_runtime_initialization_with_storage():
-    """Test that runtime can be initialized with storage."""
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        storage_path = f"{tmpdir}/test.db"
-
-        # Create storage
-        storage = SqliteAgentStorage(storage_path)
-        await storage.setup()
-
-        # Create runtime with storage
-        runtime = UiPathOpenAIAgentRuntime(
-            agent=orchestrator_agent,
-            runtime_id="test_runtime",
-            entrypoint="test",
-            storage_path=storage_path,
-            storage=storage,
-            loaded_object=main,
-        )
-
-        # Verify runtime initialized correctly
-        assert runtime.storage is not None
-        assert runtime.runtime_id == "test_runtime"
-        assert runtime.loaded_object == main
-
-        # Test schema generation
-        schema = await runtime.get_schema()
-        assert schema.type == "agent"
-        assert "message" in schema.input["properties"]
-        assert "original_text" in schema.output["properties"]
-
-        await storage.dispose()
-
-
-async def test_storage_operations():
-    """Test storage save/load operations."""
-    import tempfile
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        storage_path = f"{tmpdir}/test_storage.db"
-
-        storage = SqliteAgentStorage(storage_path)
-        await storage.setup()
-
-        # Test state save/load
-        runtime_id = "test_runtime_123"
-        test_state = {"step": "translation", "progress": 50}
-
-        await storage.save_state(runtime_id, test_state)
-        loaded_state = await storage.load_state(runtime_id)
-
-        assert loaded_state == test_state
-
-        # Test key-value operations
-        await storage.set_value(runtime_id, "test_namespace", "key1", "value1")
-        value = await storage.get_value(runtime_id, "test_namespace", "key1")
-
-        assert value == "value1"
-
-        # Test dict value
-        await storage.set_value(
-            runtime_id, "test_namespace", "dict_key", {"nested": "value"}
-        )
-        dict_value = await storage.get_value(runtime_id, "test_namespace", "dict_key")
-
-        assert dict_value == {"nested": "value"}
-
-        await storage.dispose()
-
-
 def test_pydantic_models():
     """Test that Pydantic models work correctly with serialization."""
-    # Create input model
-    input_data = TranslationInput(
-        text="Hello, world!", target_languages=["Spanish", "French"]
-    )
-
-    assert input_data.text == "Hello, world!"
-    assert len(input_data.target_languages) == 2
-
     # Create output model
     output_data = TranslationOutput(
         original_text="Hello, world!",

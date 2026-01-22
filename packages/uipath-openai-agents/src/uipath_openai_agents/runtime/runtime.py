@@ -1,15 +1,10 @@
 """Runtime class for executing OpenAI Agents within the UiPath framework."""
 
 import json
-import os
 from typing import Any, AsyncGenerator
 from uuid import uuid4
 
-from agents import (
-    Agent,
-    Runner,
-    SQLiteSession,
-)
+from agents import Agent, Runner
 from uipath.runtime import (
     UiPathExecuteOptions,
     UiPathRuntimeResult,
@@ -27,7 +22,6 @@ from uipath.runtime.schema import UiPathRuntimeSchema
 from ._serialize import serialize_output
 from .errors import UiPathOpenAIAgentsErrorCode, UiPathOpenAIAgentsRuntimeError
 from .schema import get_agent_schema, get_entrypoints_schema
-from .storage import SqliteAgentStorage
 
 
 class UiPathOpenAIAgentRuntime:
@@ -40,9 +34,6 @@ class UiPathOpenAIAgentRuntime:
         agent: Agent,
         runtime_id: str | None = None,
         entrypoint: str | None = None,
-        storage_path: str | None = None,
-        loaded_object: Any | None = None,
-        storage: SqliteAgentStorage | None = None,
     ):
         """
         Initialize the runtime.
@@ -51,86 +42,10 @@ class UiPathOpenAIAgentRuntime:
             agent: The OpenAI Agent to execute
             runtime_id: Unique identifier for this runtime instance
             entrypoint: Optional entrypoint name (for schema generation)
-            storage_path: Path to SQLite database for session persistence
-            loaded_object: Original loaded object (for schema inference)
-            storage: Optional storage instance for state persistence
         """
         self.agent: Agent = agent
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
-        self.storage_path: str | None = storage_path
-        self.loaded_object: Any | None = loaded_object
-        self.storage: SqliteAgentStorage | None = storage
-
-        # Configure OpenAI Agents SDK to use Responses API
-        # UiPath supports both APIs via X-UiPath-LlmGateway-ApiFlavor header
-        # Using responses API for enhanced agent capabilities (conversation state, reasoning)
-        from agents import set_default_openai_api
-
-        set_default_openai_api("responses")
-
-        # Inject UiPath OpenAI client if UiPath credentials are available
-        self._setup_uipath_client()
-
-    def _setup_uipath_client(self) -> None:
-        """Set up UiPath OpenAI client for agents to use UiPath gateway.
-
-        This injects the UiPath OpenAI client into the OpenAI Agents SDK
-        so all agents use the UiPath LLM Gateway instead of direct OpenAI.
-
-        The model is automatically extracted from the agent's `model` parameter.
-        If not specified in Agent(), the SDK uses agents.models.get_default_model().
-
-        If UiPath credentials are not available, falls back to default OpenAI client.
-        """
-        try:
-            # Import here to avoid circular dependency
-            from uipath_openai_agents.chat import UiPathChatOpenAI
-
-            # Check if UiPath credentials are available
-            org_id = os.getenv("UIPATH_ORGANIZATION_ID")
-            tenant_id = os.getenv("UIPATH_TENANT_ID")
-            token = os.getenv("UIPATH_ACCESS_TOKEN")
-            uipath_url = os.getenv("UIPATH_URL")
-
-            if org_id and tenant_id and token and uipath_url:
-                # Extract model from agent definition
-                from agents.models import get_default_model
-
-                from uipath_openai_agents.chat.supported_models import OpenAIModels
-
-                if hasattr(self.agent, "model") and self.agent.model:
-                    model_name = str(self.agent.model)
-                else:
-                    model_name = get_default_model()
-
-                # Normalize generic model names to UiPath-specific versions
-                model_name = OpenAIModels.normalize_model_name(model_name)
-
-                # Update agent's model to normalized version so SDK sends correct model in body
-                self.agent.model = model_name
-
-                # Create UiPath OpenAI client
-                uipath_client = UiPathChatOpenAI(
-                    token=token,
-                    org_id=org_id,
-                    tenant_id=tenant_id,
-                    model_name=model_name,
-                )
-
-                # Inject into OpenAI Agents SDK
-                # This makes all agents use UiPath gateway
-                from agents.models import _openai_shared
-
-                _openai_shared.set_default_openai_client(uipath_client.async_client)
-
-        except ImportError:
-            # UiPath chat module not available, skip injection
-            pass
-        except Exception:
-            # If injection fails, fall back to default OpenAI client
-            # Agents will use OPENAI_API_KEY if set
-            pass
 
     async def execute(
         self,
@@ -207,54 +122,27 @@ class UiPathOpenAIAgentRuntime:
             Runtime events if stream_events=True, then final result
         """
         agent_input = self._prepare_agent_input(input)
-        is_resuming = bool(options and options.resume)
-
-        # Create session for state persistence (local to this run)
-        # SQLiteSession automatically loads existing data from the database when created
-        session: SQLiteSession | None = None
-        if self.storage_path:
-            session = SQLiteSession(self.runtime_id, self.storage_path)
 
         # Run the agent with streaming if events requested
-        try:
-            if stream_events:
-                # Use streaming for events
-                async for event_or_result in self._run_agent_streamed(
-                    agent_input, options, stream_events, session
-                ):
-                    yield event_or_result
-            else:
-                # Use non-streaming for simple execution
-                result = await Runner.run(
-                    starting_agent=self.agent,
-                    input=agent_input,
-                    session=session,
-                )
-                yield self._create_success_result(result.final_output)
-
-        except Exception:
-            # Clean up session on error
-            if session and self.storage_path and not is_resuming:
-                # Delete incomplete session
-                try:
-                    import os
-
-                    if os.path.exists(self.storage_path):
-                        os.remove(self.storage_path)
-                except Exception:
-                    pass  # Best effort cleanup
-            raise
-        finally:
-            # Always close session after run completes with proper WAL checkpoint
-            if session:
-                self._close_session_with_checkpoint(session)
+        if stream_events:
+            # Use streaming for events
+            async for event_or_result in self._run_agent_streamed(
+                agent_input, options, stream_events
+            ):
+                yield event_or_result
+        else:
+            # Use non-streaming for simple execution
+            result = await Runner.run(
+                starting_agent=self.agent,
+                input=agent_input,
+            )
+            yield self._create_success_result(result.final_output)
 
     async def _run_agent_streamed(
         self,
         agent_input: str | list[Any],
         options: UiPathExecuteOptions | UiPathStreamOptions | None,
         stream_events: bool,
-        session: SQLiteSession | None,
     ) -> AsyncGenerator[UiPathRuntimeEvent | UiPathRuntimeResult, None]:
         """
         Run agent using streaming API to enable event streaming.
@@ -272,7 +160,6 @@ class UiPathOpenAIAgentRuntime:
         result = Runner.run_streamed(
             starting_agent=self.agent,
             input=agent_input,
-            session=session,
         )
 
         # Stream events from the agent
@@ -332,52 +219,10 @@ class UiPathOpenAIAgentRuntime:
         return None
 
     def _prepare_agent_input(self, input: dict[str, Any] | None) -> str | list[Any]:
-        """
-        Prepare agent input from UiPath input dictionary.
-
-        Supports two input formats:
-        - {"message": "text"} → returns string for Runner.run()
-        - {"messages": [...]} → returns list of message dicts for Runner.run()
-
-        Note: When using sessions, string input is preferred as it doesn't
-        require a session_input_callback.
-
-        Args:
-            input: Input dictionary from UiPath
-
-        Returns:
-            String or list for Runner.run() input parameter
-
-        Raises:
-            ValueError: If input doesn't contain "message" or "messages" field
-        """
-        if not input:
-            raise ValueError(
-                "Input is required. Provide either 'message' (string) or 'messages' (list of message dicts)"
-            )
-
-        # Check for "messages" field (list of message dicts)
-        if "messages" in input:
-            messages = input["messages"]
-            # Ensure it's a list
-            if isinstance(messages, list):
-                return messages
-            else:
-                raise ValueError(
-                    "'messages' field must be a list of message dictionaries"
-                )
-
-        # Check for "message" field (simple string)
-        if "message" in input:
-            message = input["message"]
-            # Return as string (OpenAI Agents SDK handles string → message conversion)
-            return str(message)
-
-        # No valid field found
-        raise ValueError(
-            "Input must contain either 'message' (string) or 'messages' (list of message dicts). "
-            f"Got keys: {list(input.keys())}"
-        )
+        """Prepare agent input from UiPath input dictionary."""
+        if input and "messages" in input and isinstance(input["messages"], list):
+            return input.get("messages", [])
+        return input.get("message", "") if input else ""
 
     def _serialize_message(self, message: Any) -> dict[str, Any]:
         """
@@ -477,7 +322,7 @@ class UiPathOpenAIAgentRuntime:
         Returns:
             UiPathRuntimeSchema with input/output schemas and graph structure
         """
-        entrypoints_schema = get_entrypoints_schema(self.agent, self.loaded_object)
+        entrypoints_schema = get_entrypoints_schema(self.agent)
 
         return UiPathRuntimeSchema(
             filePath=self.entrypoint,
@@ -488,45 +333,6 @@ class UiPathOpenAIAgentRuntime:
             graph=get_agent_schema(self.agent),
         )
 
-    def _close_session_with_checkpoint(self, session: SQLiteSession) -> None:
-        """Close SQLite session with WAL checkpoint to release file locks.
-
-        OpenAI SDK uses sync sqlite3 which doesn't release file locks on Windows
-        without explicit WAL checkpoint. This is especially important for cleanup.
-
-        Args:
-            session: The SQLiteSession to close
-        """
-        try:
-            # Get the underlying connection
-            conn = session._get_connection()
-
-            # Commit any pending transactions
-            try:
-                conn.commit()
-            except Exception:
-                pass  # Best effort
-
-            # Force WAL checkpoint to release shared memory files
-            # This is especially important on Windows
-            try:
-                conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-                conn.commit()
-            except Exception:
-                pass  # Best effort
-
-        except Exception:
-            pass  # Best effort cleanup
-
-        finally:
-            # Always call the session's close method
-            try:
-                session.close()
-            except Exception:
-                pass  # Best effort
-
     async def dispose(self) -> None:
         """Cleanup runtime resources."""
-        # Sessions are closed immediately after each run in _run_agent()
-        # Storage is shared across runtimes and managed by the factory
         pass

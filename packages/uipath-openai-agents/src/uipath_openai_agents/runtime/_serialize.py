@@ -16,12 +16,12 @@ def serialize_output(output: Any) -> Any:
     if output is None:
         return {}
 
-    # Handle Pydantic models
-    if hasattr(output, "model_dump"):
+    # Handle Pydantic models (but not Pydantic model classes)
+    if hasattr(output, "model_dump") and not isinstance(output, type):
         return serialize_output(output.model_dump(by_alias=True))
-    elif hasattr(output, "dict"):
+    elif hasattr(output, "dict") and not isinstance(output, type):
         return serialize_output(output.dict())
-    elif hasattr(output, "to_dict"):
+    elif hasattr(output, "to_dict") and not isinstance(output, type):
         return serialize_output(output.to_dict())
 
     # Handle dataclasses (but not dataclass types)
