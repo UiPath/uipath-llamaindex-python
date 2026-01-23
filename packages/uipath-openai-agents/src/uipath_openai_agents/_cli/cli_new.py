@@ -39,8 +39,7 @@ version = "0.0.1"
 description = "{project_name}"
 authors = [{{ name = "John Doe", email = "john.doe@myemail.com" }}]
 dependencies = [
-    "uipath-openai-agents>=0.1.0",
-    "openai>=1.0.0"
+    "uipath-openai-agents>=0.0.1, <0.1.0",
 ]
 requires-python = ">=3.11"
 """
@@ -63,9 +62,6 @@ def openai_agents_new_middleware(name: str) -> MiddlewareResult:
             console.success("Created 'AGENTS.md' file.")
             generate_pyproject(directory, name)
             console.success("Created 'pyproject.toml' file.")
-            console.config(
-                f""" Please ensure to define {click.style("OPENAI_API_KEY", fg="bright_yellow")} in your .env file. """
-            )
             init_command = """uipath init"""
             run_command = """uipath run agent '{"message": "What is the weather in San Francisco?"}'"""
             console.hint(
