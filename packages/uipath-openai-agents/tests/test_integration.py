@@ -56,7 +56,7 @@ def test_schema_extraction_with_new_serialization():
 
     # Verify input schema (messages format)
     assert "input" in schema
-    assert "message" in schema["input"]["properties"]
+    assert "messages" in schema["input"]["properties"]
 
     # Verify output schema (from agent's output_type)
     assert "output" in schema

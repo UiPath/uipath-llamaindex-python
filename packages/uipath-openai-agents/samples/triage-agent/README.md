@@ -29,13 +29,13 @@ In this pattern:
 
 ```bash
 # Spanish message
-uipath run main '{"message": "Hola, ¿cómo estás?"}'
+uipath run main '{"messages": "Hola, ¿cómo estás?"}'
 
 # French message
-uipath run main '{"message": "Bonjour, comment allez-vous?"}'
+uipath run main '{"messages": "Bonjour, comment allez-vous?"}'
 
 # English message
-uipath run main '{"message": "Hello, how are you?"}'
+uipath run main '{"messages": "Hello, how are you?"}'
 ```
 
 ### Configure in openai_agents.json
@@ -53,7 +53,7 @@ uipath run main '{"message": "Hello, how are you?"}'
 ### Input
 ```python
 class Input(BaseModel):
-    message: str  # User message in any language
+    messages: str  # User message in any language
 ```
 
 ### Output
@@ -66,7 +66,7 @@ class Output(BaseModel):
 ## Example Execution
 
 ```bash
-$ uipath run main '{"message": "Hola, ¿cómo estás?"}'
+$ uipath run main '{"messages": "Hola, ¿cómo estás?"}'
 
 Processing message: Hola, ¿cómo estás?
 ¡Hola! Estoy muy bien, gracias. ¿Y tú, cómo estás?

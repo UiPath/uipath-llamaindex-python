@@ -63,7 +63,7 @@ def openai_agents_new_middleware(name: str) -> MiddlewareResult:
             generate_pyproject(directory, name)
             console.success("Created 'pyproject.toml' file.")
             init_command = """uipath init"""
-            run_command = """uipath run agent '{"message": "What is the weather in San Francisco?"}'"""
+            run_command = """uipath run agent '{"messages": "What is the weather in San Francisco?"}'"""
             console.hint(
                 f""" Initialize project: {click.style(init_command, fg="cyan")}"""
             )

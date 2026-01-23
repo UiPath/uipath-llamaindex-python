@@ -63,7 +63,7 @@ def get_entrypoints_schema(agent: Agent) -> dict[str, Any]:
     schema["input"] = {
         "type": "object",
         "properties": {
-            "message": {
+            "messages": {
                 "anyOf": [
                     {"type": "string"},
                     {
@@ -71,11 +71,11 @@ def get_entrypoints_schema(agent: Agent) -> dict[str, Any]:
                         "items": {"type": "object"},
                     },
                 ],
-                "title": "Message",
-                "description": "User message(s) to send to the agent",
+                "title": "Messages",
+                "description": "User messages to send to the agent",
             }
         },
-        "required": ["message"],
+        "required": ["messages"],
     }
 
     # Extract output schema - Agent's output_type (native OpenAI Agents pattern)
