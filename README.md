@@ -13,6 +13,7 @@ All packages are extensions to the [UiPath Python SDK](https://github.com/UiPath
 
 Build agents using the [LlamaIndex SDK](https://www.llamaindex.ai/):
 
+- [README](packages/uipath-llamaindex/README.md)
 - [Docs](https://uipath.github.io/uipath-python/llamaindex/quick_start/)
 - [Samples](packages/uipath-llamaindex/samples/)
 
@@ -23,6 +24,7 @@ Build agents using the [LlamaIndex SDK](https://www.llamaindex.ai/):
 
 Build agents using the [OpenAI Agents SDK](https://github.com/openai/openai-agents-python):
 
+- [README](packages/uipath-openai-agents/README.md)
 - [Docs](https://uipath.github.io/uipath-python/openai-agents/quick_start/)
 - [Samples](packages/uipath-openai-agents/samples/)
 
