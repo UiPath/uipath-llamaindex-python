@@ -42,6 +42,14 @@ UIPATH_ACCESS_TOKEN=YOUR_TOKEN_HERE
 
 The SDK provides a command-line interface for creating, packaging, and deploying OpenAI Agents:
 
+### Authentication
+
+```bash
+uipath auth
+```
+
+This command opens a browser for authentication and creates/updates your `.env` file with the proper credentials.
+
 ### Initialize a Project
 
 ```bash
@@ -51,14 +59,6 @@ uipath init
 Running `uipath init` will process the agent definitions in the `openai_agents.json` file and create the corresponding `entry-points.json` file needed for deployment.
 
 For more details on the configuration format, see the [UiPath configuration specifications](https://github.com/UiPath/uipath-python/blob/main/specs/README.md).
-
-### Authentication
-
-```bash
-uipath auth
-```
-
-This command opens a browser for authentication and creates/updates your `.env` file with the proper credentials.
 
 ### Debug a Project
 
