@@ -12,7 +12,9 @@ from uipath.platform.resume_triggers import UiPathResumeTriggerHandler
 from uipath.runtime import (
     UiPathResumableRuntime,
     UiPathRuntimeContext,
+    UiPathRuntimeFactorySettings,
     UiPathRuntimeProtocol,
+    UiPathRuntimeStorageProtocol,
 )
 from uipath.runtime.errors import UiPathErrorCategory
 from workflows import Workflow
@@ -211,27 +213,20 @@ class UiPathLlamaIndexRuntimeFactory:
             return []
         return config.entrypoints
 
-    async def discover_runtimes(self) -> list[UiPathRuntimeProtocol]:
+    async def get_storage(self) -> UiPathRuntimeStorageProtocol | None:
         """
-        Discover runtime instances for all entrypoints.
+        Get the shared storage instance.
+        """
+        return await self._get_storage()
+
+    async def get_settings(self) -> UiPathRuntimeFactorySettings | None:
+        """
+        Get the factory settings.
 
         Returns:
-            List of LlamaIndexRuntime instances, one per entrypoint
+            Factory settings
         """
-        entrypoints = self.discover_entrypoints()
-
-        runtimes: list[UiPathRuntimeProtocol] = []
-        for entrypoint in entrypoints:
-            workflow = await self._resolve_workflow(entrypoint)
-
-            runtime = await self._create_runtime_instance(
-                workflow=workflow,
-                runtime_id=entrypoint,
-                entrypoint=entrypoint,
-            )
-            runtimes.append(runtime)
-
-        return runtimes
+        return None
 
     async def _create_runtime_instance(
         self,
