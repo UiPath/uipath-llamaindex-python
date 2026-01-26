@@ -38,8 +38,11 @@ jobs:
 
       - name: Detect changed packages
         id: detect
-        run: |
-          python .github/scripts/detect_changed_packages.py
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.after }}
+        run: python .github/scripts/detect_changed_packages.py
 
   discover-testcases:
     needs: detect-changed-packages

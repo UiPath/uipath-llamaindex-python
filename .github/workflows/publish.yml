@@ -31,8 +31,11 @@ jobs:
 
       - name: Detect changed packages
         id: detect
-        run: |
-          python .github/scripts/detect_changed_packages.py
+        env:
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.before }}
+          HEAD_SHA: ${{ github.event.after }}
+        run: python .github/scripts/detect_changed_packages.py
 
   build:
     name: Build ${{ matrix.package }}
