@@ -219,10 +219,20 @@ class UiPathOpenAIAgentRuntime:
         return None
 
     def _prepare_agent_input(self, input: dict[str, Any] | None) -> str | list[Any]:
-        """Prepare agent input from UiPath input dictionary."""
-        if input and "messages" in input and isinstance(input["messages"], list):
-            return input.get("messages", [])
-        return input.get("message", "") if input else ""
+        """
+        Prepare agent input from UiPath input dictionary.
+
+        """
+        if not input:
+            return ""
+
+        messages = input.get("messages", "")
+
+        if isinstance(messages, (str, list)):
+            return messages
+
+        # Fallback to empty string for unexpected types
+        return ""
 
     def _serialize_message(self, message: Any) -> dict[str, Any]:
         """

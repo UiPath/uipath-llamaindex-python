@@ -106,7 +106,7 @@ Generate your first UiPath OpenAI agent:
 ✓  Created 'pyproject.toml' file.
 🔧  Please ensure to define OPENAI_API_KEY in your .env file.
 💡  Initialize project: uipath init
-💡  Run agent: uipath run agent '{"message": "Hello"}'
+💡  Run agent: uipath run agent '{"messages": "Hello"}'
 ```
 
 This command creates the following files:
@@ -173,7 +173,7 @@ Execute the agent with a sample input:
 <!-- termynal -->
 
 ```shell
-> uipath run agent '{"message": "Hello"}'
+> uipath run agent '{"messages": "Hello"}'
 {'response': 'Hello! How can I help you today?', 'agent_used': 'main'}
 ✓  Successful execution.
 ```
@@ -185,19 +185,19 @@ Depending on the shell you are using, it may be necessary to escape the input js
 
 /// tab | Bash/ZSH/PowerShell
 ```console
-uipath run agent '{"message": "Hello"}'
+uipath run agent '{"messages": "Hello"}'
 ```
 ///
 
 /// tab | Windows CMD
 ```console
-uipath run agent "{""message"": ""Hello""}"
+uipath run agent "{""messages"": ""Hello""}"
 ```
 ///
 
 /// tab | Windows PowerShell
 ```console
-uipath run agent '{\"message\":\"Hello\"}'
+uipath run agent '{\"messages\":\"Hello\"}'
 ```
 ///
 
@@ -215,7 +215,7 @@ The `run` command can also take a .json file as an input. You can create a file 
 
 ```json
 {
-  "message": "Hello"
+  "messages": "Hello"
 }
 ```
 
@@ -275,7 +275,7 @@ Set the environment variables using the provided link.
 <!-- termynal -->
 
 ```shell
-> uipath invoke agent '{"message": "Hello"}'
+> uipath invoke agent '{"messages": "Hello"}'
 ⠴ Loading configuration ...
 ⠴ Starting job ...
 ✨ Job started successfully!

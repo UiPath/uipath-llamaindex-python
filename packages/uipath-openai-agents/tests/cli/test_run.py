@@ -22,7 +22,7 @@ class TestRun:
     ) -> None:
         """Test basic agent invocation structure (without actual OpenAI API calls)."""
         input_file_name = "input.json"
-        input_json_content = '{"message": "Hello, agent!"}'
+        input_json_content = '{"messages": "Hello, agent!"}'
 
         with runner.isolated_filesystem(temp_dir=temp_dir):
             # create input file
@@ -54,7 +54,7 @@ class TestRun:
     ) -> None:
         """Test run command with non-existent agent name."""
         input_file_name = "input.json"
-        input_json_content = '{"message": "test"}'
+        input_json_content = '{"messages": "test"}'
 
         with runner.isolated_filesystem(temp_dir=temp_dir):
             input_file_path = os.path.join(temp_dir, input_file_name)
@@ -83,7 +83,7 @@ class TestRun:
     ) -> None:
         """Test run command without openai_agents.json file."""
         input_file_name = "input.json"
-        input_json_content = '{"message": "test"}'
+        input_json_content = '{"messages": "test"}'
 
         with runner.isolated_filesystem(temp_dir=temp_dir):
             input_file_path = os.path.join(temp_dir, input_file_name)
@@ -109,7 +109,7 @@ class TestRun:
     ) -> None:
         """Test run command with malformed JSON input."""
         input_file_name = "input.json"
-        input_json_content = '{"message": invalid json}'  # Malformed
+        input_json_content = '{"messages": invalid json}'  # Malformed
 
         with runner.isolated_filesystem(temp_dir=temp_dir):
             input_file_path = os.path.join(temp_dir, input_file_name)

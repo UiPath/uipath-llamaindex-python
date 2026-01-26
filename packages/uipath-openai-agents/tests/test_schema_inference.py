@@ -35,9 +35,9 @@ def test_schema_inference_from_agent_output_type():
     # Check input schema - should be default messages format
     assert "input" in schema
     assert "properties" in schema["input"]
-    assert "message" in schema["input"]["properties"]
+    assert "messages" in schema["input"]["properties"]
     assert "required" in schema["input"]
-    assert "message" in schema["input"]["required"]
+    assert "messages" in schema["input"]["required"]
 
     # Check output schema - extracted from agent's output_type
     assert "output" in schema
@@ -60,9 +60,9 @@ def test_schema_fallback_without_types():
     """Test that schemas fall back to defaults when no types are provided."""
     schema = get_entrypoints_schema(test_agent)
 
-    # Should use default message-based input schema
+    # Should use default messages-based input schema
     assert "input" in schema
-    assert "message" in schema["input"]["properties"]
+    assert "messages" in schema["input"]["properties"]
 
     # Should fall back to default result-based output
     assert "output" in schema
@@ -73,9 +73,9 @@ def test_schema_with_plain_agent():
     """Test schema extraction with a plain agent."""
     schema = get_entrypoints_schema(test_agent)
 
-    # Should use default message input
+    # Should use default messages input
     assert "input" in schema
-    assert "message" in schema["input"]["properties"]
+    assert "messages" in schema["input"]["properties"]
 
     # Should use default result output
     assert "output" in schema

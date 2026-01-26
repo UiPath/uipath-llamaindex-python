@@ -70,7 +70,8 @@ plugins = [
   "pydantic.mypy"
 ]
 exclude = [
-    "samples/.*"
+    "samples/.*",
+    "testcases/.*"
 ]
 follow_imports = "silent"
 warn_redundant_casts = true

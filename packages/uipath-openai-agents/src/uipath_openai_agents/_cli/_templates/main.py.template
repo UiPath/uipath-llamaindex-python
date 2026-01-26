@@ -1,7 +1,11 @@
-from agents import Agent
-from openai import OpenAI
+from agents import Agent, function_tool
+from agents.models import _openai_shared
+
+from uipath_openai_agents.chat import UiPathChatOpenAI
+from uipath_openai_agents.chat.supported_models import OpenAIModels
 
 
+@function_tool
 def get_weather(location: str) -> str:
     """Get the current weather for a location.
 
@@ -12,17 +16,19 @@ def get_weather(location: str) -> str:
         Weather information for the location
     """
     # This is a mock implementation
-    return f"The weather in {location} is sunny and 72°F"
+    return f"The weather in {location} is sunny and 32 degrees Celsius."
 
 
-# Initialize the OpenAI client
-client = OpenAI()
+MODEL = OpenAIModels.gpt_5_1_2025_11_13
+
+# Initialize the UiPath OpenAI client
+uipath_openai_client = UiPathChatOpenAI(model_name=MODEL)
+_openai_shared.set_default_openai_client(uipath_openai_client.async_client)
 
 # Create an agent with tools
 agent = Agent(
     name="weather_agent",
     instructions="You are a helpful weather assistant. Use the get_weather tool to provide weather information.",
-    model="gpt-4o-mini",
+    model=MODEL,
     tools=[get_weather],
-    client=client,
 )
