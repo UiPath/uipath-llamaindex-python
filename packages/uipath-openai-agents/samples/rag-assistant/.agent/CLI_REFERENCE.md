@@ -59,8 +59,10 @@ uv run uipath init --infer-bindings
 | `--input-file` | value | `Sentinel.UNSET` | Alias for '-f/--file' arguments |
 | `--output-file` | value | `Sentinel.UNSET` | File path where the output will be written |
 | `--trace-file` | value | `Sentinel.UNSET` | File path where the trace spans will be written (JSON Lines format) |
+| `--state-file` | value | `Sentinel.UNSET` | File path where the state file is stored for persisting execution state. If not provided, a temporary file will be used. |
 | `--debug` | flag | false | Enable debugging with debugpy. The process will wait for a debugger to attach. |
 | `--debug-port` | value | `5678` | Port for the debug server (default: 5678) |
+| `--keep-state-file` | flag | false | Keep the temporary state file even when not resuming and no job id is provided |
 
 **Usage Examples:**
 
@@ -102,6 +104,7 @@ uv run uipath run --resume
         trace_file: File path where traces will be written in JSONL format
         max_llm_concurrency: Maximum concurrent LLM requests
         input_overrides: Input field overrides mapping (direct field override with deep merge)
+        resume: Resume execution from a previous suspended state
     
 
 **Arguments:**
@@ -124,6 +127,7 @@ uv run uipath run --resume
 | `--model-settings-id` | value | `"default"` | Model settings ID from evaluation set to override agent settings (default: 'default') |
 | `--trace-file` | value | `Sentinel.UNSET` | File path where traces will be written in JSONL format |
 | `--max-llm-concurrency` | value | `20` | Maximum concurrent LLM requests (default: 20) |
+| `--resume` | flag | false | Resume execution from a previous suspended state |
 
 **Usage Examples:**
 

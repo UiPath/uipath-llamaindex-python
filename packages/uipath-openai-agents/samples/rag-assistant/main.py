@@ -1,28 +1,20 @@
 """RAG Assistant sample - Basic Agent with Chat.
 
-This sample demonstrates a basic OpenAI agent using the Agents SDK framework with UiPath integration.
+This sample demonstrates a basic OpenAI agent using the Agents SDK framework with direct OpenAI client.
 
 Features:
 - OpenAI Agents SDK integration
-- UiPath tracing with OpenTelemetry
+- Direct OpenAI API client usage
 - Type-safe input/output with Pydantic models
 - Streaming responses support
 """
 
 from agents import Agent
-from agents.models import _openai_shared
-
-from uipath_openai_agents.chat import UiPathChatOpenAI
-from uipath_openai_agents.chat.supported_models import OpenAIModels
 
 
 def main() -> Agent:
-    """Configure UiPath OpenAI client and return the assistant agent."""
-    # Configure UiPath OpenAI client for agent execution
-    # This routes all OpenAI API calls through UiPath's LLM Gateway
-    MODEL = OpenAIModels.gpt_5_1_2025_11_13
-    uipath_openai_client = UiPathChatOpenAI(model_name=MODEL)
-    _openai_shared.set_default_openai_client(uipath_openai_client.async_client)
+    """Return the assistant agent."""
+    MODEL = "gpt-5.1-2025-11-13"
 
     # Define the assistant agent
     assistant_agent = Agent(
@@ -38,5 +30,4 @@ Always aim for clarity and accuracy in your responses.""",
         model=MODEL,
     )
 
-    return assistant_agent
     return assistant_agent
