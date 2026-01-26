@@ -4,7 +4,7 @@ import json
 import os
 
 from click.testing import CliRunner
-from uipath._cli.cli_init import init
+from uipath._cli import cli
 
 
 class TestInit:
@@ -30,7 +30,7 @@ class TestInit:
             with open("openai_agents.json", "w") as f:
                 f.write(openai_agents_config)
 
-            result = runner.invoke(init)
+            result = runner.invoke(cli, ["init"])
             assert result.exit_code == 0
             assert os.path.exists("entry-points.json")
 
@@ -54,9 +54,9 @@ class TestInit:
                 assert isinstance(input_schema["properties"], dict)
                 assert isinstance(input_schema["required"], list)
 
-                # OpenAI agents use default message input
-                assert "message" in input_schema["properties"]
-                assert "message" in input_schema["required"]
+                # OpenAI agents use default messages input
+                assert "messages" in input_schema["properties"]
+                assert "messages" in input_schema["required"]
 
                 # Verify output schema (default since no output_type specified)
                 assert "output" in entry
@@ -87,7 +87,7 @@ class TestInit:
             with open("openai_agents.json", "w") as f:
                 f.write(openai_agents_config)
 
-            result = runner.invoke(init)
+            result = runner.invoke(cli, ["init"])
             assert result.exit_code == 0
             assert os.path.exists("entry-points.json")
 
@@ -112,8 +112,8 @@ class TestInit:
                 input_schema = translation_entry["input"]
                 assert input_schema["type"] == "object"
                 assert "properties" in input_schema
-                assert "message" in input_schema["properties"]
-                assert "message" in input_schema["required"]
+                assert "messages" in input_schema["properties"]
+                assert "messages" in input_schema["required"]
 
                 # Verify output schema from agent's output_type
                 assert "output" in translation_entry

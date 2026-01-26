@@ -33,17 +33,17 @@ def test_agent_as_tools_input_schema():
 
     # OpenAI Agents use messages as input (not custom types)
     input_props = schema["input"]["properties"]
-    assert "message" in input_props
+    assert "messages" in input_props
 
-    # Verify message field accepts string or array
-    assert "anyOf" in input_props["message"]
-    types = [t.get("type") for t in input_props["message"]["anyOf"]]
+    # Verify messages field accepts string or array
+    assert "anyOf" in input_props["messages"]
+    types = [t.get("type") for t in input_props["messages"]["anyOf"]]
     assert "string" in types
     assert "array" in types
 
     # Check required fields
     assert "required" in schema["input"]
-    assert "message" in schema["input"]["required"]
+    assert "messages" in schema["input"]["required"]
 
 
 def test_agent_as_tools_output_schema():
@@ -86,7 +86,7 @@ def test_agent_as_tools_schema_metadata():
     # Input uses default messages format (no custom title/description)
     assert "input" in schema
     assert "properties" in schema["input"]
-    assert "message" in schema["input"]["properties"]
+    assert "messages" in schema["input"]["properties"]
 
     # Check output metadata from agent's output_type
     assert "title" in schema["output"]
