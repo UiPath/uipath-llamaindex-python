@@ -32,41 +32,6 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: python .github/scripts/detect_changed_packages.py
 
-  test:
-    name: Test ${{ matrix.package }} (py${{ matrix.python-version }}, ${{ matrix.os }})
-    needs: detect-changed-packages
-    if: needs.detect-changed-packages.outputs.count > 0
-    runs-on: ${{ matrix.os }}
-    defaults:
-      run:
-        working-directory: packages/${{ matrix.package }}
-
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.detect-changed-packages.outputs.packages) }}
-        python-version: ["3.11", "3.12", "3.13"]
-        os: [ubuntu-latest, windows-latest]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup uv
-        uses: astral-sh/setup-uv@v5
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install dependencies
-        run: uv sync --all-extras --python ${{ matrix.python-version }}
-
-      - name: Run tests
-        run: uv run pytest
-
-  # Per-package gate jobs that always run
   test-llamaindex:
     name: Test (uipath-llamaindex, ${{ matrix.python-version }}, ${{ matrix.os }})
     needs: detect-changed-packages
@@ -81,38 +46,38 @@ jobs:
         id: check
         shell: bash
         run: |
-          if echo '${{ needs.detect-changed-packages.outputs.packages }}' | grep -q 'uipath-llamaindex'; then
-            echo "changed=true" >> $GITHUB_OUTPUT
+          if echo '${{ needs.detect-changed-packages.outputs.packages }}' | jq -e 'index("uipath-llamaindex")' > /dev/null; then
+            echo "skip=false" >> $GITHUB_OUTPUT
           else
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "skip=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Skip if no changes
-        if: steps.check.outputs.changed != 'true'
+      - name: Skip
+        if: steps.check.outputs.skip == 'true'
         shell: bash
-        run: echo "No changes to uipath-llamaindex, skipping tests"
+        run: echo "Skipping - no changes to uipath-llamaindex"
 
       - name: Checkout
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Setup uv
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         uses: astral-sh/setup-uv@v5
 
       - name: Setup Python
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         working-directory: packages/uipath-llamaindex
         run: uv sync --all-extras --python ${{ matrix.python-version }}
 
       - name: Run tests
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         working-directory: packages/uipath-llamaindex
         run: uv run pytest
 
@@ -130,37 +95,37 @@ jobs:
         id: check
         shell: bash
         run: |
-          if echo '${{ needs.detect-changed-packages.outputs.packages }}' | grep -q 'uipath-openai-agents'; then
-            echo "changed=true" >> $GITHUB_OUTPUT
+          if echo '${{ needs.detect-changed-packages.outputs.packages }}' | jq -e 'index("uipath-openai-agents")' > /dev/null; then
+            echo "skip=false" >> $GITHUB_OUTPUT
           else
-            echo "changed=false" >> $GITHUB_OUTPUT
+            echo "skip=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Skip if no changes
-        if: steps.check.outputs.changed != 'true'
+      - name: Skip
+        if: steps.check.outputs.skip == 'true'
         shell: bash
-        run: echo "No changes to uipath-openai-agents, skipping tests"
+        run: echo "Skipping - no changes to uipath-openai-agents"
 
       - name: Checkout
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Setup uv
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         uses: astral-sh/setup-uv@v5
 
       - name: Setup Python
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install dependencies
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         working-directory: packages/uipath-openai-agents
         run: uv sync --all-extras --python ${{ matrix.python-version }}
 
       - name: Run tests
-        if: steps.check.outputs.changed == 'true'
+        if: steps.check.outputs.skip != 'true'
         working-directory: packages/uipath-openai-agents
         run: uv run pytest

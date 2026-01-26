@@ -87,17 +87,11 @@ def main():
     base_sha = os.getenv("BASE_SHA", "")
     head_sha = os.getenv("HEAD_SHA", "")
 
-    # On push to main, test all packages
-    if event_name == "push":
-        packages = get_all_packages()
-        print(f"Push to main - testing all {len(packages)} packages:")
-        for pkg in packages:
-            print(f"  - {pkg}")
-
-    # On PR with explicit SHAs, detect changed packages
-    elif event_name == "pull_request" and base_sha and head_sha:
+    # If we have explicit SHAs (from PR or push), detect changed packages
+    if base_sha and head_sha:
         packages = get_changed_packages(base_sha, head_sha)
-        print(f"Pull request - detected {len(packages)} changed package(s):")
+        event_type = "pull request" if event_name == "pull_request" else "push"
+        print(f"{event_type.capitalize()} - detected {len(packages)} changed package(s):")
         for pkg in packages:
             print(f"  - {pkg}")
 

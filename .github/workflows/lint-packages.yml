@@ -31,43 +31,130 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: python .github/scripts/detect_changed_packages.py
 
-  lint:
-    name: Lint ${{ matrix.package }}
+  lint-llamaindex:
+    name: Lint uipath-llamaindex
     needs: detect-changed-packages
-    if: needs.detect-changed-packages.outputs.count > 0 && !contains(github.event.pull_request.labels.*.name, 'test-core-dev-version')
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: packages/${{ matrix.package }}
-    strategy:
-      fail-fast: false
-      matrix:
-        package: ${{ fromJson(needs.detect-changed-packages.outputs.packages) }}
-
     steps:
+      - name: Check if package changed
+        id: check
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'test-core-dev-version') }}" == "true" ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "reason=custom-version-testing" >> $GITHUB_OUTPUT
+          elif echo '${{ needs.detect-changed-packages.outputs.packages }}' | jq -e 'index("uipath-llamaindex")' > /dev/null; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "reason=no-changes" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip
+        if: steps.check.outputs.skip == 'true'
+        run: |
+          if [[ "${{ steps.check.outputs.reason }}" == "custom-version-testing" ]]; then
+            echo "Skipping - custom version testing enabled"
+          else
+            echo "Skipping - no changes to uipath-llamaindex"
+          fi
+
       - name: Checkout
+        if: steps.check.outputs.skip != 'true'
         uses: actions/checkout@v4
 
       - name: Setup uv
+        if: steps.check.outputs.skip != 'true'
         uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
 
       - name: Setup Python
+        if: steps.check.outputs.skip != 'true'
         uses: actions/setup-python@v5
         with:
-          python-version-file: "packages/${{ matrix.package }}/.python-version"
+          python-version-file: "packages/uipath-llamaindex/.python-version"
 
       - name: Install dependencies
+        if: steps.check.outputs.skip != 'true'
+        working-directory: packages/uipath-llamaindex
         run: uv sync --all-extras
 
       - name: Check static types
+        if: steps.check.outputs.skip != 'true'
+        working-directory: packages/uipath-llamaindex
         run: uv run mypy --config-file pyproject.toml .
 
       - name: Check linting
+        if: steps.check.outputs.skip != 'true'
+        working-directory: packages/uipath-llamaindex
         run: uv run ruff check .
 
       - name: Check formatting
+        if: steps.check.outputs.skip != 'true'
+        working-directory: packages/uipath-llamaindex
+        run: uv run ruff format --check .
+
+  lint-openai-agents:
+    name: Lint uipath-openai-agents
+    needs: detect-changed-packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if package changed
+        id: check
+        run: |
+          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'test-core-dev-version') }}" == "true" ]]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "reason=custom-version-testing" >> $GITHUB_OUTPUT
+          elif echo '${{ needs.detect-changed-packages.outputs.packages }}' | jq -e 'index("uipath-openai-agents")' > /dev/null; then
+            echo "skip=false" >> $GITHUB_OUTPUT
+          else
+            echo "skip=true" >> $GITHUB_OUTPUT
+            echo "reason=no-changes" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Skip
+        if: steps.check.outputs.skip == 'true'
+        run: |
+          if [[ "${{ steps.check.outputs.reason }}" == "custom-version-testing" ]]; then
+            echo "Skipping - custom version testing enabled"
+          else
+            echo "Skipping - no changes to uipath-openai-agents"
+          fi
+
+      - name: Checkout
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        if: steps.check.outputs.skip != 'true'
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Setup Python
+        if: steps.check.outputs.skip != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version-file: "packages/uipath-openai-agents/.python-version"
+
+      - name: Install dependencies
+        if: steps.check.outputs.skip != 'true'
+        working-directory: packages/uipath-openai-agents
+        run: uv sync --all-extras
+
+      - name: Check static types
+        if: steps.check.outputs.skip != 'true'
+        working-directory: packages/uipath-openai-agents
+        run: uv run mypy --config-file pyproject.toml .
+
+      - name: Check linting
+        if: steps.check.outputs.skip != 'true'
+        working-directory: packages/uipath-openai-agents
+        run: uv run ruff check .
+
+      - name: Check formatting
+        if: steps.check.outputs.skip != 'true'
+        working-directory: packages/uipath-openai-agents
         run: uv run ruff format --check .
 
   skip-lint:
@@ -81,134 +168,3 @@ jobs:
         run: |
           echo "Custom version testing enabled - skipping normal lint process"
           echo "This job completes successfully to allow PR merging"
-
-  # Per-package gate jobs that always run
-  lint-llamaindex:
-    name: Lint uipath-llamaindex
-    needs: detect-changed-packages
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check if should skip
-        id: check
-        run: |
-          # Check for test-core-dev-version label
-          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'test-core-dev-version') }}" == "true" ]]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "reason=custom-version-testing" >> $GITHUB_OUTPUT
-          # Check if package changed
-          elif echo '${{ needs.detect-changed-packages.outputs.packages }}' | grep -q 'uipath-llamaindex'; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "reason=no-changes" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Skip if no changes or custom version testing
-        if: steps.check.outputs.changed != 'true'
-        run: |
-          if [[ "${{ steps.check.outputs.reason }}" == "custom-version-testing" ]]; then
-            echo "Custom version testing enabled - skipping lint"
-          else
-            echo "No changes to uipath-llamaindex, skipping lint"
-          fi
-
-      - name: Checkout
-        if: steps.check.outputs.changed == 'true'
-        uses: actions/checkout@v4
-
-      - name: Setup uv
-        if: steps.check.outputs.changed == 'true'
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
-      - name: Setup Python
-        if: steps.check.outputs.changed == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "packages/uipath-llamaindex/.python-version"
-
-      - name: Install dependencies
-        if: steps.check.outputs.changed == 'true'
-        working-directory: packages/uipath-llamaindex
-        run: uv sync --all-extras
-
-      - name: Check static types
-        if: steps.check.outputs.changed == 'true'
-        working-directory: packages/uipath-llamaindex
-        run: uv run mypy --config-file pyproject.toml .
-
-      - name: Check linting
-        if: steps.check.outputs.changed == 'true'
-        working-directory: packages/uipath-llamaindex
-        run: uv run ruff check .
-
-      - name: Check formatting
-        if: steps.check.outputs.changed == 'true'
-        working-directory: packages/uipath-llamaindex
-        run: uv run ruff format --check .
-
-  lint-openai-agents:
-    name: Lint uipath-openai-agents
-    needs: detect-changed-packages
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check if should skip
-        id: check
-        run: |
-          # Check for test-core-dev-version label
-          if [[ "${{ contains(github.event.pull_request.labels.*.name, 'test-core-dev-version') }}" == "true" ]]; then
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "reason=custom-version-testing" >> $GITHUB_OUTPUT
-          # Check if package changed
-          elif echo '${{ needs.detect-changed-packages.outputs.packages }}' | grep -q 'uipath-openai-agents'; then
-            echo "changed=true" >> $GITHUB_OUTPUT
-          else
-            echo "changed=false" >> $GITHUB_OUTPUT
-            echo "reason=no-changes" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Skip if no changes or custom version testing
-        if: steps.check.outputs.changed != 'true'
-        run: |
-          if [[ "${{ steps.check.outputs.reason }}" == "custom-version-testing" ]]; then
-            echo "Custom version testing enabled - skipping lint"
-          else
-            echo "No changes to uipath-openai-agents, skipping lint"
-          fi
-
-      - name: Checkout
-        if: steps.check.outputs.changed == 'true'
-        uses: actions/checkout@v4
-
-      - name: Setup uv
-        if: steps.check.outputs.changed == 'true'
-        uses: astral-sh/setup-uv@v5
-        with:
-          enable-cache: true
-
-      - name: Setup Python
-        if: steps.check.outputs.changed == 'true'
-        uses: actions/setup-python@v5
-        with:
-          python-version-file: "packages/uipath-openai-agents/.python-version"
-
-      - name: Install dependencies
-        if: steps.check.outputs.changed == 'true'
-        working-directory: packages/uipath-openai-agents
-        run: uv sync --all-extras
-
-      - name: Check static types
-        if: steps.check.outputs.changed == 'true'
-        working-directory: packages/uipath-openai-agents
-        run: uv run mypy --config-file pyproject.toml .
-
-      - name: Check linting
-        if: steps.check.outputs.changed == 'true'
-        working-directory: packages/uipath-openai-agents
-        run: uv run ruff check .
-
-      - name: Check formatting
-        if: steps.check.outputs.changed == 'true'
-        working-directory: packages/uipath-openai-agents
-        run: uv run ruff format --check .
