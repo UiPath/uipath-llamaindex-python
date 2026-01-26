@@ -1,0 +1,14 @@
+[project]
+name = "agent"
+version = "0.0.1"
+description = "OpenAI Agents integration test"
+authors = [{ name = "John Doe", email = "john.doe@myemail.com" }]
+dependencies = [
+    "openai>=1.0.0",
+    "openai-agents>=0.6.5",
+    "uipath-openai-agents",
+]
+requires-python = ">=3.11"
+
+[tool.uv.sources]
+uipath-openai-agents = { path = "../../", editable = true }

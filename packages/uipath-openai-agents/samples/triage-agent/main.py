@@ -3,6 +3,7 @@ from agents.models import _openai_shared
 from pydantic import BaseModel
 
 from uipath_openai_agents.chat import UiPathChatOpenAI
+from uipath_openai_agents.chat.supported_models import OpenAIModels
 
 """
 This example shows the handoffs/routing pattern adapted for UiPath coded agents.
@@ -24,7 +25,7 @@ def main() -> Agent:
     """Configure UiPath OpenAI client and return the triage agent."""
     # Configure UiPath OpenAI client for agent execution
     # This routes all OpenAI API calls through UiPath's LLM Gateway
-    MODEL = "gpt-4o-2024-11-20"
+    MODEL = OpenAIModels.gpt_5_1_2025_11_13
     uipath_openai_client = UiPathChatOpenAI(model_name=MODEL)
     _openai_shared.set_default_openai_client(uipath_openai_client.async_client)
 

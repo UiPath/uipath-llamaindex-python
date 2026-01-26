@@ -19,7 +19,7 @@ def get_weather(location: str) -> str:
     return f"The weather in {location} is sunny and 32 degrees Celsius."
 
 
-MODEL = OpenAIModels.gpt_5_2_2025_12_11
+MODEL = OpenAIModels.gpt_5_1_2025_11_13
 
 # Initialize the UiPath OpenAI client
 uipath_openai_client = UiPathChatOpenAI(model_name=MODEL)
