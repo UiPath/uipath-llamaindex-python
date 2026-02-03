@@ -171,7 +171,7 @@ def get_agent_schema(agent: Agent) -> UiPathRuntimeGraph:
             UiPathRuntimeNode(
                 id=agent_name,
                 name=agent_name,
-                type="model",
+                type="node",
                 subgraph=None,
                 metadata=None,
             )

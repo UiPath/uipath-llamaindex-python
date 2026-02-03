@@ -209,11 +209,11 @@ def test_multi_layer_agent_node_types():
     assert node_types["__start__"] == "__start__"
     assert node_types["__end__"] == "__end__"
 
-    # Verify agent nodes are of type "model"
-    assert node_types["orchestrator_agent"] == "model"
-    assert node_types["hr_agent"] == "model"
-    assert node_types["procurement_agent"] == "model"
-    assert node_types["policy_agent"] == "model"
+    # Verify agent nodes are of type "node"
+    assert node_types["orchestrator_agent"] == "node"
+    assert node_types["hr_agent"] == "node"
+    assert node_types["procurement_agent"] == "node"
+    assert node_types["policy_agent"] == "node"
 
     # Verify aggregated tools nodes are of type "tool"
     assert node_types["hr_agent_tools"] == "tool"
