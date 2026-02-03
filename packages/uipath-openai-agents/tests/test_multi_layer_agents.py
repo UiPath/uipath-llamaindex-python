@@ -171,7 +171,7 @@ def create_multi_layer_agent():
 
 
 def test_multi_layer_agent_graph_nodes():
-    """Test that all agents and tools are represented as nodes in the graph."""
+    """Test that all agents and aggregated tools nodes are represented in the graph."""
     agent = create_multi_layer_agent()
     graph = get_agent_schema(agent)
 
@@ -188,22 +188,13 @@ def test_multi_layer_agent_graph_nodes():
     assert "procurement_agent" in node_ids
     assert "policy_agent" in node_ids
 
-    # Verify HR agent tools
-    assert "check_employee_benefits" in node_ids
-    assert "submit_leave_request" in node_ids
-    assert "get_salary_info" in node_ids
+    # Verify aggregated tools nodes (one per agent with tools)
+    assert "hr_agent_tools" in node_ids
+    assert "procurement_agent_tools" in node_ids
+    assert "policy_agent_tools" in node_ids
 
-    # Verify procurement agent tools
-    assert "create_purchase_order" in node_ids
-    assert "check_budget_availability" in node_ids
-    assert "track_order_status" in node_ids
-
-    # Verify policy agent tools
-    assert "get_company_policy" in node_ids
-    assert "check_compliance_status" in node_ids
-
-    # Total: 2 control + 4 agents + 8 tools = 14 nodes
-    assert len(graph.nodes) == 14
+    # Total: 2 control + 4 agents + 3 tools nodes = 9 nodes
+    assert len(graph.nodes) == 9
 
 
 def test_multi_layer_agent_node_types():
@@ -224,67 +215,48 @@ def test_multi_layer_agent_node_types():
     assert node_types["procurement_agent"] == "model"
     assert node_types["policy_agent"] == "model"
 
-    # Verify tool nodes are of type "tool"
-    assert node_types["check_employee_benefits"] == "tool"
-    assert node_types["submit_leave_request"] == "tool"
-    assert node_types["get_salary_info"] == "tool"
-    assert node_types["create_purchase_order"] == "tool"
-    assert node_types["check_budget_availability"] == "tool"
-    assert node_types["track_order_status"] == "tool"
-    assert node_types["get_company_policy"] == "tool"
-    assert node_types["check_compliance_status"] == "tool"
+    # Verify aggregated tools nodes are of type "tool"
+    assert node_types["hr_agent_tools"] == "tool"
+    assert node_types["procurement_agent_tools"] == "tool"
+    assert node_types["policy_agent_tools"] == "tool"
 
 
 def test_multi_layer_agent_handoff_edges():
-    """Test that handoff edges are correctly created between orchestrator and specialized agents."""
+    """Test that handoff edges are correctly created between orchestrator and specialized agents without labels."""
     agent = create_multi_layer_agent()
     graph = get_agent_schema(agent)
 
     # Get all edges
     edges = [(edge.source, edge.target, edge.label) for edge in graph.edges]
 
-    # Verify handoff edges from orchestrator to hr_agent
-    assert ("orchestrator_agent", "hr_agent", "handoff") in edges
-    assert ("hr_agent", "orchestrator_agent", "handoff_complete") in edges
+    # Verify bidirectional handoff edges without labels
+    assert ("orchestrator_agent", "hr_agent", None) in edges
+    assert ("hr_agent", "orchestrator_agent", None) in edges
 
-    # Verify handoff edges from orchestrator to procurement_agent
-    assert ("orchestrator_agent", "procurement_agent", "handoff") in edges
-    assert ("procurement_agent", "orchestrator_agent", "handoff_complete") in edges
+    assert ("orchestrator_agent", "procurement_agent", None) in edges
+    assert ("procurement_agent", "orchestrator_agent", None) in edges
 
-    # Verify handoff edges from orchestrator to policy_agent
-    assert ("orchestrator_agent", "policy_agent", "handoff") in edges
-    assert ("policy_agent", "orchestrator_agent", "handoff_complete") in edges
+    assert ("orchestrator_agent", "policy_agent", None) in edges
+    assert ("policy_agent", "orchestrator_agent", None) in edges
 
 
 def test_multi_layer_agent_tool_edges():
-    """Test that tool edges are correctly created for each specialized agent."""
+    """Test that bidirectional tool edges exist for aggregated tools nodes without labels."""
     agent = create_multi_layer_agent()
     graph = get_agent_schema(agent)
 
     # Get all edges
     edges = [(edge.source, edge.target, edge.label) for edge in graph.edges]
 
-    # Verify HR agent tool edges
-    assert ("hr_agent", "check_employee_benefits", "tool_call") in edges
-    assert ("check_employee_benefits", "hr_agent", "tool_result") in edges
-    assert ("hr_agent", "submit_leave_request", "tool_call") in edges
-    assert ("submit_leave_request", "hr_agent", "tool_result") in edges
-    assert ("hr_agent", "get_salary_info", "tool_call") in edges
-    assert ("get_salary_info", "hr_agent", "tool_result") in edges
+    # Verify bidirectional edges to/from aggregated tools nodes without labels
+    assert ("hr_agent", "hr_agent_tools", None) in edges
+    assert ("hr_agent_tools", "hr_agent", None) in edges
 
-    # Verify procurement agent tool edges
-    assert ("procurement_agent", "create_purchase_order", "tool_call") in edges
-    assert ("create_purchase_order", "procurement_agent", "tool_result") in edges
-    assert ("procurement_agent", "check_budget_availability", "tool_call") in edges
-    assert ("check_budget_availability", "procurement_agent", "tool_result") in edges
-    assert ("procurement_agent", "track_order_status", "tool_call") in edges
-    assert ("track_order_status", "procurement_agent", "tool_result") in edges
+    assert ("procurement_agent", "procurement_agent_tools", None) in edges
+    assert ("procurement_agent_tools", "procurement_agent", None) in edges
 
-    # Verify policy agent tool edges
-    assert ("policy_agent", "get_company_policy", "tool_call") in edges
-    assert ("get_company_policy", "policy_agent", "tool_result") in edges
-    assert ("policy_agent", "check_compliance_status", "tool_call") in edges
-    assert ("check_compliance_status", "policy_agent", "tool_result") in edges
+    assert ("policy_agent", "policy_agent_tools", None) in edges
+    assert ("policy_agent_tools", "policy_agent", None) in edges
 
 
 def test_multi_layer_agent_control_edges():
@@ -308,7 +280,7 @@ def test_multi_layer_agent_no_circular_references():
     graph = get_agent_schema(agent)
 
     # Count occurrences of each agent in nodes
-    node_counts = {}
+    node_counts: dict[str, int] = {}
     for node in graph.nodes:
         node_counts[node.id] = node_counts.get(node.id, 0) + 1
 
@@ -346,10 +318,48 @@ def test_multi_layer_agent_edge_count():
 
     # Count expected edges:
     # - 2 control edges (start -> orchestrator, orchestrator -> end)
-    # - 6 handoff edges (3 agents * 2 edges each: handoff + handoff_complete)
-    # - 16 tool edges (8 tools * 2 edges each: tool_call + tool_result)
-    # Total: 2 + 6 + 16 = 24 edges
-    assert len(graph.edges) == 24
+    # - 6 handoff edges (3 agents * 2 bidirectional edges each)
+    # - 6 tool edges (3 tools nodes * 2 bidirectional edges each)
+    # Total: 2 + 6 + 6 = 14 edges
+    assert len(graph.edges) == 14
+
+
+def test_multi_layer_agent_tools_metadata():
+    """Test that tools nodes have correct metadata with tool_names and tool_count."""
+    agent = create_multi_layer_agent()
+    graph = get_agent_schema(agent)
+
+    # Create a mapping of node ID to metadata
+    node_metadata = {node.id: node.metadata for node in graph.nodes}
+
+    # Verify HR agent tools metadata
+    hr_tools_metadata = node_metadata["hr_agent_tools"]
+    assert hr_tools_metadata is not None
+    assert "tool_names" in hr_tools_metadata
+    assert "tool_count" in hr_tools_metadata
+    assert hr_tools_metadata["tool_count"] == 3
+    assert "check_employee_benefits" in hr_tools_metadata["tool_names"]
+    assert "submit_leave_request" in hr_tools_metadata["tool_names"]
+    assert "get_salary_info" in hr_tools_metadata["tool_names"]
+
+    # Verify procurement agent tools metadata
+    procurement_tools_metadata = node_metadata["procurement_agent_tools"]
+    assert procurement_tools_metadata is not None
+    assert "tool_names" in procurement_tools_metadata
+    assert "tool_count" in procurement_tools_metadata
+    assert procurement_tools_metadata["tool_count"] == 3
+    assert "create_purchase_order" in procurement_tools_metadata["tool_names"]
+    assert "check_budget_availability" in procurement_tools_metadata["tool_names"]
+    assert "track_order_status" in procurement_tools_metadata["tool_names"]
+
+    # Verify policy agent tools metadata
+    policy_tools_metadata = node_metadata["policy_agent_tools"]
+    assert policy_tools_metadata is not None
+    assert "tool_names" in policy_tools_metadata
+    assert "tool_count" in policy_tools_metadata
+    assert policy_tools_metadata["tool_count"] == 2
+    assert "get_company_policy" in policy_tools_metadata["tool_names"]
+    assert "check_compliance_status" in policy_tools_metadata["tool_names"]
 
 
 def test_multi_layer_agent_no_subgraphs():

@@ -143,9 +143,9 @@ def get_agent_schema(agent: Agent) -> UiPathRuntimeGraph:
     """
     Extract graph structure from an OpenAI Agent.
 
-    OpenAI Agents are represented as simple nodes. Tools and handoff agents
-    are also represented as nodes. This function recursively explores nested
-    agents to discover all tools and their connections.
+    OpenAI Agents are represented as simple nodes. Regular tools are aggregated
+    into a single tools node per agent with metadata. Agent-tools and handoff
+    agents are represented as separate agent nodes.
 
     Args:
         agent: An OpenAI Agent instance
@@ -156,7 +156,6 @@ def get_agent_schema(agent: Agent) -> UiPathRuntimeGraph:
     nodes: list[UiPathRuntimeNode] = []
     edges: list[UiPathRuntimeEdge] = []
     visited: set[str] = set()  # Track visited agents to avoid circular references
-    tool_ids: set[str] = set()  # Track added tool IDs to avoid duplicates
 
     def _add_agent_and_tools(current_agent: Agent) -> None:
         """Recursively add agent, its tools, and nested agents to the graph."""
@@ -178,62 +177,76 @@ def get_agent_schema(agent: Agent) -> UiPathRuntimeGraph:
             )
         )
 
-        # Process tools (including agent-tools)
+        # Process tools - separate agent-tools from regular tools
         tools = getattr(current_agent, "tools", None) or []
+        agent_tools: list[Agent] = []
+        regular_tools: list[Any] = []
+
         for tool in tools:
             if isinstance(tool, Agent):
-                tool_agent_name = getattr(tool, "name", _get_tool_name(tool))
-                if tool_agent_name and tool_agent_name not in visited:
-                    # Recursively process agent-tool
-                    _add_agent_and_tools(tool)
-
-                    # Add edges for agent-tool
-                    edges.append(
-                        UiPathRuntimeEdge(
-                            source=agent_name,
-                            target=tool_agent_name,
-                            label="tool_call",
-                        )
-                    )
-                    edges.append(
-                        UiPathRuntimeEdge(
-                            source=tool_agent_name,
-                            target=agent_name,
-                            label="tool_result",
-                        )
-                    )
+                agent_tools.append(tool)
             else:
-                # Regular tool
-                tool_name = _get_tool_name(tool)
-                if tool_name:
-                    # Add tool node if not already added
-                    if tool_name not in tool_ids:
-                        nodes.append(
-                            UiPathRuntimeNode(
-                                id=tool_name,
-                                name=tool_name,
-                                type="tool",
-                                subgraph=None,
-                                metadata=None,
-                            )
-                        )
-                        tool_ids.add(tool_name)
+                regular_tools.append(tool)
 
-                    # Add edges for tool
-                    edges.append(
-                        UiPathRuntimeEdge(
-                            source=agent_name,
-                            target=tool_name,
-                            label="tool_call",
-                        )
+        # Process agent-tools (agents used as tools)
+        for tool_agent in agent_tools:
+            tool_agent_name = getattr(tool_agent, "name", _get_tool_name(tool_agent))
+            if tool_agent_name and tool_agent_name not in visited:
+                # Recursively process agent-tool
+                _add_agent_and_tools(tool_agent)
+
+                # Add edges for agent-tool
+                edges.append(
+                    UiPathRuntimeEdge(
+                        source=agent_name,
+                        target=tool_agent_name,
+                        label="tool_call",
                     )
-                    edges.append(
-                        UiPathRuntimeEdge(
-                            source=tool_name,
-                            target=agent_name,
-                            label="tool_result",
-                        )
+                )
+                edges.append(
+                    UiPathRuntimeEdge(
+                        source=tool_agent_name,
+                        target=agent_name,
+                        label="tool_result",
                     )
+                )
+
+        # Process regular tools - aggregate into single tools node
+        if regular_tools:
+            tool_names = [_get_tool_name(tool) for tool in regular_tools]
+            tool_names = [name for name in tool_names if name]  # Filter out None values
+
+            if tool_names:
+                # Create a single tools node for this agent
+                tools_node_id = f"{agent_name}_tools"
+                nodes.append(
+                    UiPathRuntimeNode(
+                        id=tools_node_id,
+                        name="tools",
+                        type="tool",
+                        subgraph=None,
+                        metadata={
+                            "tool_names": tool_names,
+                            "tool_count": len(tool_names),
+                        },
+                    )
+                )
+
+                # Add bidirectional edges for tools node
+                edges.append(
+                    UiPathRuntimeEdge(
+                        source=agent_name,
+                        target=tools_node_id,
+                        label=None,
+                    )
+                )
+                edges.append(
+                    UiPathRuntimeEdge(
+                        source=tools_node_id,
+                        target=agent_name,
+                        label=None,
+                    )
+                )
 
         # Process handoff agents
         handoffs = getattr(current_agent, "handoffs", None) or []
@@ -243,19 +256,19 @@ def get_agent_schema(agent: Agent) -> UiPathRuntimeGraph:
                 # Recursively process handoff agent
                 _add_agent_and_tools(handoff_agent)
 
-                # Add handoff edges
+                # Add handoff edges without labels
                 edges.append(
                     UiPathRuntimeEdge(
                         source=agent_name,
                         target=handoff_name,
-                        label="handoff",
+                        label=None,
                     )
                 )
                 edges.append(
                     UiPathRuntimeEdge(
                         source=handoff_name,
                         target=agent_name,
-                        label="handoff_complete",
+                        label=None,
                     )
                 )
 
