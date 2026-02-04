@@ -11,6 +11,52 @@ from uipath.runtime.schema import (
     UiPathRuntimeNode,
 )
 
+from .context import get_agent_context_type
+
+
+def _extract_agent_from_tool(tool: Any) -> Agent | None:
+    """
+    Extract an Agent from a tool that was created via Agent.as_tool().
+
+    The agent is stored deep in the closure chain of the tool's on_invoke_tool function.
+    """
+    if not hasattr(tool, "on_invoke_tool"):
+        return None
+
+    try:
+        func = tool.on_invoke_tool
+        if not hasattr(func, "__closure__") or not func.__closure__:
+            return None
+
+        # First level: get _on_invoke_tool_impl
+        impl = func.__closure__[0].cell_contents
+        if (
+            not callable(impl)
+            or not hasattr(impl, "__closure__")
+            or not impl.__closure__
+        ):
+            return None
+
+        # Second level: get run_agent function
+        run_agent = impl.__closure__[1].cell_contents
+        if (
+            not callable(run_agent)
+            or not hasattr(run_agent, "__closure__")
+            or not run_agent.__closure__
+        ):
+            return None
+
+        # Third level: find the Agent in run_agent's closure
+        for cell in run_agent.__closure__:
+            content = cell.cell_contents
+            if isinstance(content, Agent):
+                return content
+
+    except (IndexError, AttributeError):
+        pass
+
+    return None
+
 
 def _is_pydantic_model(type_hint: Any) -> bool:
     """
@@ -45,38 +91,49 @@ def get_entrypoints_schema(agent: Agent) -> dict[str, Any]:
     """
     Extract input/output schema from an OpenAI Agent.
 
-    Uses the agent's native output_type attribute for schema extraction.
-
-    Args:
-        agent: An OpenAI Agent instance
-
-    Returns:
-        Dictionary with input and output schemas
+    Input schema always includes 'messages' field, plus context fields if defined.
+    Output schema uses agent's output_type attribute.
     """
-    schema = {
-        "input": {"type": "object", "properties": {}, "required": []},
+    # Messages field is always required
+    messages_schema: dict[str, Any] = {
+        "anyOf": [
+            {"type": "string"},
+            {"type": "array", "items": {"type": "object"}},
+        ],
+        "title": "Messages",
+        "description": "User messages to send to the agent",
+    }
+
+    input_properties: dict[str, Any] = {"messages": messages_schema}
+    input_required: list[str] = ["messages"]
+
+    schema: dict[str, Any] = {
+        "input": {
+            "type": "object",
+            "properties": input_properties,
+            "required": input_required,
+        },
         "output": {"type": "object", "properties": {}, "required": []},
     }
 
-    # Extract input schema - check agent's context type or use default messages
-    # For OpenAI Agents, input is typically messages (string or list of message objects)
-    schema["input"] = {
-        "type": "object",
-        "properties": {
-            "messages": {
-                "anyOf": [
-                    {"type": "string"},
-                    {
-                        "type": "array",
-                        "items": {"type": "object"},
-                    },
-                ],
-                "title": "Messages",
-                "description": "User messages to send to the agent",
-            }
-        },
-        "required": ["messages"],
-    }
+    # Add context fields if agent has a context type (Agent[MyContext])
+    context_type = get_agent_context_type(agent)
+    if context_type is not None and _is_pydantic_model(context_type):
+        try:
+            adapter = TypeAdapter(context_type)
+            context_schema = adapter.json_schema()
+            unpacked = _resolve_refs(context_schema)
+
+            # Merge context properties with messages
+            context_props = _process_nullable_types(unpacked.get("properties", {}))
+            input_properties.update(context_props)
+
+            # Add context required fields (messages is already required)
+            for field in unpacked.get("required", []):
+                if field not in input_required:
+                    input_required.append(field)
+        except Exception:
+            pass
 
     # Extract output schema - Agent's output_type (native OpenAI Agents pattern)
     output_type = getattr(agent, "output_type", None)
@@ -177,41 +234,54 @@ def get_agent_schema(agent: Agent) -> UiPathRuntimeGraph:
             )
         )
 
-        # Process tools - separate agent-tools from regular tools
+        # Process tools - separate agent-tools from regular function tools
         tools = getattr(current_agent, "tools", None) or []
-        agent_tools: list[Agent] = []
+        agent_tools: list[tuple[str, Agent]] = []  # (tool_name, agent)
         regular_tools: list[Any] = []
 
         for tool in tools:
             if isinstance(tool, Agent):
-                agent_tools.append(tool)
+                # Direct Agent instance
+                agent_name_str: str = getattr(tool, "name", None) or "agent"
+                agent_tools.append((agent_name_str, tool))
             else:
-                regular_tools.append(tool)
+                # Check if this is an agent wrapped via .as_tool()
+                wrapped_agent = _extract_agent_from_tool(tool)
+                if wrapped_agent is not None:
+                    # Use the tool's name (e.g., "translate_to_spanish") for the edge
+                    tool_name_str: str = (
+                        _get_tool_name(tool)
+                        or getattr(wrapped_agent, "name", None)
+                        or "agent"
+                    )
+                    agent_tools.append((tool_name_str, wrapped_agent))
+                else:
+                    regular_tools.append(tool)
 
-        # Process agent-tools (agents used as tools)
-        for tool_agent in agent_tools:
-            tool_agent_name = getattr(tool_agent, "name", _get_tool_name(tool_agent))
-            if tool_agent_name and tool_agent_name not in visited:
+        # Process agent-tools (agents used as tools via .as_tool())
+        for tool_name, tool_agent in agent_tools:
+            tool_agent_name = getattr(tool_agent, "name", "agent")
+            if tool_agent_name not in visited:
                 # Recursively process agent-tool
                 _add_agent_and_tools(tool_agent)
 
-                # Add edges for agent-tool
-                edges.append(
-                    UiPathRuntimeEdge(
-                        source=agent_name,
-                        target=tool_agent_name,
-                        label="tool_call",
-                    )
+            # Add edges for agent-tool (even if already visited, we need edges)
+            edges.append(
+                UiPathRuntimeEdge(
+                    source=agent_name,
+                    target=tool_agent_name,
+                    label=tool_name,
                 )
-                edges.append(
-                    UiPathRuntimeEdge(
-                        source=tool_agent_name,
-                        target=agent_name,
-                        label="tool_result",
-                    )
+            )
+            edges.append(
+                UiPathRuntimeEdge(
+                    source=tool_agent_name,
+                    target=agent_name,
+                    label=None,
                 )
+            )
 
-        # Process regular tools - aggregate into single tools node
+        # Process regular function tools - aggregate into single tools node
         if regular_tools:
             tool_names = [_get_tool_name(tool) for tool in regular_tools]
             tool_names = [name for name in tool_names if name]  # Filter out None values
