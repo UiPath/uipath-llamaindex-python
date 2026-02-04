@@ -16,6 +16,25 @@ sdk = UiPath()
 sdk = UiPath(base_url="https://cloud.uipath.com/...", secret="your_token")
 ```
 
+### Agenthub
+
+Agenthub service
+
+```python
+# Fetch available models from LLM Gateway discovery endpoint.
+sdk.agenthub.get_available_llm_models(headers: dict[str, Any] | None=None) -> list[uipath.platform.agenthub.agenthub.LlmModel]
+
+# Asynchronously fetch available models from LLM Gateway discovery endpoint.
+sdk.agenthub.get_available_llm_models_async(headers: dict[str, Any] | None=None) -> list[uipath.platform.agenthub.agenthub.LlmModel]
+
+# Start a system agent job.
+sdk.agenthub.invoke_system_agent(agent_name: str, entrypoint: str, input_arguments: dict[str, Any] | None=None, folder_key: str | None=None, folder_path: str | None=None, headers: dict[str, Any] | None=None) -> str
+
+# Asynchronously start a system agent and return the job.
+sdk.agenthub.invoke_system_agent_async(agent_name: str, entrypoint: str, input_arguments: dict[str, Any] | None=None, folder_key: str | None=None, folder_path: str | None=None, headers: dict[str, Any] | None=None) -> str
+
+```
+
 ### Api Client
 
 Api Client service
@@ -31,6 +50,12 @@ service = sdk.api_client
 Assets service
 
 ```python
+# List assets using OData API with offset-based pagination.
+sdk.assets.list(folder_path: Optional[str]=None, folder_key: Optional[str]=None, filter: Optional[str]=None, orderby: Optional[str]=None, skip: int=0, top: int=100) -> uipath.platform.common.paging.PagedResult[uipath.platform.orchestrator.assets.Asset]
+
+# Asynchronously list assets using OData API with offset-based pagination.
+sdk.assets.list_async(folder_path: Optional[str]=None, folder_key: Optional[str]=None, filter: Optional[str]=None, orderby: Optional[str]=None, skip: int=0, top: int=100) -> uipath.platform.common.paging.PagedResult[uipath.platform.orchestrator.assets.Asset]
+
 # Retrieve an asset by its name.
 sdk.assets.retrieve(name: str, folder_key: Optional[str]=None, folder_path: Optional[str]=None) -> uipath.platform.orchestrator.assets.UserAsset | uipath.platform.orchestrator.assets.Asset
 
@@ -340,11 +365,23 @@ sdk.documents.retrieve_ixp_extraction_result(project_id: str, tag: str, operatio
 # Asynchronous version of the [`retrieve_ixp_extraction_result`][uipath.platform.documents._documents_service.DocumentsService.retrieve_ixp_extraction_result] method.
 sdk.documents.retrieve_ixp_extraction_result_async(project_id: str, tag: str, operation_id: str) -> uipath.platform.documents.documents.ExtractionResponseIXP
 
+# Retrieve the result of an IXP create validate extraction action operation (single-shot, non-blocking).
+sdk.documents.retrieve_ixp_extraction_validation_result(project_id: str, tag: str, operation_id: str) -> uipath.platform.documents.documents.ValidateExtractionAction
+
+# Asynchronous version of the [`retrieve_ixp_extraction_validation_result`][uipath.platform.documents._documents_service.DocumentsService.retrieve_ixp_extraction_validation_result] method.
+sdk.documents.retrieve_ixp_extraction_validation_result_async(project_id: str, tag: str, operation_id: str) -> uipath.platform.documents.documents.ValidateExtractionAction
+
 # Start an IXP extraction process without waiting for results (non-blocking).
 sdk.documents.start_ixp_extraction(project_name: str, tag: str, file: Union[IO[bytes], bytes, str, NoneType]=None, file_path: Optional[str]=None) -> uipath.platform.documents.documents.StartExtractionResponse
 
 # Asynchronous version of the [`start_ixp_extraction`][uipath.platform.documents._documents_service.DocumentsService.start_ixp_extraction] method.
 sdk.documents.start_ixp_extraction_async(project_name: str, tag: str, file: Union[IO[bytes], bytes, str, NoneType]=None, file_path: Optional[str]=None) -> uipath.platform.documents.documents.StartExtractionResponse
+
+# Start an IXP extraction validation action without waiting for results (non-blocking).
+sdk.documents.start_ixp_extraction_validation(action_title: str, action_priority: <enum 'ActionPriority, action_catalog: str, action_folder: str, storage_bucket_name: str, storage_bucket_directory_path: str, extraction_response: uipath.platform.documents.documents.ExtractionResponseIXP) -> uipath.platform.documents.documents.StartOperationResponse
+
+# Asynchronous version of the [`start_ixp_extraction_validation`][uipath.platform.documents._documents_service.DocumentsService.start_ixp_extraction_validation] method.
+sdk.documents.start_ixp_extraction_validation_async(action_title: str, action_priority: <enum 'ActionPriority, action_catalog: str, action_folder: str, storage_bucket_name: str, storage_bucket_directory_path: str, extraction_response: uipath.platform.documents.documents.ExtractionResponseIXP) -> uipath.platform.documents.documents.StartOperationResponse
 
 ```
 
@@ -505,7 +542,7 @@ Llm service
 
 ```python
 # Generate chat completions using UiPath's normalized LLM Gateway API.
-sdk.llm.chat_completions(messages: list[dict[str, str]] | list[tuple[str, str]], model: str="gpt-4o-mini-2024-07-18", max_tokens: int=4096, temperature: float=0, n: int=1, frequency_penalty: float=0, presence_penalty: float=0, top_p: float | None=1, top_k: int | None=None, tools: list[uipath.platform.chat.llm_gateway.ToolDefinition] | None=None, tool_choice: Union[uipath.platform.chat.llm_gateway.AutoToolChoice, uipath.platform.chat.llm_gateway.RequiredToolChoice, uipath.platform.chat.llm_gateway.SpecificToolChoice, Literal['auto', 'none'], NoneType]=None, response_format: dict[str, Any] | type[pydantic.main.BaseModel] | None=None, api_version: str="2024-08-01-preview")
+sdk.llm.chat_completions(messages: list[dict[str, str]] | list[tuple[str, str]], model: str="gpt-4.1-mini-2025-04-14", max_tokens: int=4096, temperature: float=0, n: int=1, frequency_penalty: float=0, presence_penalty: float=0, top_p: float | None=1, top_k: int | None=None, tools: list[uipath.platform.chat.llm_gateway.ToolDefinition] | None=None, tool_choice: Union[uipath.platform.chat.llm_gateway.AutoToolChoice, uipath.platform.chat.llm_gateway.RequiredToolChoice, uipath.platform.chat.llm_gateway.SpecificToolChoice, Literal['auto', 'none'], NoneType]=None, response_format: dict[str, Any] | type[pydantic.main.BaseModel] | None=None, api_version: str="2024-08-01-preview")
 
 ```
 
@@ -515,7 +552,7 @@ Llm Openai service
 
 ```python
 # Generate chat completions using UiPath's LLM Gateway service.
-sdk.llm_openai.chat_completions(messages: list[dict[str, str]], model: str="gpt-4o-mini-2024-07-18", max_tokens: int=4096, temperature: float=0, response_format: dict[str, Any] | type[pydantic.main.BaseModel] | None=None, api_version: str="2024-10-21")
+sdk.llm_openai.chat_completions(messages: list[dict[str, str]], model: str="gpt-4.1-mini-2025-04-14", max_tokens: int=4096, temperature: float=0, response_format: dict[str, Any] | type[pydantic.main.BaseModel] | None=None, api_version: str="2024-10-21")
 
 # Generate text embeddings using UiPath's LLM Gateway service.
 sdk.llm_openai.embeddings(input: str, embedding_model: str="text-embedding-ada-002", openai_api_version: str="2024-10-21")

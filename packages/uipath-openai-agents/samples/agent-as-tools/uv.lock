@@ -2027,7 +2027,7 @@ wheels = [
 
 [[package]]
 name = "uipath-openai-agents"
-version = "0.0.1"
+version = "0.0.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiosqlite" },
@@ -2037,9 +2037,9 @@ dependencies = [
     { name = "uipath" },
     { name = "uipath-runtime" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/50/0c/76e3fa61c8b2aa552d659ed3b6840bbf980a3e5fd33cc7cbfb62e4176885/uipath_openai_agents-0.0.1.tar.gz", hash = "sha256:e2e357e78da30b7c3e5388fd41832fa20d866b12271e6e078e57d08b178ce64b", size = 660107, upload-time = "2026-01-20T14:57:28.73Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/43/48/34e6e156489cf60e0537e81690bb5885c73aa1b207ea3c8276da3dd53f45/uipath_openai_agents-0.0.3.tar.gz", hash = "sha256:665d18077c67e83a98c68d3c34c2fe7a551ad92f93d7bea803e2f264019dfddd", size = 661842, upload-time = "2026-02-04T07:15:31.558Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/dd/ae/c0fb2d2ee854064c4aaa121ed96e5e010c475765e62a1ba2073362c74081/uipath_openai_agents-0.0.1-py3-none-any.whl", hash = "sha256:61fd3e0b34ce902484d89607369adb476697c8d51bde96f49c7dea5e5d0c7ba6", size = 31634, upload-time = "2026-01-20T14:57:27.441Z" },
+    { url = "https://files.pythonhosted.org/packages/3e/0f/af58b3409a8c55b654124e123609bb8b7b11c400ddaf299802f29e5d2860/uipath_openai_agents-0.0.3-py3-none-any.whl", hash = "sha256:fce3d6409c6e6ddf6df7b5a620b3c367e17267ae686c8a911a6459cf77da730a", size = 24989, upload-time = "2026-02-04T07:15:29.689Z" },
 ]
 
 [[package]]
