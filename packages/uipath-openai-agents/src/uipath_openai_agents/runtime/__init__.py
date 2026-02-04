@@ -54,6 +54,14 @@ def __getattr__(name):
         from .runtime import UiPathOpenAIAgentRuntime
 
         return UiPathOpenAIAgentRuntime
+    if name == "get_agent_context_type":
+        from .context import get_agent_context_type
+
+        return get_agent_context_type
+    if name == "parse_input_to_context":
+        from .context import parse_input_to_context
+
+        return parse_input_to_context
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
@@ -63,4 +71,6 @@ __all__ = [
     "get_agent_schema",
     "UiPathOpenAIAgentRuntimeFactory",
     "UiPathOpenAIAgentRuntime",
+    "get_agent_context_type",
+    "parse_input_to_context",
 ]
