@@ -4,7 +4,7 @@
     "entryPoints": [
         {
             "filePath": "agent",
-            "uniqueId": "14e68747-fdf0-4501-80f9-6b1d81012909",
+            "uniqueId": "fc75c79b-5076-47a0-8d68-744599aafec5",
             "type": "agent",
             "input": {
                 "type": "object",
@@ -61,74 +61,80 @@
                         "id": "__start__",
                         "name": "__start__",
                         "type": "__start__",
-                        "subgraph": null
+                        "subgraph": null,
+                        "metadata": null
                     },
                     {
                         "id": "triage_agent",
                         "name": "triage_agent",
-                        "type": "model",
-                        "subgraph": null
+                        "type": "node",
+                        "subgraph": null,
+                        "metadata": null
                     },
                     {
                         "id": "french_agent",
                         "name": "french_agent",
-                        "type": "model",
-                        "subgraph": null
+                        "type": "node",
+                        "subgraph": null,
+                        "metadata": null
                     },
                     {
                         "id": "spanish_agent",
                         "name": "spanish_agent",
-                        "type": "model",
-                        "subgraph": null
+                        "type": "node",
+                        "subgraph": null,
+                        "metadata": null
                     },
                     {
                         "id": "english_agent",
                         "name": "english_agent",
-                        "type": "model",
-                        "subgraph": null
+                        "type": "node",
+                        "subgraph": null,
+                        "metadata": null
                     },
                     {
                         "id": "__end__",
                         "name": "__end__",
                         "type": "__end__",
-                        "subgraph": null
+                        "subgraph": null,
+                        "metadata": null
                     }
                 ],
                 "edges": [
                     {
-                        "source": "__start__",
-                        "target": "triage_agent",
-                        "label": "input"
-                    },
-                    {
                         "source": "triage_agent",
                         "target": "french_agent",
-                        "label": "handoff"
+                        "label": null
                     },
                     {
                         "source": "french_agent",
                         "target": "triage_agent",
-                        "label": "handoff_complete"
+                        "label": null
                     },
                     {
                         "source": "triage_agent",
                         "target": "spanish_agent",
-                        "label": "handoff"
+                        "label": null
                     },
                     {
                         "source": "spanish_agent",
                         "target": "triage_agent",
-                        "label": "handoff_complete"
+                        "label": null
                     },
                     {
                         "source": "triage_agent",
                         "target": "english_agent",
-                        "label": "handoff"
+                        "label": null
                     },
                     {
                         "source": "english_agent",
                         "target": "triage_agent",
-                        "label": "handoff_complete"
+                        "label": null
+                    },
+                    {
+                        "source": "__start__",
+                        "target": "triage_agent",
+                        "label": "input"
                     },
                     {
                         "source": "triage_agent",

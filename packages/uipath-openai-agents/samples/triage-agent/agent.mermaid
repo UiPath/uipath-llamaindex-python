@@ -5,11 +5,11 @@ flowchart TB
   spanish_agent(spanish_agent)
   english_agent(english_agent)
   __end__(__end__)
+  triage_agent --> french_agent
+  french_agent --> triage_agent
+  triage_agent --> spanish_agent
+  spanish_agent --> triage_agent
+  triage_agent --> english_agent
+  english_agent --> triage_agent
   __start__ --> |input|triage_agent
-  triage_agent --> |handoff|french_agent
-  french_agent --> |handoff_complete|triage_agent
-  triage_agent --> |handoff|spanish_agent
-  spanish_agent --> |handoff_complete|triage_agent
-  triage_agent --> |handoff|english_agent
-  english_agent --> |handoff_complete|triage_agent
   triage_agent --> |output|__end__

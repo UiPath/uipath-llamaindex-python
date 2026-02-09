@@ -4,7 +4,7 @@
     "entryPoints": [
         {
             "filePath": "agent",
-            "uniqueId": "6d0e928f-cf8e-465e-9b63-cb972e231e19",
+            "uniqueId": "ca84ed97-359c-4d78-b93a-d431b66943f6",
             "type": "agent",
             "input": {
                 "type": "object",
@@ -61,19 +61,22 @@
                         "id": "__start__",
                         "name": "__start__",
                         "type": "__start__",
-                        "subgraph": null
+                        "subgraph": null,
+                        "metadata": null
                     },
                     {
                         "id": "assistant_agent",
                         "name": "assistant_agent",
-                        "type": "model",
-                        "subgraph": null
+                        "type": "node",
+                        "subgraph": null,
+                        "metadata": null
                     },
                     {
                         "id": "__end__",
                         "name": "__end__",
                         "type": "__end__",
-                        "subgraph": null
+                        "subgraph": null,
+                        "metadata": null
                     }
                 ],
                 "edges": [
