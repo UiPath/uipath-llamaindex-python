@@ -5,6 +5,7 @@ from typing import Any, AsyncGenerator
 from uuid import uuid4
 
 from agents import Agent, Runner
+from pydantic import BaseModel
 from uipath.runtime import (
     UiPathExecuteOptions,
     UiPathRuntimeResult,
@@ -20,6 +21,7 @@ from uipath.runtime.events import (
 from uipath.runtime.schema import UiPathRuntimeSchema
 
 from ._serialize import serialize_output
+from .context import get_agent_context_type, parse_input_to_context
 from .errors import UiPathOpenAIAgentsErrorCode, UiPathOpenAIAgentsRuntimeError
 from .schema import get_agent_schema, get_entrypoints_schema
 
@@ -46,6 +48,9 @@ class UiPathOpenAIAgentRuntime:
         self.agent: Agent = agent
         self.runtime_id: str = runtime_id or "default"
         self.entrypoint: str | None = entrypoint
+
+        # Detect context type from agent's generic parameter
+        self._context_type: type[BaseModel] | None = get_agent_context_type(agent)
 
     async def execute(
         self,
@@ -121,13 +126,14 @@ class UiPathOpenAIAgentRuntime:
         Yields:
             Runtime events if stream_events=True, then final result
         """
-        agent_input = self._prepare_agent_input(input)
+        # Prepare input and context
+        agent_input, context = self._prepare_agent_input_and_context(input)
 
         # Run the agent with streaming if events requested
         if stream_events:
             # Use streaming for events
             async for event_or_result in self._run_agent_streamed(
-                agent_input, options, stream_events
+                agent_input, context, options, stream_events
             ):
                 yield event_or_result
         else:
@@ -135,12 +141,14 @@ class UiPathOpenAIAgentRuntime:
             result = await Runner.run(
                 starting_agent=self.agent,
                 input=agent_input,
+                context=context,
             )
             yield self._create_success_result(result.final_output)
 
     async def _run_agent_streamed(
         self,
         agent_input: str | list[Any],
+        context: Any | None,
         options: UiPathExecuteOptions | UiPathStreamOptions | None,
         stream_events: bool,
     ) -> AsyncGenerator[UiPathRuntimeEvent | UiPathRuntimeResult, None]:
@@ -149,6 +157,7 @@ class UiPathOpenAIAgentRuntime:
 
         Args:
             agent_input: Prepared agent input (string or list of messages)
+            context: Optional context object (Pydantic model instance)
             options: Execution/stream options
             stream_events: Whether to yield streaming events to caller
 
@@ -160,6 +169,7 @@ class UiPathOpenAIAgentRuntime:
         result = Runner.run_streamed(
             starting_agent=self.agent,
             input=agent_input,
+            context=context,
         )
 
         # Stream events from the agent
@@ -218,21 +228,32 @@ class UiPathOpenAIAgentRuntime:
         # Filter out raw response events (too granular)
         return None
 
-    def _prepare_agent_input(self, input: dict[str, Any] | None) -> str | list[Any]:
+    def _prepare_agent_input_and_context(
+        self, input: dict[str, Any] | None
+    ) -> tuple[str | list[Any], Any | None]:
         """
-        Prepare agent input from UiPath input dictionary.
+        Prepare agent input and context from UiPath input dictionary.
 
+        - 'messages' field is always extracted as the LLM input
+        - If agent has a context type, remaining fields are parsed into Pydantic model
         """
         if not input:
-            return ""
+            return "", None
 
+        # Extract messages (always goes to LLM)
         messages = input.get("messages", "")
+        if not isinstance(messages, (str, list)):
+            messages = ""
 
-        if isinstance(messages, (str, list)):
-            return messages
+        # If agent has a context type, parse remaining fields into context
+        context = None
+        if self._context_type is not None:
+            try:
+                context = parse_input_to_context(input, self._context_type)
+            except ValueError:
+                pass  # Fallback to no context if parsing fails
 
-        # Fallback to empty string for unexpected types
-        return ""
+        return messages, context
 
     def _serialize_message(self, message: Any) -> dict[str, Any]:
         """
