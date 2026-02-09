@@ -4,24 +4,25 @@
     "entryPoints": [
         {
             "filePath": "agent",
-            "uniqueId": "bed6acef-3fd1-43b5-9e49-fbc7c36523cb",
+            "uniqueId": "043c7fc4-885c-4806-96f6-3e05ccf8b515",
             "type": "agent",
             "input": {
                 "type": "object",
-                "properties": {},
-                "required": []
-            },
-            "output": {
-                "type": "object",
                 "properties": {
-                    "result": {
-                        "title": "Result",
-                        "type": "object"
+                    "user_msg": {
+                        "type": "string",
+                        "title": "User Message",
+                        "description": "The user's question or request"
                     }
                 },
                 "required": [
-                    "result"
+                    "user_msg"
                 ]
+            },
+            "output": {
+                "type": "object",
+                "properties": {},
+                "required": []
             },
             "graph": {
                 "nodes": [
@@ -29,13 +30,6 @@
                         "id": "__start__",
                         "name": "__start__",
                         "type": "__start__",
-                        "subgraph": null,
-                        "metadata": {}
-                    },
-                    {
-                        "id": "_done",
-                        "name": "_done",
-                        "type": "node",
                         "subgraph": null
                     },
                     {
@@ -73,6 +67,12 @@
                         "name": "setup_agent",
                         "type": "node",
                         "subgraph": null
+                    },
+                    {
+                        "id": "__end__",
+                        "name": "__end__",
+                        "type": "__end__",
+                        "subgraph": null
                     }
                 ],
                 "edges": [
@@ -83,7 +83,7 @@
                     },
                     {
                         "source": "aggregate_tool_results",
-                        "target": "_done",
+                        "target": "__end__",
                         "label": "StopEvent"
                     },
                     {
@@ -103,7 +103,7 @@
                     },
                     {
                         "source": "parse_agent_output",
-                        "target": "_done",
+                        "target": "__end__",
                         "label": "StopEvent"
                     },
                     {

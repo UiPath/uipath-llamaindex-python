@@ -1,4 +1,4 @@
-from llama_index.core.agent.workflow import AgentWorkflow
+from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.core.workflow import (
     Context,
     HumanResponseEvent,
@@ -19,15 +19,16 @@ async def may_research_company(ctx: Context, company_name: str) -> bool:
     """
     print("Researching company...")
 
-    # emit an event to the external stream to be captured
-    ctx.write_event_to_stream(
-        InputRequiredEvent(
-            prefix=f"May I perform a research on company {company_name}? \n (yes/no)"
-        )
-    )
+    question = f"May I perform research on company '{company_name}'? (yes/no) "
 
     # wait until we see a HumanResponseEvent
-    response = await ctx.wait_for_event(HumanResponseEvent)
+    response = await ctx.wait_for_event(
+        HumanResponseEvent,
+        waiter_id=question,
+        waiter_event=InputRequiredEvent(
+            prefix=question,
+        ),
+    )
     print("Received response:", response.response)
 
     # act on the input from the event
@@ -37,10 +38,11 @@ async def may_research_company(ctx: Context, company_name: str) -> bool:
         return False
 
 
-workflow = AgentWorkflow.from_tools_or_functions(
-    [may_research_company],
+workflow = FunctionAgent(
+    tools=[may_research_company],
     llm=llm,
-    system_prompt="""You are a helpful assistant that researches companies.
-
-CRITICAL: You MUST call the may_research_company function BEFORE providing any information about a company. After calling the function and receiving approval, provide your research summary.""",
+    system_prompt=(
+        "You are a helpful assistant that researches companies. "
+        "You MUST call may_research_company before providing any information."
+    ),
 )
