@@ -7,7 +7,9 @@ from agents import Agent
 from openinference.instrumentation.openai_agents import OpenAIAgentsInstrumentor
 from uipath.runtime import (
     UiPathRuntimeContext,
+    UiPathRuntimeFactorySettings,
     UiPathRuntimeProtocol,
+    UiPathRuntimeStorageProtocol,
 )
 from uipath.runtime.errors import UiPathErrorCategory
 
@@ -178,6 +180,21 @@ class UiPathOpenAIAgentRuntimeFactory:
             runtimes.append(runtime)
 
         return runtimes
+
+    async def get_storage(self) -> UiPathRuntimeStorageProtocol | None:
+        """
+        Get the shared storage instance.
+        """
+        return None
+
+    async def get_settings(self) -> UiPathRuntimeFactorySettings | None:
+        """
+        Get the factory settings.
+
+        Returns:
+            Factory settings
+        """
+        return None
 
     async def _create_runtime_instance(
         self,
