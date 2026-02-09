@@ -1290,7 +1290,7 @@ wheels = [
 
 [[package]]
 name = "llama-index"
-version = "0.14.10"
+version = "0.14.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "llama-index-cli" },
@@ -1302,9 +1302,9 @@ dependencies = [
     { name = "llama-index-readers-llama-parse" },
     { name = "nltk" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f9/ab/96ed543df874118cc7d01490bda0ff6bdd4f781cb511731786b2605d3f54/llama_index-0.14.10.tar.gz", hash = "sha256:49f539e4c68ddf77bb2a10f80f49bd950de3a91fe0e3ecd3b2d55a6fbc05c31e", size = 8461, upload-time = "2025-12-04T19:45:57.788Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/63/26/e46c43ca97f849169d54b1c11e599ea51e650f4c27355c28e384cb0c7e94/llama_index-0.14.13.tar.gz", hash = "sha256:6392822f8ad0e747da2f0adbfcd170bc91fafdff4341cd50da809feae5ca828a", size = 8461, upload-time = "2026-01-21T20:44:49.651Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/50/81b8f6b9d4f7a329981ef9a6a9e9322df1a02702eebd64fd1862aa77f902/llama_index-0.14.10-py3-none-any.whl", hash = "sha256:6f03a2a8a82c059705ba54b92d4e96c8d8ba4ce70103b07825e55110452aec84", size = 7459, upload-time = "2025-12-04T19:45:56.547Z" },
+    { url = "https://files.pythonhosted.org/packages/10/32/5c13c0b0e7fdedaf4f98a137a64558ee87bbdbc14e16b394c103f6a5418e/llama_index-0.14.13-py3-none-any.whl", hash = "sha256:54b3c15d9327a05c981f332643e15a7adc52168d173302987aeb0f9dc7f0267c", size = 7459, upload-time = "2026-01-21T20:44:47.96Z" },
 ]
 
 [[package]]
@@ -1323,7 +1323,7 @@ wheels = [
 
 [[package]]
 name = "llama-index-core"
-version = "0.14.10"
+version = "0.14.13"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "aiohttp" },
@@ -1354,9 +1354,9 @@ dependencies = [
     { name = "typing-inspect" },
     { name = "wrapt" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/6b/77/a1aa39cca5b32e3801f28e877add27c9c0daf4b3dc087ac9f31df53337b5/llama_index_core-0.14.10.tar.gz", hash = "sha256:b930aac3161a5e145f4003e81ba94cbef062228a0d3ef39752e03471b0cb386b", size = 11582499, upload-time = "2025-12-04T19:45:24.093Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/74/54/d6043a088e5e9c1d62300db7ad0ef417c6b9a92f7b4a5cade066aeafdaca/llama_index_core-0.14.13.tar.gz", hash = "sha256:c3b30d20ae0407e5d0a1d35bb3376a98e242661ebfc22da754b5a3da1f8108c0", size = 11589074, upload-time = "2026-01-21T20:44:16.287Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/a4/fa/98618331a22f8fedd050af0a0096916fdcec39bbff82bdd8ae7693536866/llama_index_core-0.14.10-py3-none-any.whl", hash = "sha256:ea0d563c777a7209664594588e3f0885a4784a1ae39dddaa28526867c79a3d65", size = 11925643, upload-time = "2025-12-04T19:45:21.585Z" },
+    { url = "https://files.pythonhosted.org/packages/76/59/9769f03f1cccadcc014b3b65c166de18999b51459a0f0a579d80f6c91d80/llama_index_core-0.14.13-py3-none-any.whl", hash = "sha256:392f0a5a09433e9dea786964ef5fe5ca2a2b10aee9f979a9507c19a14da2a20a", size = 11934761, upload-time = "2026-01-21T20:44:18.892Z" },
 ]
 
 [[package]]
@@ -1528,16 +1528,16 @@ wheels = [
 
 [[package]]
 name = "llama-index-workflows"
-version = "2.11.5"
+version = "2.14.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "llama-index-instrumentation" },
     { name = "pydantic" },
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d4/14/b15613ece1d7bfbe3f3b1a7f76cf9eaa603b55dd6b5921e81de2ee21f580/llama_index_workflows-2.11.5.tar.gz", hash = "sha256:defba6c5169a9c986fe06dd9f3ee5e1a6cc5f58c776605c0458baa0a55f07643", size = 70743, upload-time = "2025-11-24T18:37:59.187Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/98/20/75e39cbd7fb95288c1b3897a12b5d49fcef7b376d93daa3765f3ae4df9c0/llama_index_workflows-2.14.1.tar.gz", hash = "sha256:79a9dc120c5dcbf1401aed40c10bdae0bd2d39fdc90f6eef463185e846656bef", size = 75607, upload-time = "2026-02-06T19:46:47.661Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/90/ac/e911594a2f10445717ea45b61b3a93f3bb91594320745fe1bb796c2dc87a/llama_index_workflows-2.11.5-py3-none-any.whl", hash = "sha256:3c5a419129114bb0b1bd83b88aa5f653f84181b2e39e33473e8747ec6e88538e", size = 91982, upload-time = "2025-11-24T18:37:58.265Z" },
+    { url = "https://files.pythonhosted.org/packages/74/1b/f7b0093f65789742181dd1c175a411b24e73415ace4f21206e6f028dc42f/llama_index_workflows-2.14.1-py3-none-any.whl", hash = "sha256:720979e5b78211861d162d22086bfee95286749a138e54cde206bc99f6c14aed", size = 96783, upload-time = "2026-02-06T19:46:49.379Z" },
 ]
 
 [[package]]
@@ -3334,7 +3334,7 @@ wheels = [
 
 [[package]]
 name = "uipath"
-version = "2.6.0"
+version = "2.8.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "applicationinsights" },
@@ -3355,34 +3355,35 @@ dependencies = [
     { name = "uipath-core" },
     { name = "uipath-runtime" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0c/9f/3b419a3397a8eac404062d98f4a64ccf421187c8b9f35f344cbff1307124/uipath-2.6.0.tar.gz", hash = "sha256:fbbd18b1c940a63b0541a96ad8181708c7c0a708838f2f0a0779de91244b2fc8", size = 3904808, upload-time = "2026-01-25T15:29:56.032Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c8/c7/8f4fa3ffd289176ee1e6286d4f5bbafe907d952813ce487444239e2ac492/uipath-2.8.0.tar.gz", hash = "sha256:4eda5284d9a05943357359a6a1372f227c8ab7dab7afe93d5e380479e508c306", size = 3939277, upload-time = "2026-02-06T19:57:44.931Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/6b/2f/9e25ea4d91286e53d7d7934e85e6efa5bacfacbe7e69d5baa5b26d9f6429/uipath-2.6.0-py3-none-any.whl", hash = "sha256:f1f4fe7a3c5c20d75aef88c51c95f2f4af92ea736a1a1e0f8f95f4dece1cdac4", size = 449292, upload-time = "2026-01-25T15:29:53.506Z" },
+    { url = "https://files.pythonhosted.org/packages/b4/ba/ce82697d5b142d6f10aa5cabac5faac983af9050d89468cbea09b24db198/uipath-2.8.0-py3-none-any.whl", hash = "sha256:49e4f1d3748222423a547a17c8db0093448d947a844425089b53d0ecf4aedba2", size = 467168, upload-time = "2026-02-06T19:57:43.219Z" },
 ]
 
 [[package]]
 name = "uipath-core"
-version = "0.2.0"
+version = "0.2.4"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "opentelemetry-instrumentation" },
     { name = "opentelemetry-sdk" },
     { name = "pydantic" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9a/4f/9bf150a21b6af8b56edf7fbca46827806570eab5b37f90c2b76180cf1e79/uipath_core-0.2.0.tar.gz", hash = "sha256:950427fe7921a67468416856faf63192cf717d8adce092d706b070c487f0c076", size = 103072, upload-time = "2026-01-25T11:59:10.871Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/45/9b/fb943fab67dea63aac3b257439094916ca87a168c402b6d644e44880e5ed/uipath_core-0.2.4.tar.gz", hash = "sha256:92b9af258dcf56d83695366c0eef959b4d6786653d8ed620b8f64c67852d0b14", size = 107516, upload-time = "2026-02-06T11:01:33.818Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e8/43/f61f6aace058d61dfa11e3c2116b06f0bc15c45d9d201bf432902f54018f/uipath_core-0.2.0-py3-none-any.whl", hash = "sha256:bb5366bfca7ec4611f91a0035df194a56eef11f447313491557e131e6090f5e6", size = 32826, upload-time = "2026-01-25T11:59:09.203Z" },
+    { url = "https://files.pythonhosted.org/packages/28/a9/2955db06bce0a1f318be457c9f58245d8979d1c0534ecaf155d45eff5a64/uipath_core-0.2.4-py3-none-any.whl", hash = "sha256:d61e825726682c5800d111e4cb175cd57bebc73dd4c3d2c970daf4cc87073576", size = 34310, upload-time = "2026-02-06T11:01:32.174Z" },
 ]
 
 [[package]]
 name = "uipath-llamaindex"
-version = "0.5.0"
+version = "0.5.1"
 source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
     { name = "llama-index" },
     { name = "llama-index-embeddings-azure-openai" },
     { name = "llama-index-llms-azure-openai" },
+    { name = "llama-index-workflows" },
     { name = "openinference-instrumentation-llama-index" },
     { name = "uipath" },
     { name = "uipath-runtime" },
@@ -3420,14 +3421,15 @@ requires-dist = [
     { name = "aiosqlite", specifier = ">=0.21.0" },
     { name = "boto3", marker = "extra == 'bedrock'", specifier = ">=1.28.0" },
     { name = "google-genai", marker = "extra == 'vertex'", specifier = ">=1.0.0" },
-    { name = "llama-index", specifier = ">=0.14.8" },
+    { name = "llama-index", specifier = ">=0.14.13,<1.0.0" },
     { name = "llama-index-embeddings-azure-openai", specifier = ">=0.4.1" },
     { name = "llama-index-llms-azure-openai", specifier = ">=0.4.2" },
     { name = "llama-index-llms-bedrock", marker = "extra == 'bedrock'", specifier = ">=0.3.0" },
     { name = "llama-index-llms-bedrock-converse", marker = "extra == 'bedrock'", specifier = ">=0.3.0" },
     { name = "llama-index-llms-google-genai", marker = "extra == 'vertex'", specifier = ">=0.8.0" },
+    { name = "llama-index-workflows", specifier = ">=2.14.1,<3.0.0" },
     { name = "openinference-instrumentation-llama-index", specifier = ">=4.3.9" },
-    { name = "uipath", specifier = ">=2.6.0,<2.7.0" },
+    { name = "uipath", specifier = ">=2.8.0,<2.9.0" },
     { name = "uipath-runtime", specifier = ">=0.6.0,<0.7.0" },
 ]
 provides-extras = ["bedrock", "vertex"]
@@ -3448,14 +3450,14 @@ dev = [
 
 [[package]]
 name = "uipath-runtime"
-version = "0.6.0"
+version = "0.6.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "uipath-core" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f9/e3/eb104949fd2bcd2a96870ca3ebda0229f23ff3768db3b6c1e0f33864283c/uipath_runtime-0.6.0.tar.gz", hash = "sha256:3b000ffe72ab2126ba6fa9f818220e35f60ea120412a8bbd2e18119b4b730184", size = 103627, upload-time = "2026-01-25T15:19:04.653Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/74/d141f84d845a6ecc8ede56ca1ce7aca5f56031895be9e6546c6ffd046ce3/uipath_runtime-0.6.2.tar.gz", hash = "sha256:f838e1e5e20cc7c070475c8f839ba6d0615a2e12750a7275bc4669fed15c26c6", size = 103641, upload-time = "2026-01-27T12:48:41.039Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/62/d1/2207f96ee870ca2fd1a76ec5c4ae864f55813f4562adab606cd9d30f4b35/uipath_runtime-0.6.0-py3-none-any.whl", hash = "sha256:cb78420475fa355d57c98fcbe731b5c8213a44cdc886b14ee2ed7fd78da0d7a8", size = 40764, upload-time = "2026-01-25T15:19:02.819Z" },
+    { url = "https://files.pythonhosted.org/packages/4d/1c/20f1aa6a194c1e21557943d08c1a23dc3d55558d4f69644ccbfa62ddbc43/uipath_runtime-0.6.2-py3-none-any.whl", hash = "sha256:b33511f9a29269677049ab5dd54419aab302a5ae3a5820d8a86c7f060bd9fc62", size = 40770, upload-time = "2026-01-27T12:48:38.674Z" },
 ]
 
 [[package]]
