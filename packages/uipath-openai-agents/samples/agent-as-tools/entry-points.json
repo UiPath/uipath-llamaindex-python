@@ -4,7 +4,7 @@
     "entryPoints": [
         {
             "filePath": "agent",
-            "uniqueId": "aa358456-b985-4a8d-abf8-280d13d1ef60",
+            "uniqueId": "c345930e-50b8-410a-b521-b9ddc3d4e78a",
             "type": "agent",
             "input": {
                 "type": "object",
@@ -91,36 +91,18 @@
                         "metadata": null
                     },
                     {
-                        "id": "spanish_agent",
-                        "name": "spanish_agent",
-                        "type": "node",
-                        "subgraph": null,
-                        "metadata": null
-                    },
-                    {
-                        "id": "french_agent",
-                        "name": "french_agent",
-                        "type": "node",
-                        "subgraph": null,
-                        "metadata": null
-                    },
-                    {
-                        "id": "italian_agent",
-                        "name": "italian_agent",
-                        "type": "node",
-                        "subgraph": null,
-                        "metadata": null
-                    },
-                    {
                         "id": "orchestrator_agent_tools",
                         "name": "tools",
                         "type": "tool",
                         "subgraph": null,
                         "metadata": {
                             "tool_names": [
-                                "get_translation_preferences"
+                                "get_translation_preferences",
+                                "translate_to_spanish",
+                                "translate_to_french",
+                                "translate_to_italian"
                             ],
-                            "tool_count": 1
+                            "tool_count": 4
                         }
                     },
                     {
@@ -132,36 +114,6 @@
                     }
                 ],
                 "edges": [
-                    {
-                        "source": "orchestrator_agent",
-                        "target": "spanish_agent",
-                        "label": "translate_to_spanish"
-                    },
-                    {
-                        "source": "spanish_agent",
-                        "target": "orchestrator_agent",
-                        "label": null
-                    },
-                    {
-                        "source": "orchestrator_agent",
-                        "target": "french_agent",
-                        "label": "translate_to_french"
-                    },
-                    {
-                        "source": "french_agent",
-                        "target": "orchestrator_agent",
-                        "label": null
-                    },
-                    {
-                        "source": "orchestrator_agent",
-                        "target": "italian_agent",
-                        "label": "translate_to_italian"
-                    },
-                    {
-                        "source": "italian_agent",
-                        "target": "orchestrator_agent",
-                        "label": null
-                    },
                     {
                         "source": "orchestrator_agent",
                         "target": "orchestrator_agent_tools",
