@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "uv"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+    exclude-paths:
+      - "packages/uipath-llamaindex/samples/**"
+      - "packages/uipath-openai-agents/samples/**"
