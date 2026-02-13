@@ -1,0 +1,142 @@
+{
+    "$schema": "https://cloud.uipath.com/draft/2024-12/entry-point",
+    "$id": "entry-points.json",
+    "entryPoints": [
+        {
+            "filePath": "agent",
+            "uniqueId": "e570907b-f2f6-4ff0-96a8-ca1781d0e49f",
+            "type": "agent",
+            "input": {
+                "type": "object",
+                "properties": {
+                    "messages": {
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            }
+                        ],
+                        "title": "Messages",
+                        "description": "User messages to send to the agent"
+                    }
+                },
+                "required": [
+                    "messages"
+                ]
+            },
+            "output": {
+                "type": "object",
+                "properties": {
+                    "result": {
+                        "title": "Result",
+                        "description": "The agent's response",
+                        "anyOf": [
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "array",
+                                "items": {
+                                    "type": "object"
+                                }
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "result"
+                ]
+            },
+            "graph": {
+                "nodes": [
+                    {
+                        "id": "__start__",
+                        "name": "__start__",
+                        "type": "__start__",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "orchestrator_agent",
+                        "name": "orchestrator_agent",
+                        "type": "model",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "hr_agent",
+                        "name": "hr_agent",
+                        "type": "model",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "procurement_agent",
+                        "name": "procurement_agent",
+                        "type": "model",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "policy_agent",
+                        "name": "policy_agent",
+                        "type": "model",
+                        "subgraph": null
+                    },
+                    {
+                        "id": "__end__",
+                        "name": "__end__",
+                        "type": "__end__",
+                        "subgraph": null
+                    }
+                ],
+                "edges": [
+                    {
+                        "source": "__start__",
+                        "target": "orchestrator_agent",
+                        "label": "input"
+                    },
+                    {
+                        "source": "orchestrator_agent",
+                        "target": "hr_agent",
+                        "label": "handoff"
+                    },
+                    {
+                        "source": "hr_agent",
+                        "target": "orchestrator_agent",
+                        "label": "handoff_complete"
+                    },
+                    {
+                        "source": "orchestrator_agent",
+                        "target": "procurement_agent",
+                        "label": "handoff"
+                    },
+                    {
+                        "source": "procurement_agent",
+                        "target": "orchestrator_agent",
+                        "label": "handoff_complete"
+                    },
+                    {
+                        "source": "orchestrator_agent",
+                        "target": "policy_agent",
+                        "label": "handoff"
+                    },
+                    {
+                        "source": "policy_agent",
+                        "target": "orchestrator_agent",
+                        "label": "handoff_complete"
+                    },
+                    {
+                        "source": "orchestrator_agent",
+                        "target": "__end__",
+                        "label": "output"
+                    }
+                ]
+            }
+        }
+    ]
+}

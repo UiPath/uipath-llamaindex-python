@@ -1,0 +1,15 @@
+flowchart TB
+  __start__(__start__)
+  orchestrator_agent(orchestrator_agent)
+  hr_agent(hr_agent)
+  procurement_agent(procurement_agent)
+  policy_agent(policy_agent)
+  __end__(__end__)
+  __start__ --> |input|orchestrator_agent
+  orchestrator_agent --> |handoff|hr_agent
+  hr_agent --> |handoff_complete|orchestrator_agent
+  orchestrator_agent --> |handoff|procurement_agent
+  procurement_agent --> |handoff_complete|orchestrator_agent
+  orchestrator_agent --> |handoff|policy_agent
+  policy_agent --> |handoff_complete|orchestrator_agent
+  orchestrator_agent --> |output|__end__
